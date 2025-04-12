@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPI Tree - Vertical Example</title>
+  <style>
+    /* General styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+/* KPI Tree styles - Common */
+.kpi-tree-container {
+  overflow: auto;
+  padding: 20px;
+  margin: 0 auto;
+}
+
+.kpi-tree {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Vertical direction styles */
+.direction-vertical .kpi-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.direction-vertical .kpi-tree ul {
+  list-style-type: none;
+  padding: 20px 0 0 0;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  position: relative;
+}
+
+.direction-vertical .kpi-tree li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 15px;
+}
+
+.direction-vertical .kpi-tree ul::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-top: 2px solid #ccc;
+  width: 100%;
+}
+
+.direction-vertical .children > li::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  border-left: 2px solid #ccc;
+  height: 20px;
+  transform: translateX(-50%);
+}
+
+.direction-vertical .operator {
+  margin: 10px 0;
+}
+
+.direction-vertical .toggle-btn {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Horizontal direction styles */
+.direction-horizontal .kpi-tree {
+  display: flex;
+  align-items: center;
+}
+
+.direction-horizontal .kpi-tree ul {
+  list-style-type: none;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.direction-horizontal .kpi-tree li {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 15px 0;
+}
+
+.direction-horizontal .kpi-tree ul::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-left: 2px solid #ccc;
+  height: 100%;
+}
+
+.direction-horizontal .children > li::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  border-top: 2px solid #ccc;
+  width: 20px;
+  transform: translateY(-50%);
+}
+
+.direction-horizontal .operator {
+  margin: 0 10px;
+}
+
+.direction-horizontal .toggle-btn {
+  margin: 0 10px;
+}
+
+/* Node styles */
+.node {
+  min-width: 120px;
+  min-height: 70px;
+  padding: 10px;
+  background-color: #fff;
+  border: 2px solid #666;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.node a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.node a:hover {
+  text-decoration: underline;
+}
+
+.node .value {
+  font-weight: bold;
+  margin-top: 5px;
+  color: #333;
+}
+
+/* Operator styles */
+.operator {
+  font-size: 24px;
+  font-weight: bold;
+  color: #666;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* Toggle button styles */
+.toggle-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #ddd;
+  border: 1px solid #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  font-size: 0;
+  z-index: 2;
+}
+
+.toggle-btn::before {
+  content: '−';
+  font-size: 16px;
+  line-height: 1;
+}
+
+.toggle-btn.collapsed::before {
+  content: '+';
+}
+
+/* Collapsed state */
+.children.collapsed {
+  display: none !important;
+}
+
+/* Theme colors */
+.theme-default .node {
+  border-color: #00796b;
+  background-color: #e0f2f1;
+}
+
+.theme-blue .node {
+  border-color: #1976d2;
+  background-color: #e3f2fd;
+}
+
+.theme-red .node {
+  border-color: #d32f2f;
+  background-color: #ffebee;
+}
+  </style>
+</head>
+<body data-theme="red" data-direction="vertical">
+  <div class="container">
+    <h1>KPI Tree - Vertical Example</h1>
+    <div class="kpi-tree-container theme-red direction-vertical">
+      <ul class="kpi-tree">
+        
+    <li>
+      <div class="node" id="node-zwjq79h87">
+        <a href="https://example.com/revenue" target="_blank">Revenue (¥100M)</a><div class="value">500</div>
+      </div>
+      <button class="toggle-btn" data-target="node-zwjq79h87-children"></button>
+      <ul id="node-zwjq79h87-children" class="children">
+    <li>
+      <div class="node" id="node-x55jr3bbs">
+        Product A<div class="value">300</div>
+      </div>
+      <button class="toggle-btn" data-target="node-x55jr3bbs-children"></button>
+      <ul id="node-x55jr3bbs-children" class="children">
+    <li>
+      <div class="node" id="node-iyl7h2dy8">
+        Direct Sales<div class="value">200</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-97tvohuw2">
+        Partner Sales<div class="value">100</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-od3br4w3v">
+        Product B<div class="value">200</div>
+      </div>
+      <button class="toggle-btn" data-target="node-od3br4w3v-children"></button>
+      <ul id="node-od3br4w3v-children" class="children">
+    <li>
+      <div class="node" id="node-yf4vhxovq">
+        Region X<div class="value">120</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-wty30udg8">
+        Region Y<div class="value">80</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </div>
+  </div>
+  
+  <script>
+    // KPI Tree JavaScript
+// Using old-school function approach to ensure maximum browser compatibility
+function kpiTreeInit() {
+  // Apply theme and direction from config
+  var theme = document.body.getAttribute('data-theme') || 'default';
+  var direction = document.body.getAttribute('data-direction') || 'vertical';
+  
+  console.log('KPI Tree initializing with direction:', direction);
+  
+  // Add direction toggle control
+  addDirectionToggle(direction);
+  
+  // Initialize toggle buttons
+  setupToggleButtons();
+}
+
+// Handle toggle buttons for collapsing/expanding nodes
+function setupToggleButtons() {
+  console.log('Setting up toggle buttons');
+  
+  // Get all toggle buttons
+  var toggleButtons = document.querySelectorAll('.toggle-btn');
+  console.log('Found toggle buttons:', toggleButtons.length);
+  
+  // Load saved state from localStorage
+  var savedStates = loadTreeState();
+  
+  // Initialize toggle buttons
+  for (var i = 0; i < toggleButtons.length; i++) {
+    var button = toggleButtons[i];
+    var targetId = button.getAttribute('data-target');
+    var target = document.getElementById(targetId);
+    
+    if (!target) {
+      console.error('Target element not found:', targetId);
+      continue;
+    }
+    
+    // Apply saved state if exists
+    if (savedStates[targetId] === 'collapsed') {
+      target.classList.add('collapsed');
+      button.classList.add('collapsed');
+    }
+    
+    // Use closure to maintain button and target references
+    (function(btn, tgt) {
+      btn.onclick = function() {
+        console.log('Toggle button clicked for:', tgt.id);
+        tgt.classList.toggle('collapsed');
+        btn.classList.toggle('collapsed');
+        saveTreeState();
+      };
+    })(button, target);
+  }
+}
+
+// Add direction toggle dropdown
+function addDirectionToggle(initialDirection) {
+  // Create toggle control
+  var controlDiv = document.createElement('div');
+  controlDiv.className = 'direction-control';
+  controlDiv.style.position = 'fixed';
+  controlDiv.style.top = '10px';
+  controlDiv.style.right = '10px';
+  controlDiv.style.zIndex = '1000';
+  controlDiv.style.background = '#fff';
+  controlDiv.style.padding = '5px 10px';
+  controlDiv.style.borderRadius = '4px';
+  controlDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+  
+  // Create select element
+  var select = document.createElement('select');
+  select.id = 'directionToggle';
+  
+  // Add options
+  var vertOption = document.createElement('option');
+  vertOption.value = 'vertical';
+  vertOption.textContent = 'Vertical Direction';
+  vertOption.selected = initialDirection === 'vertical';
+  
+  var horizOption = document.createElement('option');
+  horizOption.value = 'horizontal';
+  horizOption.textContent = 'Horizontal Direction';
+  horizOption.selected = initialDirection === 'horizontal';
+  
+  select.appendChild(vertOption);
+  select.appendChild(horizOption);
+  
+  // Add event listener using old-school approach
+  select.onchange = function() {
+    var treeContainer = document.querySelector('.kpi-tree-container');
+    var body = document.body;
+    
+    // Remove old direction class
+    treeContainer.classList.remove('direction-vertical');
+    treeContainer.classList.remove('direction-horizontal');
+    
+    // Add new direction class
+    treeContainer.classList.add('direction-' + this.value);
+    
+    // Update data attribute
+    body.setAttribute('data-direction', this.value);
+    
+    // Save preference to localStorage
+    localStorage.setItem('kpiTreeDirection', this.value);
+  };
+  
+  // Add label
+  var label = document.createElement('label');
+  label.htmlFor = 'directionToggle';
+  label.textContent = 'Layout: ';
+  label.style.marginRight = '5px';
+  label.style.fontWeight = 'bold';
+  
+  // Append to control div
+  controlDiv.appendChild(label);
+  controlDiv.appendChild(select);
+  
+  // Append to body
+  document.body.appendChild(controlDiv);
+  
+  // Check if user has a saved preference
+  var savedDirection = localStorage.getItem('kpiTreeDirection');
+  if (savedDirection && savedDirection !== initialDirection) {
+    select.value = savedDirection;
+    
+    // Trigger change event manually for IE compatibility
+    if ("createEvent" in document) {
+      var evt = document.createEvent("HTMLEvents");
+      evt.initEvent("change", false, true);
+      select.dispatchEvent(evt);
+    } else {
+      select.fireEvent("onchange");
+    }
+  }
+}
+
+// Save tree state to localStorage
+function saveTreeState() {
+  var state = {};
+  var children = document.querySelectorAll('.children');
+  
+  for (var i = 0; i < children.length; i++) {
+    var child = children[i];
+    if (child.id) {
+      state[child.id] = child.classList.contains('collapsed') ? 'collapsed' : 'expanded';
+    }
+  }
+  
+  localStorage.setItem('kpiTreeState', JSON.stringify(state));
+}
+
+// Load tree state from localStorage
+function loadTreeState() {
+  var savedState = localStorage.getItem('kpiTreeState');
+  return savedState ? JSON.parse(savedState) : {};
+}
+
+// Run initialization when page is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', kpiTreeInit);
+} else {
+  kpiTreeInit();
+}
+  </script>
+</body>
+</html>
