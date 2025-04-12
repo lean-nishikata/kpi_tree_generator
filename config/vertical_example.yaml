@@ -1,0 +1,29 @@
+title: "KPI Tree - Vertical Example"
+theme: "red"
+direction: "vertical"
+
+root:
+  text: "Revenue (¥100M)"
+  value: 500
+  url: "https://example.com/revenue"
+  children:
+    - text: "Product A"
+      value: 300
+      children:
+        - text: "Direct Sales"
+          value: 200
+          operator: "+"
+        - text: "Partner Sales"
+          value: 100
+          operator: "+"
+      operator: "+"
+    - text: "Product B"
+      value: 200
+      children:
+        - text: "Region X"
+          value: 120
+          operator: "+"
+        - text: "Region Y"
+          value: 80
+          operator: "+"
+      operator: "+"
