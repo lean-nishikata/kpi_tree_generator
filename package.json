@@ -1,0 +1,14 @@
+{
+  "name": "kpi_tree_generator",
+  "version": "1.0.0",
+  "description": "KPI Tree Generator",
+  "main": "src/generator.js",
+  "scripts": {
+    "start": "node src/generator.js",
+    "dev": "node src/generator.js"
+  },
+  "dependencies": {
+    "yaml": "^2.2.2",
+    "fs-extra": "^11.1.1"
+  }
+}

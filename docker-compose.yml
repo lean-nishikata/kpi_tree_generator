@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  kpi-generator:
+    build: .
+    volumes:
+      - ./config:/app/config
+      - ./output:/app/output
+    environment:
+      - NODE_ENV=production
+    # コマンドライン引数を渡すことができます（例：docker-compose run kpi-generator sales）
+    # デフォルトはconfig.yaml

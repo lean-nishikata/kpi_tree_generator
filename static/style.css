@@ -1,0 +1,223 @@
+/* General styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+/* KPI Tree styles - Common */
+.kpi-tree-container {
+  overflow: auto;
+  padding: 20px;
+  margin: 0 auto;
+}
+
+.kpi-tree {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Vertical direction styles */
+.direction-vertical .kpi-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.direction-vertical .kpi-tree ul {
+  list-style-type: none;
+  padding: 20px 0 0 0;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  position: relative;
+}
+
+.direction-vertical .kpi-tree li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 15px;
+}
+
+.direction-vertical .kpi-tree ul::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-top: 2px solid #ccc;
+  width: 100%;
+}
+
+.direction-vertical .children > li::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  border-left: 2px solid #ccc;
+  height: 20px;
+  transform: translateX(-50%);
+}
+
+.direction-vertical .operator {
+  margin: 10px 0;
+}
+
+.direction-vertical .toggle-btn {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Horizontal direction styles */
+.direction-horizontal .kpi-tree {
+  display: flex;
+  align-items: center;
+}
+
+.direction-horizontal .kpi-tree ul {
+  list-style-type: none;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.direction-horizontal .kpi-tree li {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 15px 0;
+}
+
+.direction-horizontal .kpi-tree ul::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-left: 2px solid #ccc;
+  height: 100%;
+}
+
+.direction-horizontal .children > li::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  border-top: 2px solid #ccc;
+  width: 20px;
+  transform: translateY(-50%);
+}
+
+.direction-horizontal .operator {
+  margin: 0 10px;
+}
+
+.direction-horizontal .toggle-btn {
+  margin: 0 10px;
+}
+
+/* Node styles */
+.node {
+  min-width: 120px;
+  min-height: 70px;
+  padding: 10px;
+  background-color: #fff;
+  border: 2px solid #666;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.node a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.node a:hover {
+  text-decoration: underline;
+}
+
+.node .value {
+  font-weight: bold;
+  margin-top: 5px;
+  color: #333;
+}
+
+/* Operator styles */
+.operator {
+  font-size: 24px;
+  font-weight: bold;
+  color: #666;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* Toggle button styles */
+.toggle-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #ddd;
+  border: 1px solid #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  font-size: 0;
+  z-index: 2;
+}
+
+.toggle-btn::before {
+  content: '−';
+  font-size: 16px;
+  line-height: 1;
+}
+
+.toggle-btn.collapsed::before {
+  content: '+';
+}
+
+/* Collapsed state */
+.children.collapsed {
+  display: none !important;
+}
+
+/* Theme colors */
+.theme-default .node {
+  border-color: #00796b;
+  background-color: #e0f2f1;
+}
+
+.theme-blue .node {
+  border-color: #1976d2;
+  background-color: #e3f2fd;
+}
+
+.theme-red .node {
+  border-color: #d32f2f;
+  background-color: #ffebee;
+}

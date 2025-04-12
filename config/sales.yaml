@@ -1,0 +1,28 @@
+title: "Sales KPI Tree"
+theme: "blue"
+direction: "vertical"
+
+root:
+  text: "Total Sales (¥M)"
+  value: 1200
+  children:
+    - text: "Online"
+      value: 700
+      children:
+        - text: "Desktop"
+          value: 400
+          operator: "+"
+        - text: "Mobile"
+          value: 300
+          operator: "+"
+      operator: "+"
+    - text: "Offline"
+      value: 500
+      children:
+        - text: "Retail Stores"
+          value: 350
+          operator: "+"
+        - text: "Partners"
+          value: 150
+          operator: "+"
+      operator: "+"
