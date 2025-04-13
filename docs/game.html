@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales KPI Tree</title>
+  <title>KPI Tree Example</title>
   <style>
     /* General styles */
 body {
@@ -230,51 +230,77 @@ h1 {
 }
   </style>
 </head>
-<body data-theme="blue" data-direction="vertical">
+<body data-theme="default" data-direction="horizontal">
   <div class="container">
-    <h1>Sales KPI Tree</h1>
-    <div class="kpi-tree-container theme-blue direction-vertical">
+    <h1>KPI Tree Example</h1>
+    <div class="kpi-tree-container theme-default direction-horizontal">
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-22ln0rayd">
-        Total Sales (¥M)<div class="value">1200</div>
+      <div class="node" id="node-86ou17get">
+        <a href="https://example.com/revenue" target="_blank">Revenue (JPY)</a><div class="value">350,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-22ln0rayd-children"></button>
-      <ul id="node-22ln0rayd-children" class="children">
+      <button class="toggle-btn" data-target="node-86ou17get-children"></button>
+      <ul id="node-86ou17get-children" class="children">
     <li>
-      <div class="node" id="node-nfw0t0qar">
-        Online<div class="value">700</div>
+      <div class="node" id="node-pikpzic4d">
+        Product A<div class="value">150,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-nfw0t0qar-children"></button>
-      <ul id="node-nfw0t0qar-children" class="children">
+      <button class="toggle-btn" data-target="node-pikpzic4d-children"></button>
+      <ul id="node-pikpzic4d-children" class="children">
     <li>
-      <div class="node" id="node-sdblddt1w">
-        Desktop<div class="value">400</div>
+      <div class="node" id="node-g4x95feqs">
+        Active Users
       </div>
-    </li><li class="operator">+</li>
+    </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-516z46e4x">
-        Mobile<div class="value">300</div>
+      <div class="node" id="node-llivsx0q3">
+        ARPU<div class="value">1500</div>
       </div>
+      <button class="toggle-btn" data-target="node-llivsx0q3-children"></button>
+      <ul id="node-llivsx0q3-children" class="children">
+    <li>
+      <div class="node" id="node-dtxcc8ji5">
+        ARPPU<div class="value">100,000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-h2o66ng3x">
+        課金率<div class="value">15%</div>
+      </div>
+    </li>
+      </ul>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-e7w0cs1aq">
-        Offline<div class="value">500</div>
+      <div class="node" id="node-zw1ezlelm">
+        Product B<div class="value">150,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-e7w0cs1aq-children"></button>
-      <ul id="node-e7w0cs1aq-children" class="children">
+      <button class="toggle-btn" data-target="node-zw1ezlelm-children"></button>
+      <ul id="node-zw1ezlelm-children" class="children">
     <li>
-      <div class="node" id="node-iftf2p4ug">
-        Retail Stores<div class="value">350</div>
+      <div class="node" id="node-35jwanfl2">
+        Active Users<div class="value">100,000</div>
       </div>
-    </li><li class="operator">+</li>
+    </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-chyqh4bv5">
-        Partners<div class="value">150</div>
+      <div class="node" id="node-ajjfwucv2">
+        ARPU<div class="value">1500</div>
       </div>
+      <button class="toggle-btn" data-target="node-ajjfwucv2-children"></button>
+      <ul id="node-ajjfwucv2-children" class="children">
+    <li>
+      <div class="node" id="node-tlasw2tl8">
+        ARPPU<div class="value">100,000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-vhmdi3e8s">
+        課金率<div class="value">15%</div>
+      </div>
+    </li>
+      </ul>
     </li>
       </ul>
     </li>

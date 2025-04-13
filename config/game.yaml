@@ -1,0 +1,42 @@
+title: "KPI Tree Example"
+theme: "default"
+direction: "horizontal"  # horizontal or vertical
+
+root:
+  text: "Revenue (JPY)"
+  value: 350,000,000
+  url: "https://example.com/revenue"
+  children:
+    - text: "Product A"
+      value: 150,000,000
+      children:
+        - text: "Active Users"
+          operator: "*"
+        - text: "ARPU"
+          value: 1500
+          operator: "*"
+          children:
+            - text: "ARPPU"
+              value: 100,000
+              operator: "*"
+            - text: "課金率"
+              value: 15%
+              operator: "*"
+      operator: "+"
+    - text: "Product B"
+      value: 150,000,000
+      children:
+        - text: "Active Users"
+          value: 100,000
+          operator: "*"
+        - text: "ARPU"
+          value: 1500
+          operator: "*"
+          children:
+            - text: "ARPPU"
+              value: 100,000
+              operator: "*"
+            - text: "課金率"
+              value: 15%
+              operator: "*"
+      operator: "+"
