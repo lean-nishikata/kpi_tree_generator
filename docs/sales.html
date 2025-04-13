@@ -106,7 +106,7 @@ h1 {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 15px 0;
+  margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
 }
 
 .direction-horizontal .kpi-tree ul::before {
@@ -169,17 +169,19 @@ h1 {
 
 /* Operator styles */
 .operator {
-  font-size: 24px;
+  font-size: 32px; /* フォントサイズを大きく */
   font-weight: bold;
-  color: #666;
-  width: 30px;
-  height: 30px;
+  color: #333; /* より濃い色に */
+  width: 45px; /* 幅を大きく */
+  height: 45px; /* 高さを大きく */
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f0f0f0;
+  background-color: #ffeb3b; /* 黄色の背景色で目立たせる */
   border-radius: 50%;
-  z-index: 1;
+  z-index: 10; /* 前面に表示 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
+  border: 2px solid #ffc107; /* 境界線を追加 */
 }
 
 /* Toggle button styles */
@@ -237,42 +239,42 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-22ln0rayd">
+      <div class="node" id="node-vh9a7r0lk">
         Total Sales (¥M)<div class="value">1200</div>
       </div>
-      <button class="toggle-btn" data-target="node-22ln0rayd-children"></button>
-      <ul id="node-22ln0rayd-children" class="children">
+      <button class="toggle-btn" data-target="node-vh9a7r0lk-children"></button>
+      <ul id="node-vh9a7r0lk-children" class="children">
     <li>
-      <div class="node" id="node-nfw0t0qar">
+      <div class="node" id="node-9bjqiqqsw">
         Online<div class="value">700</div>
       </div>
-      <button class="toggle-btn" data-target="node-nfw0t0qar-children"></button>
-      <ul id="node-nfw0t0qar-children" class="children">
+      <button class="toggle-btn" data-target="node-9bjqiqqsw-children"></button>
+      <ul id="node-9bjqiqqsw-children" class="children">
     <li>
-      <div class="node" id="node-sdblddt1w">
+      <div class="node" id="node-4qkv360e8">
         Desktop<div class="value">400</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-516z46e4x">
+      <div class="node" id="node-x87m8yf9i">
         Mobile<div class="value">300</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-e7w0cs1aq">
+      <div class="node" id="node-l8e9t77nc">
         Offline<div class="value">500</div>
       </div>
-      <button class="toggle-btn" data-target="node-e7w0cs1aq-children"></button>
-      <ul id="node-e7w0cs1aq-children" class="children">
+      <button class="toggle-btn" data-target="node-l8e9t77nc-children"></button>
+      <ul id="node-l8e9t77nc-children" class="children">
     <li>
-      <div class="node" id="node-iftf2p4ug">
+      <div class="node" id="node-y5o0y2c7d">
         Retail Stores<div class="value">350</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-chyqh4bv5">
+      <div class="node" id="node-p53zslajy">
         Partners<div class="value">150</div>
       </div>
     </li>

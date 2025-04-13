@@ -99,7 +99,7 @@ h1 {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 15px 0;
+  margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
 }
 
 .direction-horizontal .kpi-tree ul::before {
@@ -162,17 +162,19 @@ h1 {
 
 /* Operator styles */
 .operator {
-  font-size: 24px;
+  font-size: 32px; /* フォントサイズを大きく */
   font-weight: bold;
-  color: #666;
-  width: 30px;
-  height: 30px;
+  color: #333; /* より濃い色に */
+  width: 45px; /* 幅を大きく */
+  height: 45px; /* 高さを大きく */
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f0f0f0;
+  background-color: #ffeb3b; /* 黄色の背景色で目立たせる */
   border-radius: 50%;
-  z-index: 1;
+  z-index: 10; /* 前面に表示 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
+  border: 2px solid #ffc107; /* 境界線を追加 */
 }
 
 /* Toggle button styles */

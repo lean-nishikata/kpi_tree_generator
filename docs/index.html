@@ -106,7 +106,7 @@ h1 {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 15px 0;
+  margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
 }
 
 .direction-horizontal .kpi-tree ul::before {
@@ -169,17 +169,19 @@ h1 {
 
 /* Operator styles */
 .operator {
-  font-size: 24px;
+  font-size: 32px; /* フォントサイズを大きく */
   font-weight: bold;
-  color: #666;
-  width: 30px;
-  height: 30px;
+  color: #333; /* より濃い色に */
+  width: 45px; /* 幅を大きく */
+  height: 45px; /* 高さを大きく */
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f0f0f0;
+  background-color: #ffeb3b; /* 黄色の背景色で目立たせる */
   border-radius: 50%;
-  z-index: 1;
+  z-index: 10; /* 前面に表示 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
+  border: 2px solid #ffc107; /* 境界線を追加 */
 }
 
 /* Toggle button styles */
@@ -237,35 +239,35 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-86ou17get">
+      <div class="node" id="node-3gtx2hq37">
         <a href="https://example.com/revenue" target="_blank">Revenue (JPY)</a><div class="value">350,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-86ou17get-children"></button>
-      <ul id="node-86ou17get-children" class="children">
+      <button class="toggle-btn" data-target="node-3gtx2hq37-children"></button>
+      <ul id="node-3gtx2hq37-children" class="children">
     <li>
-      <div class="node" id="node-pikpzic4d">
+      <div class="node" id="node-j4tm56w3h">
         Product A<div class="value">150,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-pikpzic4d-children"></button>
-      <ul id="node-pikpzic4d-children" class="children">
+      <button class="toggle-btn" data-target="node-j4tm56w3h-children"></button>
+      <ul id="node-j4tm56w3h-children" class="children">
     <li>
-      <div class="node" id="node-g4x95feqs">
+      <div class="node" id="node-1gut6jn2x">
         Active Users
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-llivsx0q3">
+      <div class="node" id="node-fcm2k23no">
         ARPU<div class="value">1500</div>
       </div>
-      <button class="toggle-btn" data-target="node-llivsx0q3-children"></button>
-      <ul id="node-llivsx0q3-children" class="children">
+      <button class="toggle-btn" data-target="node-fcm2k23no-children"></button>
+      <ul id="node-fcm2k23no-children" class="children">
     <li>
-      <div class="node" id="node-dtxcc8ji5">
+      <div class="node" id="node-qigmc2rqg">
         ARPPU<div class="value">100,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-h2o66ng3x">
+      <div class="node" id="node-goe7y0u9b">
         課金率<div class="value">15%</div>
       </div>
     </li>
@@ -274,29 +276,29 @@ h1 {
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-zw1ezlelm">
+      <div class="node" id="node-9feetge2h">
         Product B<div class="value">150,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-zw1ezlelm-children"></button>
-      <ul id="node-zw1ezlelm-children" class="children">
+      <button class="toggle-btn" data-target="node-9feetge2h-children"></button>
+      <ul id="node-9feetge2h-children" class="children">
     <li>
-      <div class="node" id="node-35jwanfl2">
+      <div class="node" id="node-dyzzilkea">
         Active Users<div class="value">100,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-ajjfwucv2">
+      <div class="node" id="node-depxaz9qv">
         ARPU<div class="value">1500</div>
       </div>
-      <button class="toggle-btn" data-target="node-ajjfwucv2-children"></button>
-      <ul id="node-ajjfwucv2-children" class="children">
+      <button class="toggle-btn" data-target="node-depxaz9qv-children"></button>
+      <ul id="node-depxaz9qv-children" class="children">
     <li>
-      <div class="node" id="node-tlasw2tl8">
+      <div class="node" id="node-fk3lktvk4">
         ARPPU<div class="value">100,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-vhmdi3e8s">
+      <div class="node" id="node-dkgg1z5uc">
         課金率<div class="value">15%</div>
       </div>
     </li>

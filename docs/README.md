@@ -6,10 +6,10 @@
 
 以下のリンクから、異なるスタイルのKPIツリーを確認できます：
 
-- [ゲーム収益ツリー](index.html) - ゲーム収益の分解ツリー（メインデモ、乗算演算子を使用）
-- [シンプルなKPIツリー](example.html) - シンプルな売上分解ツリー（加算演算子を使用）
-- [青テーマ - 縦向きツリー](sales.html) - 青テーマの縦向きレイアウト
-- [赤テーマ - 縦向きツリー](vertical_example.html) - 赤テーマの縦向きレイアウト
+- [ゲーム収益ツリー](https://lean-nishikata.github.io/kpi_tree_generator/index.html) - ゲーム収益の分解ツリー（メインデモ、乗算演算子を使用）
+- [シンプルなKPIツリー](https://lean-nishikata.github.io/kpi_tree_generator/example.html) - シンプルな売上分解ツリー（加算演算子を使用）
+- [青テーマ - 縦向きツリー](https://lean-nishikata.github.io/kpi_tree_generator/sales.html) - 青テーマの縦向きレイアウト
+- [赤テーマ - 縦向きツリー](https://lean-nishikata.github.io/kpi_tree_generator/vertical_example.html) - 赤テーマの縦向きレイアウト
 
 ## 特徴
 
