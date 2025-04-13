@@ -66,7 +66,15 @@ async function generateKPITree() {
     
     // Set default output filename based on config name
     if (!config.output) {
-      config.output = `/app/output/${configName}.html`;
+      // Check if running in Docker or local
+      const isDocker = await fs.pathExists('/app');
+      if (isDocker) {
+        config.output = `/app/output/${configName}.html`;
+      } else {
+        // Extract just the filename without path
+        const fileName = path.basename(configName);
+        config.output = path.join(process.cwd(), 'output', `${fileName}.html`);
+      }
     }
     
     // Read template file
@@ -141,7 +149,12 @@ function generateTreeHtml(node, level = 0) {
       
       // Add operator between nodes if specified (except for the last child)
       if (child.operator && index < node.children.length - 1) {
-        html += `<li class="operator">${child.operator}</li>`;
+        // 演算子の表示を変換（*を×、/を÷に）
+        let displayOperator = child.operator;
+        if (displayOperator === "*") displayOperator = "×";
+        if (displayOperator === "/") displayOperator = "÷";
+        
+        html += `<li class="operator">${displayOperator}</li>`;
       }
     });
     
