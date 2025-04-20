@@ -239,42 +239,42 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-hm3bgmxke">
+      <div class="node" id="node-2rbb2sftx">
         <a href="https://example.com/revenue" target="_blank">Revenue (¥100M)</a><div class="value">500</div>
       </div>
-      <button class="toggle-btn" data-target="node-hm3bgmxke-children"></button>
-      <ul id="node-hm3bgmxke-children" class="children">
+      <button class="toggle-btn" data-target="node-2rbb2sftx-children"></button>
+      <ul id="node-2rbb2sftx-children" class="children">
     <li>
-      <div class="node" id="node-1xzi5eg20">
+      <div class="node" id="node-cbng9m8dh">
         Product A<div class="value">300</div>
       </div>
-      <button class="toggle-btn" data-target="node-1xzi5eg20-children"></button>
-      <ul id="node-1xzi5eg20-children" class="children">
+      <button class="toggle-btn" data-target="node-cbng9m8dh-children"></button>
+      <ul id="node-cbng9m8dh-children" class="children">
     <li>
-      <div class="node" id="node-5ca0bp68u">
+      <div class="node" id="node-cvxxdrpvg">
         Direct Sales<div class="value">200</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-mgxnzjdlv">
+      <div class="node" id="node-gsx6q7e7e">
         Partner Sales<div class="value">100</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-kjf3v1bvm">
+      <div class="node" id="node-koevoh8k5">
         Product B<div class="value">200</div>
       </div>
-      <button class="toggle-btn" data-target="node-kjf3v1bvm-children"></button>
-      <ul id="node-kjf3v1bvm-children" class="children">
+      <button class="toggle-btn" data-target="node-koevoh8k5-children"></button>
+      <ul id="node-koevoh8k5-children" class="children">
     <li>
-      <div class="node" id="node-7zuzm6335">
+      <div class="node" id="node-2vhhnltdq">
         Region X<div class="value">120</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-g15q0oohs">
+      <div class="node" id="node-ryp7z2gj7">
         Region Y<div class="value">80</div>
       </div>
     </li>
@@ -561,6 +561,9 @@ function updateShareUrl() {
   // Store URL for copy button
   window._shareUrl = url.toString();
   console.log('Share URL updated:', window._shareUrl);
+  
+  // ブラウザのURLを動的に更新
+  updateBrowserUrl(url.toString());
 }
 
 // Copy share URL to clipboard
@@ -590,6 +593,18 @@ function copyShareUrlToClipboard() {
   setTimeout(function() {
     tooltip.style.opacity = '0';
   }, 2000);
+}
+
+// ブラウザのURLを動的に更新する関数
+function updateBrowserUrl(url) {
+  // History APIを使用してURLを更新
+  if (window.history && window.history.replaceState) {
+    try {
+      window.history.replaceState({}, document.title, url);
+    } catch (e) {
+      console.error('Error updating browser URL:', e);
+    }
+  }
 }
 
 // Run initialization when page is loaded

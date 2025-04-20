@@ -272,6 +272,9 @@ function updateShareUrl() {
   // Store URL for copy button
   window._shareUrl = url.toString();
   console.log('Share URL updated:', window._shareUrl);
+  
+  // ブラウザのURLを動的に更新
+  updateBrowserUrl(url.toString());
 }
 
 // Copy share URL to clipboard
@@ -301,6 +304,18 @@ function copyShareUrlToClipboard() {
   setTimeout(function() {
     tooltip.style.opacity = '0';
   }, 2000);
+}
+
+// ブラウザのURLを動的に更新する関数
+function updateBrowserUrl(url) {
+  // History APIを使用してURLを更新
+  if (window.history && window.history.replaceState) {
+    try {
+      window.history.replaceState({}, document.title, url);
+    } catch (e) {
+      console.error('Error updating browser URL:', e);
+    }
+  }
 }
 
 // Run initialization when page is loaded
