@@ -239,35 +239,35 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-uf04c1uqm">
+      <div class="node" id="node-hjfbkwuph">
         <a href="https://example.com/revenue" target="_blank">Revenue (JPY)</a><div class="value">300,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-uf04c1uqm-children"></button>
-      <ul id="node-uf04c1uqm-children" class="children">
+      <button class="toggle-btn" data-target="node-hjfbkwuph-children"></button>
+      <ul id="node-hjfbkwuph-children" class="children">
     <li>
-      <div class="node" id="node-radzs2soj">
+      <div class="node" id="node-z6esn79i4">
         Product A<div class="value">150,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-radzs2soj-children"></button>
-      <ul id="node-radzs2soj-children" class="children">
+      <button class="toggle-btn" data-target="node-z6esn79i4-children"></button>
+      <ul id="node-z6esn79i4-children" class="children">
     <li>
-      <div class="node" id="node-h2ngqbytx">
+      <div class="node" id="node-hl6hqfjsu">
         Active Users<div class="value">100,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-qj7i27fz9">
+      <div class="node" id="node-34rnclecu">
         ARPU<div class="value">1,500</div>
       </div>
-      <button class="toggle-btn" data-target="node-qj7i27fz9-children"></button>
-      <ul id="node-qj7i27fz9-children" class="children">
+      <button class="toggle-btn" data-target="node-34rnclecu-children"></button>
+      <ul id="node-34rnclecu-children" class="children">
     <li>
-      <div class="node" id="node-qrmjgfapq">
+      <div class="node" id="node-e8oaeh6ea">
         ARPPU<div class="value">10,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-nw578botf">
+      <div class="node" id="node-pyua8r1tl">
         課金率<div class="value">15%</div>
       </div>
     </li>
@@ -276,29 +276,29 @@ h1 {
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-kqg6erdy1">
+      <div class="node" id="node-f0asij4nn">
         Product B<div class="value">150,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-kqg6erdy1-children"></button>
-      <ul id="node-kqg6erdy1-children" class="children">
+      <button class="toggle-btn" data-target="node-f0asij4nn-children"></button>
+      <ul id="node-f0asij4nn-children" class="children">
     <li>
-      <div class="node" id="node-bevggx8x8">
+      <div class="node" id="node-ww1he5y28">
         Active Users<div class="value">100,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-e3cp53x7l">
+      <div class="node" id="node-f4mwhpp9q">
         ARPU<div class="value">1,500</div>
       </div>
-      <button class="toggle-btn" data-target="node-e3cp53x7l-children"></button>
-      <ul id="node-e3cp53x7l-children" class="children">
+      <button class="toggle-btn" data-target="node-f4mwhpp9q-children"></button>
+      <ul id="node-f4mwhpp9q-children" class="children">
     <li>
-      <div class="node" id="node-3njepjkx6">
+      <div class="node" id="node-zivxvux1u">
         ARPPU<div class="value">10,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-u2r10okbe">
+      <div class="node" id="node-tpf11ubyz">
         課金率<div class="value">15%</div>
       </div>
     </li>
@@ -316,11 +316,20 @@ h1 {
     // KPI Tree JavaScript
 // Using old-school function approach to ensure maximum browser compatibility
 function kpiTreeInit() {
-  // Apply theme and direction from config
+  console.log('KPI Tree initializing...');
+  console.log('URL:', window.location.href);
+  
+  // まずURLパラメータから方向を取得
+  var urlDirection = getDirectionFromUrl();
+  
+  // Apply theme and direction from config or URL
   var theme = document.body.getAttribute('data-theme') || 'default';
-  var direction = document.body.getAttribute('data-direction') || 'vertical';
+  var direction = urlDirection || document.body.getAttribute('data-direction') || 'vertical';
   
   console.log('KPI Tree initializing with direction:', direction);
+  
+  // 方向を設定
+  setDirection(direction);
   
   // Add direction toggle control
   addDirectionToggle(direction);
@@ -330,6 +339,40 @@ function kpiTreeInit() {
   
   // Initialize toggle buttons
   setupToggleButtons();
+  
+  // 初期化後にシェアURLを更新
+  setTimeout(function() {
+    updateShareUrl();
+  }, 500);
+}
+
+// URLパラメータから方向を取得
+function getDirectionFromUrl() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var direction = urlParams.get('direction');
+  
+  if (direction === 'vertical' || direction === 'horizontal') {
+    console.log('Direction from URL:', direction);
+    return direction;
+  }
+  
+  return null;
+}
+
+// 方向を設定する関数
+function setDirection(direction) {
+  var treeContainer = document.querySelector('.kpi-tree-container');
+  var body = document.body;
+  
+  // Remove old direction class
+  treeContainer.classList.remove('direction-vertical');
+  treeContainer.classList.remove('direction-horizontal');
+  
+  // Add new direction class
+  treeContainer.classList.add('direction-' + direction);
+  
+  // Update data attribute
+  body.setAttribute('data-direction', direction);
 }
 
 // Handle toggle buttons for collapsing/expanding nodes
@@ -342,9 +385,14 @@ function setupToggleButtons() {
   
   // First check URL parameters for state
   var urlStates = getStateFromUrl();
+  console.log('URL states:', urlStates);
   
   // If no URL parameters, load from localStorage
   var savedStates = Object.keys(urlStates).length > 0 ? urlStates : loadTreeState();
+  console.log('Using states:', savedStates);
+  
+  // ツリーの状態を適用する前に、まずすべてのノードを展開状態にする
+  resetAllNodes();
   
   // Initialize toggle buttons
   for (var i = 0; i < toggleButtons.length; i++) {
@@ -357,11 +405,15 @@ function setupToggleButtons() {
       continue;
     }
     
+    console.log('Checking state for:', targetId, 'State:', savedStates[targetId]);
+    
     // Apply saved state if exists
     if (savedStates[targetId] === 'collapsed') {
+      console.log('Collapsing:', targetId);
       target.classList.add('collapsed');
       button.classList.add('collapsed');
     }
+    // 展開状態の場合は、既にresetAllNodes()で展開済み
     
     // Use closure to maintain button and target references
     (function(btn, tgt) {
@@ -410,18 +462,8 @@ function addDirectionToggle(initialDirection) {
   
   // Add event listener using old-school approach
   select.onchange = function() {
-    var treeContainer = document.querySelector('.kpi-tree-container');
-    var body = document.body;
-    
-    // Remove old direction class
-    treeContainer.classList.remove('direction-vertical');
-    treeContainer.classList.remove('direction-horizontal');
-    
-    // Add new direction class
-    treeContainer.classList.add('direction-' + this.value);
-    
-    // Update data attribute
-    body.setAttribute('data-direction', this.value);
+    // 新しい方向を設定
+    setDirection(this.value);
     
     // Save preference to localStorage
     localStorage.setItem('kpiTreeDirection', this.value);
@@ -444,30 +486,8 @@ function addDirectionToggle(initialDirection) {
   // Append to body
   document.body.appendChild(controlDiv);
   
-  // Check URL parameters first for direction
-  var urlParams = new URLSearchParams(window.location.search);
-  var directionParam = urlParams.get('direction');
-  
-  if (directionParam && (directionParam === 'vertical' || directionParam === 'horizontal')) {
-    select.value = directionParam;
-  } else {
-    // If no URL parameter, check localStorage
-    var savedDirection = localStorage.getItem('kpiTreeDirection');
-    if (savedDirection && savedDirection !== initialDirection) {
-      select.value = savedDirection;
-    }
-  }
-  
-  // Trigger change event manually for IE compatibility
-  if (select.value !== initialDirection) {
-    if ("createEvent" in document) {
-      var evt = document.createEvent("HTMLEvents");
-      evt.initEvent("change", false, true);
-      select.dispatchEvent(evt);
-    } else {
-      select.fireEvent("onchange");
-    }
-  }
+  // 初期値をセレクトボックスに設定
+  select.value = initialDirection;
 }
 
 // Save tree state to localStorage
@@ -498,14 +518,20 @@ function getStateFromUrl() {
   var stateParam = urlParams.get('state');
   
   if (!stateParam) {
+    console.log('No state parameter in URL');
     return {};
   }
   
   try {
     // URLデコード後、URL-safe base64 decode
+    console.log('Raw state param:', stateParam);
     var decodedState = decodeURIComponent(stateParam);
+    console.log('URL decoded state:', decodedState);
     decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(decodedState);
+    console.log('Base64 decoded state:', decodedState);
+    var parsedState = JSON.parse(decodedState);
+    console.log('Parsed state:', parsedState);
+    return parsedState;
   } catch (e) {
     console.error('Error parsing state from URL:', e);
     return {};
@@ -621,6 +647,24 @@ function copyShareUrlToClipboard() {
   }, 2000);
 }
 
+// すべてのノードを展開状態にリセットする関数
+function resetAllNodes() {
+  var children = document.querySelectorAll('.children');
+  var buttons = document.querySelectorAll('.toggle-btn');
+  
+  // すべての子ノードを展開状態にする
+  for (var i = 0; i < children.length; i++) {
+    children[i].classList.remove('collapsed');
+  }
+  
+  // すべてのボタンを展開状態にする
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].classList.remove('collapsed');
+  }
+  
+  console.log('All nodes reset to expanded state');
+}
+
 // ブラウザのURLを動的に更新する関数
 function updateBrowserUrl(url) {
   // History APIを使用してURLを更新
@@ -639,6 +683,7 @@ if (document.readyState === 'loading') {
 } else {
   kpiTreeInit();
 }
+
   </script>
 </body>
 </html>

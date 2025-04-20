@@ -239,42 +239,42 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-45477vcqq">
+      <div class="node" id="node-hvkquuorb">
         Total Sales (¥M)<div class="value">1200</div>
       </div>
-      <button class="toggle-btn" data-target="node-45477vcqq-children"></button>
-      <ul id="node-45477vcqq-children" class="children">
+      <button class="toggle-btn" data-target="node-hvkquuorb-children"></button>
+      <ul id="node-hvkquuorb-children" class="children">
     <li>
-      <div class="node" id="node-imtr4bbmb">
+      <div class="node" id="node-mno1zh8r1">
         Online<div class="value">700</div>
       </div>
-      <button class="toggle-btn" data-target="node-imtr4bbmb-children"></button>
-      <ul id="node-imtr4bbmb-children" class="children">
+      <button class="toggle-btn" data-target="node-mno1zh8r1-children"></button>
+      <ul id="node-mno1zh8r1-children" class="children">
     <li>
-      <div class="node" id="node-y07jxyynv">
+      <div class="node" id="node-s2nrqb6e0">
         Desktop<div class="value">400</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-j2qrmejpu">
+      <div class="node" id="node-8rkb4zjpk">
         Mobile<div class="value">300</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-saiv5kszi">
+      <div class="node" id="node-binvgfbcq">
         Offline<div class="value">500</div>
       </div>
-      <button class="toggle-btn" data-target="node-saiv5kszi-children"></button>
-      <ul id="node-saiv5kszi-children" class="children">
+      <button class="toggle-btn" data-target="node-binvgfbcq-children"></button>
+      <ul id="node-binvgfbcq-children" class="children">
     <li>
-      <div class="node" id="node-nouh7ksf8">
+      <div class="node" id="node-nktfp3kwp">
         Retail Stores<div class="value">350</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-33by10dks">
+      <div class="node" id="node-lm4eho8ci">
         Partners<div class="value">150</div>
       </div>
     </li>
@@ -290,11 +290,20 @@ h1 {
     // KPI Tree JavaScript
 // Using old-school function approach to ensure maximum browser compatibility
 function kpiTreeInit() {
-  // Apply theme and direction from config
+  console.log('KPI Tree initializing...');
+  console.log('URL:', window.location.href);
+  
+  // まずURLパラメータから方向を取得
+  var urlDirection = getDirectionFromUrl();
+  
+  // Apply theme and direction from config or URL
   var theme = document.body.getAttribute('data-theme') || 'default';
-  var direction = document.body.getAttribute('data-direction') || 'vertical';
+  var direction = urlDirection || document.body.getAttribute('data-direction') || 'vertical';
   
   console.log('KPI Tree initializing with direction:', direction);
+  
+  // 方向を設定
+  setDirection(direction);
   
   // Add direction toggle control
   addDirectionToggle(direction);
@@ -304,6 +313,40 @@ function kpiTreeInit() {
   
   // Initialize toggle buttons
   setupToggleButtons();
+  
+  // 初期化後にシェアURLを更新
+  setTimeout(function() {
+    updateShareUrl();
+  }, 500);
+}
+
+// URLパラメータから方向を取得
+function getDirectionFromUrl() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var direction = urlParams.get('direction');
+  
+  if (direction === 'vertical' || direction === 'horizontal') {
+    console.log('Direction from URL:', direction);
+    return direction;
+  }
+  
+  return null;
+}
+
+// 方向を設定する関数
+function setDirection(direction) {
+  var treeContainer = document.querySelector('.kpi-tree-container');
+  var body = document.body;
+  
+  // Remove old direction class
+  treeContainer.classList.remove('direction-vertical');
+  treeContainer.classList.remove('direction-horizontal');
+  
+  // Add new direction class
+  treeContainer.classList.add('direction-' + direction);
+  
+  // Update data attribute
+  body.setAttribute('data-direction', direction);
 }
 
 // Handle toggle buttons for collapsing/expanding nodes
@@ -316,9 +359,14 @@ function setupToggleButtons() {
   
   // First check URL parameters for state
   var urlStates = getStateFromUrl();
+  console.log('URL states:', urlStates);
   
   // If no URL parameters, load from localStorage
   var savedStates = Object.keys(urlStates).length > 0 ? urlStates : loadTreeState();
+  console.log('Using states:', savedStates);
+  
+  // ツリーの状態を適用する前に、まずすべてのノードを展開状態にする
+  resetAllNodes();
   
   // Initialize toggle buttons
   for (var i = 0; i < toggleButtons.length; i++) {
@@ -331,11 +379,15 @@ function setupToggleButtons() {
       continue;
     }
     
+    console.log('Checking state for:', targetId, 'State:', savedStates[targetId]);
+    
     // Apply saved state if exists
     if (savedStates[targetId] === 'collapsed') {
+      console.log('Collapsing:', targetId);
       target.classList.add('collapsed');
       button.classList.add('collapsed');
     }
+    // 展開状態の場合は、既にresetAllNodes()で展開済み
     
     // Use closure to maintain button and target references
     (function(btn, tgt) {
@@ -384,18 +436,8 @@ function addDirectionToggle(initialDirection) {
   
   // Add event listener using old-school approach
   select.onchange = function() {
-    var treeContainer = document.querySelector('.kpi-tree-container');
-    var body = document.body;
-    
-    // Remove old direction class
-    treeContainer.classList.remove('direction-vertical');
-    treeContainer.classList.remove('direction-horizontal');
-    
-    // Add new direction class
-    treeContainer.classList.add('direction-' + this.value);
-    
-    // Update data attribute
-    body.setAttribute('data-direction', this.value);
+    // 新しい方向を設定
+    setDirection(this.value);
     
     // Save preference to localStorage
     localStorage.setItem('kpiTreeDirection', this.value);
@@ -418,30 +460,8 @@ function addDirectionToggle(initialDirection) {
   // Append to body
   document.body.appendChild(controlDiv);
   
-  // Check URL parameters first for direction
-  var urlParams = new URLSearchParams(window.location.search);
-  var directionParam = urlParams.get('direction');
-  
-  if (directionParam && (directionParam === 'vertical' || directionParam === 'horizontal')) {
-    select.value = directionParam;
-  } else {
-    // If no URL parameter, check localStorage
-    var savedDirection = localStorage.getItem('kpiTreeDirection');
-    if (savedDirection && savedDirection !== initialDirection) {
-      select.value = savedDirection;
-    }
-  }
-  
-  // Trigger change event manually for IE compatibility
-  if (select.value !== initialDirection) {
-    if ("createEvent" in document) {
-      var evt = document.createEvent("HTMLEvents");
-      evt.initEvent("change", false, true);
-      select.dispatchEvent(evt);
-    } else {
-      select.fireEvent("onchange");
-    }
-  }
+  // 初期値をセレクトボックスに設定
+  select.value = initialDirection;
 }
 
 // Save tree state to localStorage
@@ -472,14 +492,20 @@ function getStateFromUrl() {
   var stateParam = urlParams.get('state');
   
   if (!stateParam) {
+    console.log('No state parameter in URL');
     return {};
   }
   
   try {
     // URLデコード後、URL-safe base64 decode
+    console.log('Raw state param:', stateParam);
     var decodedState = decodeURIComponent(stateParam);
+    console.log('URL decoded state:', decodedState);
     decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(decodedState);
+    console.log('Base64 decoded state:', decodedState);
+    var parsedState = JSON.parse(decodedState);
+    console.log('Parsed state:', parsedState);
+    return parsedState;
   } catch (e) {
     console.error('Error parsing state from URL:', e);
     return {};
@@ -595,6 +621,24 @@ function copyShareUrlToClipboard() {
   }, 2000);
 }
 
+// すべてのノードを展開状態にリセットする関数
+function resetAllNodes() {
+  var children = document.querySelectorAll('.children');
+  var buttons = document.querySelectorAll('.toggle-btn');
+  
+  // すべての子ノードを展開状態にする
+  for (var i = 0; i < children.length; i++) {
+    children[i].classList.remove('collapsed');
+  }
+  
+  // すべてのボタンを展開状態にする
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].classList.remove('collapsed');
+  }
+  
+  console.log('All nodes reset to expanded state');
+}
+
 // ブラウザのURLを動的に更新する関数
 function updateBrowserUrl(url) {
   // History APIを使用してURLを更新
@@ -613,6 +657,7 @@ if (document.readyState === 'loading') {
 } else {
   kpiTreeInit();
 }
+
   </script>
 </body>
 </html>
