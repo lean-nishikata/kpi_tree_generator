@@ -239,42 +239,42 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-mr4qchqm9">
+      <div class="node" id="node-3egbcl2li">
         <a href="https://example.com/revenue" target="_blank">Revenue (¥100M)</a><div class="value">500</div>
       </div>
-      <button class="toggle-btn" data-target="node-mr4qchqm9-children"></button>
-      <ul id="node-mr4qchqm9-children" class="children">
+      <button class="toggle-btn" data-target="node-3egbcl2li-children"></button>
+      <ul id="node-3egbcl2li-children" class="children">
     <li>
-      <div class="node" id="node-1nh7g0pm4">
+      <div class="node" id="node-gpca4f9p9">
         Product A<div class="value">300</div>
       </div>
-      <button class="toggle-btn" data-target="node-1nh7g0pm4-children"></button>
-      <ul id="node-1nh7g0pm4-children" class="children">
+      <button class="toggle-btn" data-target="node-gpca4f9p9-children"></button>
+      <ul id="node-gpca4f9p9-children" class="children">
     <li>
-      <div class="node" id="node-qca353d3p">
+      <div class="node" id="node-n03q0thsq">
         Direct Sales<div class="value">200</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-pbbjwo4pj">
+      <div class="node" id="node-2fufcx69h">
         Partner Sales<div class="value">100</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-2dqxd4zaq">
+      <div class="node" id="node-xeqoyet8i">
         Product B<div class="value">200</div>
       </div>
-      <button class="toggle-btn" data-target="node-2dqxd4zaq-children"></button>
-      <ul id="node-2dqxd4zaq-children" class="children">
+      <button class="toggle-btn" data-target="node-xeqoyet8i-children"></button>
+      <ul id="node-xeqoyet8i-children" class="children">
     <li>
-      <div class="node" id="node-4h9roirff">
+      <div class="node" id="node-tc5d8k4st">
         Region X<div class="value">120</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-6bt4f7zlr">
+      <div class="node" id="node-gvmwnijaz">
         Region Y<div class="value">80</div>
       </div>
     </li>
@@ -311,13 +311,34 @@ function kpiTreeInit() {
   // Add share button for permanent link
   addShareButton();
   
-  // Initialize toggle buttons
-  setupToggleButtons();
-  
-  // 初期化後にシェアURLを更新
-  setTimeout(function() {
-    updateShareUrl();
-  }, 500);
+  // DOMContentLoadedイベントが発火した後にセットアップを行う
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize toggle buttons
+      setupToggleButtons();
+      
+      // URLパラメータがない場合のみURLを更新
+      var urlParams = new URLSearchParams(window.location.search);
+      if (!urlParams.has('state')) {
+        // 初期化後にシェアURLを更新
+        setTimeout(function() {
+          updateShareUrl();
+        }, 500);
+      }
+    });
+  } else {
+    // すでにDOMContentLoadedイベントが発火している場合は直接実行
+    setupToggleButtons();
+    
+    // URLパラメータがない場合のみURLを更新
+    var urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('state')) {
+      // 初期化後にシェアURLを更新
+      setTimeout(function() {
+        updateShareUrl();
+      }, 500);
+    }
+  }
 }
 
 // URLパラメータから方向を取得
@@ -368,6 +389,10 @@ function setupToggleButtons() {
   // ツリーの状態を適用する前に、まずすべてのノードを展開状態にする
   resetAllNodes();
   
+  // ノードIDとボタンのマッピングを作成
+  var buttonMap = {};
+  var targetMap = {};
+  
   // Initialize toggle buttons
   for (var i = 0; i < toggleButtons.length; i++) {
     var button = toggleButtons[i];
@@ -378,6 +403,10 @@ function setupToggleButtons() {
       console.error('Target element not found:', targetId);
       continue;
     }
+    
+    // マッピングを保存
+    buttonMap[targetId] = button;
+    targetMap[targetId] = target;
     
     console.log('Checking state for:', targetId, 'State:', savedStates[targetId]);
     
@@ -505,6 +534,17 @@ function getStateFromUrl() {
     console.log('Base64 decoded state:', decodedState);
     var parsedState = JSON.parse(decodedState);
     console.log('Parsed state:', parsedState);
+    
+    // デバッグ: 各ノードIDが存在するか確認
+    for (var nodeId in parsedState) {
+      var element = document.getElementById(nodeId);
+      if (!element) {
+        console.warn('Node ID from URL not found in DOM:', nodeId);
+      } else {
+        console.log('Node ID from URL found in DOM:', nodeId, 'State:', parsedState[nodeId]);
+      }
+    }
+    
     return parsedState;
   } catch (e) {
     console.error('Error parsing state from URL:', e);
@@ -588,8 +628,17 @@ function updateShareUrl() {
   window._shareUrl = url.toString();
   console.log('Share URL updated:', window._shareUrl);
   
-  // ブラウザのURLを動的に更新
-  updateBrowserUrl(url.toString());
+  // 現在のURLパラメータをチェック
+  var currentUrlParams = new URLSearchParams(window.location.search);
+  var hasStateParam = currentUrlParams.has('state');
+  
+  // 初期ロード時にURLパラメータがある場合は更新しない
+  if (window._initialLoadComplete || !hasStateParam) {
+    // ブラウザのURLを動的に更新
+    updateBrowserUrl(url.toString());
+  } else {
+    console.log('Skipping URL update on initial load with state parameters');
+  }
 }
 
 // Copy share URL to clipboard
@@ -651,12 +700,50 @@ function updateBrowserUrl(url) {
   }
 }
 
+// 初期ロード完了フラグ
+window._initialLoadComplete = false;
+
 // Run initialization when page is loaded
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', kpiTreeInit);
+  document.addEventListener('DOMContentLoaded', function() {
+    kpiTreeInit();
+    // 初期ロード完了をマーク
+    setTimeout(function() {
+      window._initialLoadComplete = true;
+      console.log('Initial load complete');
+    }, 1000);
+  });
 } else {
   kpiTreeInit();
+  // 初期ロード完了をマーク
+  setTimeout(function() {
+    window._initialLoadComplete = true;
+    console.log('Initial load complete');
+  }, 1000);
 }
+
+// デバッグ用：URLパラメータの変更を監視
+window.addEventListener('popstate', function(event) {
+  console.log('URL changed, reloading state from URL');
+  // ページをリロードせずに状態を更新
+  var urlStates = getStateFromUrl();
+  if (Object.keys(urlStates).length > 0) {
+    console.log('Applying new states from URL');
+    resetAllNodes();
+    
+    // 各ノードに状態を適用
+    for (var nodeId in urlStates) {
+      var target = document.getElementById(nodeId);
+      var button = document.querySelector('[data-target="' + nodeId + '"]');
+      
+      if (target && button && urlStates[nodeId] === 'collapsed') {
+        target.classList.add('collapsed');
+        button.classList.add('collapsed');
+      }
+    }
+  }
+});
+
 
   </script>
 </body>
