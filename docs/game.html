@@ -239,35 +239,35 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-arauf63u4">
+      <div class="node" id="node-uf04c1uqm">
         <a href="https://example.com/revenue" target="_blank">Revenue (JPY)</a><div class="value">300,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-arauf63u4-children"></button>
-      <ul id="node-arauf63u4-children" class="children">
+      <button class="toggle-btn" data-target="node-uf04c1uqm-children"></button>
+      <ul id="node-uf04c1uqm-children" class="children">
     <li>
-      <div class="node" id="node-2e9krq5su">
+      <div class="node" id="node-radzs2soj">
         Product A<div class="value">150,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-2e9krq5su-children"></button>
-      <ul id="node-2e9krq5su-children" class="children">
+      <button class="toggle-btn" data-target="node-radzs2soj-children"></button>
+      <ul id="node-radzs2soj-children" class="children">
     <li>
-      <div class="node" id="node-yxlwm0ox7">
+      <div class="node" id="node-h2ngqbytx">
         Active Users<div class="value">100,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-42ijyh07p">
+      <div class="node" id="node-qj7i27fz9">
         ARPU<div class="value">1,500</div>
       </div>
-      <button class="toggle-btn" data-target="node-42ijyh07p-children"></button>
-      <ul id="node-42ijyh07p-children" class="children">
+      <button class="toggle-btn" data-target="node-qj7i27fz9-children"></button>
+      <ul id="node-qj7i27fz9-children" class="children">
     <li>
-      <div class="node" id="node-y306d5yj2">
+      <div class="node" id="node-qrmjgfapq">
         ARPPU<div class="value">10,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-6cye81ktn">
+      <div class="node" id="node-nw578botf">
         課金率<div class="value">15%</div>
       </div>
     </li>
@@ -276,29 +276,29 @@ h1 {
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-t34g82iir">
+      <div class="node" id="node-kqg6erdy1">
         Product B<div class="value">150,000,000</div>
       </div>
-      <button class="toggle-btn" data-target="node-t34g82iir-children"></button>
-      <ul id="node-t34g82iir-children" class="children">
+      <button class="toggle-btn" data-target="node-kqg6erdy1-children"></button>
+      <ul id="node-kqg6erdy1-children" class="children">
     <li>
-      <div class="node" id="node-u0br6pt2j">
+      <div class="node" id="node-bevggx8x8">
         Active Users<div class="value">100,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-10f6v089x">
+      <div class="node" id="node-e3cp53x7l">
         ARPU<div class="value">1,500</div>
       </div>
-      <button class="toggle-btn" data-target="node-10f6v089x-children"></button>
-      <ul id="node-10f6v089x-children" class="children">
+      <button class="toggle-btn" data-target="node-e3cp53x7l-children"></button>
+      <ul id="node-e3cp53x7l-children" class="children">
     <li>
-      <div class="node" id="node-uk1wsclxg">
+      <div class="node" id="node-3njepjkx6">
         ARPPU<div class="value">10,000</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-piqt8lnll">
+      <div class="node" id="node-u2r10okbe">
         課金率<div class="value">15%</div>
       </div>
     </li>
@@ -587,6 +587,9 @@ function updateShareUrl() {
   // Store URL for copy button
   window._shareUrl = url.toString();
   console.log('Share URL updated:', window._shareUrl);
+  
+  // ブラウザのURLを動的に更新
+  updateBrowserUrl(url.toString());
 }
 
 // Copy share URL to clipboard
@@ -616,6 +619,18 @@ function copyShareUrlToClipboard() {
   setTimeout(function() {
     tooltip.style.opacity = '0';
   }, 2000);
+}
+
+// ブラウザのURLを動的に更新する関数
+function updateBrowserUrl(url) {
+  // History APIを使用してURLを更新
+  if (window.history && window.history.replaceState) {
+    try {
+      window.history.replaceState({}, document.title, url);
+    } catch (e) {
+      console.error('Error updating browser URL:', e);
+    }
+  }
 }
 
 // Run initialization when page is loaded

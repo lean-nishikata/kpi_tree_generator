@@ -239,42 +239,42 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-l5kho53d9">
+      <div class="node" id="node-45477vcqq">
         Total Sales (¥M)<div class="value">1200</div>
       </div>
-      <button class="toggle-btn" data-target="node-l5kho53d9-children"></button>
-      <ul id="node-l5kho53d9-children" class="children">
+      <button class="toggle-btn" data-target="node-45477vcqq-children"></button>
+      <ul id="node-45477vcqq-children" class="children">
     <li>
-      <div class="node" id="node-htpj56s9t">
+      <div class="node" id="node-imtr4bbmb">
         Online<div class="value">700</div>
       </div>
-      <button class="toggle-btn" data-target="node-htpj56s9t-children"></button>
-      <ul id="node-htpj56s9t-children" class="children">
+      <button class="toggle-btn" data-target="node-imtr4bbmb-children"></button>
+      <ul id="node-imtr4bbmb-children" class="children">
     <li>
-      <div class="node" id="node-0vm4ljk8l">
+      <div class="node" id="node-y07jxyynv">
         Desktop<div class="value">400</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-usbfsateb">
+      <div class="node" id="node-j2qrmejpu">
         Mobile<div class="value">300</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-atrxgivzm">
+      <div class="node" id="node-saiv5kszi">
         Offline<div class="value">500</div>
       </div>
-      <button class="toggle-btn" data-target="node-atrxgivzm-children"></button>
-      <ul id="node-atrxgivzm-children" class="children">
+      <button class="toggle-btn" data-target="node-saiv5kszi-children"></button>
+      <ul id="node-saiv5kszi-children" class="children">
     <li>
-      <div class="node" id="node-kpm4ourmv">
+      <div class="node" id="node-nouh7ksf8">
         Retail Stores<div class="value">350</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-m41cfxdx8">
+      <div class="node" id="node-33by10dks">
         Partners<div class="value">150</div>
       </div>
     </li>
@@ -561,6 +561,9 @@ function updateShareUrl() {
   // Store URL for copy button
   window._shareUrl = url.toString();
   console.log('Share URL updated:', window._shareUrl);
+  
+  // ブラウザのURLを動的に更新
+  updateBrowserUrl(url.toString());
 }
 
 // Copy share URL to clipboard
@@ -590,6 +593,18 @@ function copyShareUrlToClipboard() {
   setTimeout(function() {
     tooltip.style.opacity = '0';
   }, 2000);
+}
+
+// ブラウザのURLを動的に更新する関数
+function updateBrowserUrl(url) {
+  // History APIを使用してURLを更新
+  if (window.history && window.history.replaceState) {
+    try {
+      window.history.replaceState({}, document.title, url);
+    } catch (e) {
+      console.error('Error updating browser URL:', e);
+    }
+  }
 }
 
 // Run initialization when page is loaded
