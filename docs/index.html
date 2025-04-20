@@ -1,482 +1,226 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KPI Tree Example</title>
+  <title>KPIツリージェネレーター</title>
   <style>
-    /* General styles */
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f5f5f5;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-h1 {
-  text-align: center;
-  color: #333;
-}
-
-/* KPI Tree styles - Common */
-.kpi-tree-container {
-  overflow: auto;
-  padding: 20px;
-  margin: 0 auto;
-}
-
-.kpi-tree {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-
-/* Vertical direction styles */
-.direction-vertical .kpi-tree {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.direction-vertical .kpi-tree ul {
-  list-style-type: none;
-  padding: 20px 0 0 0;
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  position: relative;
-}
-
-.direction-vertical .kpi-tree li {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 15px;
-}
-
-.direction-vertical .kpi-tree ul::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-top: 2px solid #ccc;
-  width: 100%;
-}
-
-.direction-vertical .children > li::before {
-  content: '';
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  border-left: 2px solid #ccc;
-  height: 20px;
-  transform: translateX(-50%);
-}
-
-.direction-vertical .operator {
-  margin: 10px 0;
-}
-
-.direction-vertical .toggle-btn {
-  margin-top: 10px;
-  margin-bottom: 0;
-}
-
-/* Horizontal direction styles */
-.direction-horizontal .kpi-tree {
-  display: flex;
-  align-items: center;
-}
-
-.direction-horizontal .kpi-tree ul {
-  list-style-type: none;
-  padding: 0 0 0 20px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-.direction-horizontal .kpi-tree li {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
-}
-
-.direction-horizontal .kpi-tree ul::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  border-left: 2px solid #ccc;
-  height: 100%;
-}
-
-.direction-horizontal .children > li::before {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  border-top: 2px solid #ccc;
-  width: 20px;
-  transform: translateY(-50%);
-}
-
-.direction-horizontal .operator {
-  margin: 0 10px;
-}
-
-.direction-horizontal .toggle-btn {
-  margin: 0 10px;
-}
-
-/* Node styles */
-.node {
-  min-width: 120px;
-  min-height: 70px;
-  padding: 10px;
-  background-color: #fff;
-  border: 2px solid #666;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  position: relative;
-}
-
-.node a {
-  color: #0066cc;
-  text-decoration: none;
-}
-
-.node a:hover {
-  text-decoration: underline;
-}
-
-.node .value {
-  font-weight: bold;
-  margin-top: 5px;
-  color: #333;
-}
-
-/* Operator styles */
-.operator {
-  font-size: 32px; /* フォントサイズを大きく */
-  font-weight: bold;
-  color: #666; /* 元の色に戻す */
-  width: 45px; /* 幅を大きく */
-  height: 45px; /* 高さを大きく */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f0f0f0; /* 元の背景色に戻す */
-  border-radius: 50%;
-  z-index: 10; /* 前面に表示 */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
-  border: 2px solid #ddd; /* 境界線色を元に近い色に調整 */
-}
-
-/* Toggle button styles */
-.toggle-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: #ddd;
-  border: 1px solid #999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-  font-size: 0;
-  z-index: 2;
-}
-
-.toggle-btn::before {
-  content: '−';
-  font-size: 16px;
-  line-height: 1;
-}
-
-.toggle-btn.collapsed::before {
-  content: '+';
-}
-
-/* Collapsed state */
-.children.collapsed {
-  display: none !important;
-}
-
-/* Theme colors */
-.theme-default .node {
-  border-color: #00796b;
-  background-color: #e0f2f1;
-}
-
-.theme-blue .node {
-  border-color: #1976d2;
-  background-color: #e3f2fd;
-}
-
-.theme-red .node {
-  border-color: #d32f2f;
-  background-color: #ffebee;
-}
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    h1 {
+      color: #2c3e50;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    
+    .description {
+      color: #555;
+      font-size: 1.2rem;
+      max-width: 800px;
+      margin: 0 auto 30px;
+    }
+    
+    .samples {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+    
+    .sample-card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .sample-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sample-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .sample-content {
+      padding: 20px;
+    }
+    
+    .sample-title {
+      font-size: 1.3rem;
+      margin: 0 0 10px;
+      color: #2c3e50;
+    }
+    
+    .sample-description {
+      color: #666;
+      margin-bottom: 15px;
+    }
+    
+    .sample-link {
+      display: inline-block;
+      background-color: #3498db;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.3s;
+    }
+    
+    .sample-link:hover {
+      background-color: #2980b9;
+    }
+    
+    .features {
+      margin: 60px 0;
+    }
+    
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    
+    .feature-item {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .feature-title {
+      font-size: 1.1rem;
+      color: #2c3e50;
+      margin-top: 0;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      color: #777;
+    }
+    
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+    
+    .github-link svg {
+      margin-right: 8px;
+    }
   </style>
 </head>
-<body data-theme="default" data-direction="horizontal">
+<body>
   <div class="container">
-    <h1>KPI Tree Example</h1>
-    <div class="kpi-tree-container theme-default direction-horizontal">
-      <ul class="kpi-tree">
-        
-    <li>
-      <div class="node" id="node-7cynxnylq">
-        <a href="https://example.com/revenue" target="_blank">Revenue (JPY)</a><div class="value">300,000,000</div>
+    <header>
+      <h1>KPIツリージェネレーター</h1>
+      <p class="description">YAMLファイル形式の設定から、HTML形式のKPIツリーを生成するためのツールです。ノード間の関係を視覚的に表現し、折りたたみ機能や共有機能を備えています。</p>
+    </header>
+    
+    <div class="features">
+      <h2>主な機能</h2>
+      <div class="feature-list">
+        <div class="feature-item">
+          <h3 class="feature-title">ノードと接続を持つKPIツリーの生成</h3>
+          <p>YAMLファイルから階層構造を持つKPIツリーを簡単に生成できます。</p>
+        </div>
+        <div class="feature-item">
+          <h3 class="feature-title">演算記号のサポート</h3>
+          <p>ノード間の演算記号（+, -, *, /）をサポートしています。</p>
+        </div>
+        <div class="feature-item">
+          <h3 class="feature-title">テキストとハイパーリンク</h3>
+          <p>ノード内にテキストとハイパーリンクを設定できます。</p>
+        </div>
+        <div class="feature-item">
+          <h3 class="feature-title">サブツリーの折りたたみ機能</h3>
+          <p>複雑なツリーを整理するための折りたたみ機能を備えています。</p>
+        </div>
+        <div class="feature-item">
+          <h3 class="feature-title">状態の保存と共有</h3>
+          <p>折りたたみ状態をURLパラメータで共有できます。</p>
+        </div>
+        <div class="feature-item">
+          <h3 class="feature-title">レイアウト切替</h3>
+          <p>縦向き・横向きレイアウトを切り替えることができます。</p>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-7cynxnylq-children"></button>
-      <ul id="node-7cynxnylq-children" class="children">
-    <li>
-      <div class="node" id="node-2sxat7ji3">
-        Product A<div class="value">150,000,000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-2sxat7ji3-children"></button>
-      <ul id="node-2sxat7ji3-children" class="children">
-    <li>
-      <div class="node" id="node-93jyocft1">
-        Active Users<div class="value">100,000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-cvu209o88">
-        ARPU<div class="value">1,500</div>
-      </div>
-      <button class="toggle-btn" data-target="node-cvu209o88-children"></button>
-      <ul id="node-cvu209o88-children" class="children">
-    <li>
-      <div class="node" id="node-r7flu3xt0">
-        ARPPU<div class="value">10,000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-8vdts638w">
-        課金率<div class="value">15%</div>
-      </div>
-    </li>
-      </ul>
-    </li>
-      </ul>
-    </li><li class="operator">+</li>
-    <li>
-      <div class="node" id="node-x3qg7irbw">
-        Product B<div class="value">150,000,000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-x3qg7irbw-children"></button>
-      <ul id="node-x3qg7irbw-children" class="children">
-    <li>
-      <div class="node" id="node-c3b80bbnw">
-        Active Users<div class="value">100,000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-oo5s9hroc">
-        ARPU<div class="value">1,500</div>
-      </div>
-      <button class="toggle-btn" data-target="node-oo5s9hroc-children"></button>
-      <ul id="node-oo5s9hroc-children" class="children">
-    <li>
-      <div class="node" id="node-nptab2ph9">
-        ARPPU<div class="value">10,000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-udvgx6l9k">
-        課金率<div class="value">15%</div>
-      </div>
-    </li>
-      </ul>
-    </li>
-      </ul>
-    </li>
-      </ul>
-    </li>
-      </ul>
     </div>
+    
+    <h2>サンプル</h2>
+    <div class="samples">
+      <div class="sample-card">
+        <div class="sample-content">
+          <h3 class="sample-title">基本サンプル</h3>
+          <p class="sample-description">横向きのデフォルトテーマのKPIツリー</p>
+          <a href="example.html" class="sample-link">表示する</a>
+        </div>
+      </div>
+      
+      <div class="sample-card">
+        <div class="sample-content">
+          <h3 class="sample-title">縦向きサンプル</h3>
+          <p class="sample-description">縦向きの赤テーマのKPIツリー</p>
+          <a href="vertical_example.html" class="sample-link">表示する</a>
+        </div>
+      </div>
+      
+      <div class="sample-card">
+        <div class="sample-content">
+          <h3 class="sample-title">売上ツリー</h3>
+          <p class="sample-description">縦向きの青テーマの売上ツリー</p>
+          <a href="sales.html" class="sample-link">表示する</a>
+        </div>
+      </div>
+      
+      <div class="sample-card">
+        <div class="sample-content">
+          <h3 class="sample-title">ゲーム指標</h3>
+          <p class="sample-description">ゲーム関連のKPI指標</p>
+          <a href="game.html" class="sample-link">表示する</a>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>KPIツリージェネレーター &copy; 2025</p>
+      <a href="https://github.com/lean-nishikata/kpi_tree_generator" class="github-link">
+        <svg height="24" width="24" viewBox="0 0 16 16" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+        GitHubリポジトリ
+      </a>
+    </footer>
   </div>
-  
-  <script>
-    // KPI Tree JavaScript
-// Using old-school function approach to ensure maximum browser compatibility
-function kpiTreeInit() {
-  // Apply theme and direction from config
-  var theme = document.body.getAttribute('data-theme') || 'default';
-  var direction = document.body.getAttribute('data-direction') || 'vertical';
-  
-  console.log('KPI Tree initializing with direction:', direction);
-  
-  // Add direction toggle control
-  addDirectionToggle(direction);
-  
-  // Initialize toggle buttons
-  setupToggleButtons();
-}
-
-// Handle toggle buttons for collapsing/expanding nodes
-function setupToggleButtons() {
-  console.log('Setting up toggle buttons');
-  
-  // Get all toggle buttons
-  var toggleButtons = document.querySelectorAll('.toggle-btn');
-  console.log('Found toggle buttons:', toggleButtons.length);
-  
-  // Load saved state from localStorage
-  var savedStates = loadTreeState();
-  
-  // Initialize toggle buttons
-  for (var i = 0; i < toggleButtons.length; i++) {
-    var button = toggleButtons[i];
-    var targetId = button.getAttribute('data-target');
-    var target = document.getElementById(targetId);
-    
-    if (!target) {
-      console.error('Target element not found:', targetId);
-      continue;
-    }
-    
-    // Apply saved state if exists
-    if (savedStates[targetId] === 'collapsed') {
-      target.classList.add('collapsed');
-      button.classList.add('collapsed');
-    }
-    
-    // Use closure to maintain button and target references
-    (function(btn, tgt) {
-      btn.onclick = function() {
-        console.log('Toggle button clicked for:', tgt.id);
-        tgt.classList.toggle('collapsed');
-        btn.classList.toggle('collapsed');
-        saveTreeState();
-      };
-    })(button, target);
-  }
-}
-
-// Add direction toggle dropdown
-function addDirectionToggle(initialDirection) {
-  // Create toggle control
-  var controlDiv = document.createElement('div');
-  controlDiv.className = 'direction-control';
-  controlDiv.style.position = 'fixed';
-  controlDiv.style.top = '10px';
-  controlDiv.style.right = '10px';
-  controlDiv.style.zIndex = '1000';
-  controlDiv.style.background = '#fff';
-  controlDiv.style.padding = '5px 10px';
-  controlDiv.style.borderRadius = '4px';
-  controlDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-  
-  // Create select element
-  var select = document.createElement('select');
-  select.id = 'directionToggle';
-  
-  // Add options
-  var vertOption = document.createElement('option');
-  vertOption.value = 'vertical';
-  vertOption.textContent = 'Vertical Direction';
-  vertOption.selected = initialDirection === 'vertical';
-  
-  var horizOption = document.createElement('option');
-  horizOption.value = 'horizontal';
-  horizOption.textContent = 'Horizontal Direction';
-  horizOption.selected = initialDirection === 'horizontal';
-  
-  select.appendChild(vertOption);
-  select.appendChild(horizOption);
-  
-  // Add event listener using old-school approach
-  select.onchange = function() {
-    var treeContainer = document.querySelector('.kpi-tree-container');
-    var body = document.body;
-    
-    // Remove old direction class
-    treeContainer.classList.remove('direction-vertical');
-    treeContainer.classList.remove('direction-horizontal');
-    
-    // Add new direction class
-    treeContainer.classList.add('direction-' + this.value);
-    
-    // Update data attribute
-    body.setAttribute('data-direction', this.value);
-    
-    // Save preference to localStorage
-    localStorage.setItem('kpiTreeDirection', this.value);
-  };
-  
-  // Add label
-  var label = document.createElement('label');
-  label.htmlFor = 'directionToggle';
-  label.textContent = 'Layout: ';
-  label.style.marginRight = '5px';
-  label.style.fontWeight = 'bold';
-  
-  // Append to control div
-  controlDiv.appendChild(label);
-  controlDiv.appendChild(select);
-  
-  // Append to body
-  document.body.appendChild(controlDiv);
-  
-  // Check if user has a saved preference
-  var savedDirection = localStorage.getItem('kpiTreeDirection');
-  if (savedDirection && savedDirection !== initialDirection) {
-    select.value = savedDirection;
-    
-    // Trigger change event manually for IE compatibility
-    if ("createEvent" in document) {
-      var evt = document.createEvent("HTMLEvents");
-      evt.initEvent("change", false, true);
-      select.dispatchEvent(evt);
-    } else {
-      select.fireEvent("onchange");
-    }
-  }
-}
-
-// Save tree state to localStorage
-function saveTreeState() {
-  var state = {};
-  var children = document.querySelectorAll('.children');
-  
-  for (var i = 0; i < children.length; i++) {
-    var child = children[i];
-    if (child.id) {
-      state[child.id] = child.classList.contains('collapsed') ? 'collapsed' : 'expanded';
-    }
-  }
-  
-  localStorage.setItem('kpiTreeState', JSON.stringify(state));
-}
-
-// Load tree state from localStorage
-function loadTreeState() {
-  var savedState = localStorage.getItem('kpiTreeState');
-  return savedState ? JSON.parse(savedState) : {};
-}
-
-// Run initialization when page is loaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', kpiTreeInit);
-} else {
-  kpiTreeInit();
-}
-  </script>
 </body>
 </html>
