@@ -7,6 +7,9 @@ RUN npm install
 
 COPY . .
 
+# 出力ディレクトリを作成し、権限を設定
+RUN mkdir -p /app/output && chmod 777 /app/output
+
 VOLUME ["/app/config"]
 VOLUME ["/app/output"]
 
