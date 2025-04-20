@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-const PORT = 8000;
+// コマンドライン引数からポート番号を取得（デフォルトは8000）
+const PORT = process.argv[2] ? parseInt(process.argv[2]) : 8000;
 
 const server = http.createServer((req, res) => {
   // URLをパースしてパス部分のみを取得
