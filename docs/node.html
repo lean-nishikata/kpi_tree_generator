@@ -1,4 +1,293 @@
-// KPI Tree JavaScript
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPI Tree Example</title>
+  <style>
+    /* General styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+/* KPI Tree styles - Common */
+.kpi-tree-container {
+  overflow: auto;
+  padding: 20px;
+  margin: 0 auto;
+}
+
+.kpi-tree {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Vertical direction styles */
+.direction-vertical .kpi-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.direction-vertical .kpi-tree ul {
+  list-style-type: none;
+  padding: 20px 0 0 0;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  position: relative;
+}
+
+.direction-vertical .kpi-tree li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 15px;
+}
+
+.direction-vertical .kpi-tree ul::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-top: 2px solid #ccc;
+  width: 100%;
+}
+
+.direction-vertical .children > li::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  border-left: 2px solid #ccc;
+  height: 20px;
+  transform: translateX(-50%);
+}
+
+.direction-vertical .operator {
+  margin: 10px 0;
+}
+
+.direction-vertical .toggle-btn {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Horizontal direction styles */
+.direction-horizontal .kpi-tree {
+  display: flex;
+  align-items: center;
+}
+
+.direction-horizontal .kpi-tree ul {
+  list-style-type: none;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.direction-horizontal .kpi-tree li {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
+}
+
+.direction-horizontal .kpi-tree ul::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-left: 2px solid #ccc;
+  height: 100%;
+}
+
+.direction-horizontal .children > li::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  border-top: 2px solid #ccc;
+  width: 20px;
+  transform: translateY(-50%);
+}
+
+.direction-horizontal .operator {
+  margin: 0 10px;
+}
+
+.direction-horizontal .toggle-btn {
+  margin: 0 10px;
+}
+
+/* Node styles */
+.node {
+  min-width: 120px;
+  min-height: 70px;
+  padding: 10px;
+  background-color: #fff;
+  border: 2px solid #666;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.node a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.node a:hover {
+  text-decoration: underline;
+}
+
+.node .value {
+  font-weight: bold;
+  margin-top: 5px;
+  color: #333;
+}
+
+/* Operator styles */
+.operator {
+  font-size: 32px; /* フォントサイズを大きく */
+  font-weight: bold;
+  color: #666; /* 元の色に戻す */
+  width: 45px; /* 幅を大きく */
+  height: 45px; /* 高さを大きく */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0; /* 元の背景色に戻す */
+  border-radius: 50%;
+  z-index: 10; /* 前面に表示 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
+  border: 2px solid #ddd; /* 境界線色を元に近い色に調整 */
+}
+
+/* Toggle button styles */
+.toggle-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #ddd;
+  border: 1px solid #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  font-size: 0;
+  z-index: 2;
+}
+
+.toggle-btn::before {
+  content: '−';
+  font-size: 16px;
+  line-height: 1;
+}
+
+.toggle-btn.collapsed::before {
+  content: '+';
+}
+
+/* Collapsed state */
+.children.collapsed {
+  display: none !important;
+}
+
+/* Theme colors */
+.theme-default .node {
+  border-color: #00796b;
+  background-color: #e0f2f1;
+}
+
+.theme-blue .node {
+  border-color: #1976d2;
+  background-color: #e3f2fd;
+}
+
+.theme-red .node {
+  border-color: #d32f2f;
+  background-color: #ffebee;
+}
+  </style>
+</head>
+<body data-theme="default" data-direction="horizontal">
+  <div class="container">
+    <h1>KPI Tree Example</h1>
+    <div class="kpi-tree-container theme-default direction-horizontal">
+      <ul class="kpi-tree">
+        
+    <li>
+      <div class="node" id="node-t1qfsd761">
+        <a href="https://example.com/revenue" target="_blank">Revenue (¥100M)</a><div class="value">500</div>
+      </div>
+      <button class="toggle-btn" data-target="node-t1qfsd761-children"></button>
+      <ul id="node-t1qfsd761-children" class="children">
+    <li>
+      <div class="node" id="node-p0taswss7">
+        Product A<div class="value">300</div>
+      </div>
+      <button class="toggle-btn" data-target="node-p0taswss7-children"></button>
+      <ul id="node-p0taswss7-children" class="children">
+    <li>
+      <div class="node" id="node-2igci7kde">
+        Direct Sales<div class="value">200</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-sfg0hbm2x">
+        Partner Sales<div class="value">100</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-v90bgmms8">
+        Product B<div class="value">200</div>
+      </div>
+      <button class="toggle-btn" data-target="node-v90bgmms8-children"></button>
+      <ul id="node-v90bgmms8-children" class="children">
+    <li>
+      <div class="node" id="node-nj6tatorv">
+        Region X<div class="value">120</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-gr6kwf4ns">
+        Region Y<div class="value">80</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </div>
+  </div>
+  
+  <script>
+    // KPI Tree JavaScript
 // Using old-school function approach to ensure maximum browser compatibility
 function kpiTreeInit() {
   console.log('KPI Tree initializing...');
@@ -208,106 +497,41 @@ function addShareButton() {
   var shareDiv = document.createElement('div');
   shareDiv.className = 'share-control';
   shareDiv.style.position = 'fixed';
-  shareDiv.style.top = '10px'; // 右上に配置
+  shareDiv.style.top = '50px';
   shareDiv.style.right = '10px';
   shareDiv.style.zIndex = '1000';
   shareDiv.style.background = '#fff';
   shareDiv.style.padding = '5px 10px';
   shareDiv.style.borderRadius = '4px';
   shareDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-  shareDiv.style.display = 'flex'; // フレックスボックスを使用
-  shareDiv.style.alignItems = 'center'; // 中央揃え
   
   var shareButton = document.createElement('button');
   shareButton.id = 'shareButton';
-  shareButton.textContent = '現在のURLをコピー';
+  shareButton.textContent = '現在の表示状態を共有';
   shareButton.style.padding = '5px 10px';
   shareButton.style.cursor = 'pointer';
   shareButton.style.backgroundColor = '#4CAF50';
   shareButton.style.color = 'white';
   shareButton.style.border = 'none';
   shareButton.style.borderRadius = '4px';
-  shareButton.style.position = 'relative'; // ツールチップの配置のため
-  shareButton.style.overflow = 'hidden'; // エフェクトのため
-  
-  // ボタン内にチェックマークアニメーション用の要素を追加
-  var checkmark = document.createElement('span');
-  checkmark.id = 'checkmarkEffect';
-  checkmark.style.position = 'absolute';
-  checkmark.style.width = '20px';
-  checkmark.style.height = '20px';
-  checkmark.style.top = '50%';
-  checkmark.style.left = '50%';
-  checkmark.style.transform = 'translate(-50%, -50%) scale(0)';
-  checkmark.style.opacity = '0';
-  checkmark.style.transition = 'transform 0.3s, opacity 0.3s';
-  checkmark.style.pointerEvents = 'none'; // クリックイベントを通過
-  
-  // SVGチェックマークを作成
-  var svgNS = 'http://www.w3.org/2000/svg';
-  var svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('width', '20');
-  svg.setAttribute('height', '20');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.style.fill = 'none';
-  svg.style.stroke = 'white';
-  svg.style.strokeWidth = '3';
-  svg.style.strokeLinecap = 'round';
-  svg.style.strokeLinejoin = 'round';
-  
-  var path = document.createElementNS(svgNS, 'path');
-  path.setAttribute('d', 'M20 6L9 17l-5-5');
-  svg.appendChild(path);
-  checkmark.appendChild(svg);
-  
-  shareButton.appendChild(checkmark);
   
   // Add event listener
-  shareButton.onclick = function(e) {
-    // チェックマークアニメーションを表示
-    var checkmark = document.getElementById('checkmarkEffect');
-    
-    // チェックマークを表示
-    checkmark.style.transform = 'translate(-50%, -50%) scale(1)';
-    checkmark.style.opacity = '1';
-    
-    // ボタンのテキストを一時的に非表示
-    var originalText = shareButton.textContent;
-    shareButton.style.color = 'rgba(255, 255, 255, 0)';
-    
-    // アニメーションが終わったらリセット
-    setTimeout(function() {
-      checkmark.style.transform = 'translate(-50%, -50%) scale(0)';
-      checkmark.style.opacity = '0';
-      shareButton.style.color = 'white';
-    }, 1000);
-    
-    // URLをコピー
+  shareButton.onclick = function() {
     copyShareUrlToClipboard();
   };
   
-  // ツールチップ要素を作成
-  var tooltip = document.createElement('div');
+  // Add tooltip span
+  var tooltip = document.createElement('span');
   tooltip.id = 'shareTooltip';
-  tooltip.textContent = '現在のURLをコピーしました';
-  tooltip.style.position = 'absolute';
-  tooltip.style.top = '100%';
-  tooltip.style.left = '50%';
-  tooltip.style.transform = 'translateX(-50%)';
-  tooltip.style.backgroundColor = '#333';
-  tooltip.style.color = 'white';
-  tooltip.style.padding = '5px 10px';
-  tooltip.style.borderRadius = '4px';
+  tooltip.textContent = '';
+  tooltip.style.marginLeft = '10px';
   tooltip.style.fontSize = '12px';
-  tooltip.style.whiteSpace = 'nowrap';
   tooltip.style.opacity = '0';
   tooltip.style.transition = 'opacity 0.3s';
-  tooltip.style.pointerEvents = 'none';
-  tooltip.style.zIndex = '1001';
-  shareButton.appendChild(tooltip);
   
   // Append to share div
   shareDiv.appendChild(shareButton);
+  shareDiv.appendChild(tooltip);
   
   // Append to body
   document.body.appendChild(shareDiv);
@@ -355,24 +579,6 @@ function copyShareUrlToClipboard() {
     updateShareUrl();
   }
   
-  // クリップボードAPIが利用可能な場合はそちらを使用
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(window._shareUrl)
-      .then(function() {
-        showCopySuccess();
-      })
-      .catch(function(err) {
-        // 失敗した場合は従来の方法を使用
-        fallbackCopyToClipboard();
-      });
-  } else {
-    // 従来の方法でコピー
-    fallbackCopyToClipboard();
-  }
-}
-
-// 従来のクリップボードコピー方法
-function fallbackCopyToClipboard() {
   // Create temporary input element
   var tempInput = document.createElement('input');
   tempInput.style.position = 'absolute';
@@ -382,24 +588,18 @@ function fallbackCopyToClipboard() {
   
   // Select and copy
   tempInput.select();
-  var success = document.execCommand('copy');
+  document.execCommand('copy');
   document.body.removeChild(tempInput);
   
-  if (success) {
-    showCopySuccess();
-  }
-}
-
-// コピー成功時の表示
-function showCopySuccess() {
   // Show tooltip
   var tooltip = document.getElementById('shareTooltip');
+  tooltip.textContent = 'リンクをコピーしました！';
   tooltip.style.opacity = '1';
   
-  // ツールチップを非表示にする
+  // Hide tooltip after 2 seconds
   setTimeout(function() {
     tooltip.style.opacity = '0';
-  }, 1000); // チェックマークアニメーションと同じタイミング
+  }, 2000);
 }
 
 // すべてのノードを展開状態にリセットする関数
@@ -476,3 +676,7 @@ window.addEventListener('popstate', function(event) {
   }
 });
 
+
+  </script>
+</body>
+</html>

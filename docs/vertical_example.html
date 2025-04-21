@@ -239,42 +239,42 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-hbsh319hb">
+      <div class="node" id="node-wvimcd7l9">
         <a href="https://example.com/revenue" target="_blank">Revenue (¥100M)</a><div class="value">500</div>
       </div>
-      <button class="toggle-btn" data-target="node-hbsh319hb-children"></button>
-      <ul id="node-hbsh319hb-children" class="children">
+      <button class="toggle-btn" data-target="node-wvimcd7l9-children"></button>
+      <ul id="node-wvimcd7l9-children" class="children">
     <li>
-      <div class="node" id="node-34kvhcptq">
+      <div class="node" id="node-dhne3p8tf">
         Product A<div class="value">300</div>
       </div>
-      <button class="toggle-btn" data-target="node-34kvhcptq-children"></button>
-      <ul id="node-34kvhcptq-children" class="children">
+      <button class="toggle-btn" data-target="node-dhne3p8tf-children"></button>
+      <ul id="node-dhne3p8tf-children" class="children">
     <li>
-      <div class="node" id="node-abvcehkmh">
+      <div class="node" id="node-0t24tewsm">
         Direct Sales<div class="value">200</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-qxg4n7rdz">
+      <div class="node" id="node-btblill8v">
         Partner Sales<div class="value">100</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-xzyrievkz">
+      <div class="node" id="node-47un0vxcj">
         Product B<div class="value">200</div>
       </div>
-      <button class="toggle-btn" data-target="node-xzyrievkz-children"></button>
-      <ul id="node-xzyrievkz-children" class="children">
+      <button class="toggle-btn" data-target="node-47un0vxcj-children"></button>
+      <ul id="node-47un0vxcj-children" class="children">
     <li>
-      <div class="node" id="node-06wxkiofv">
+      <div class="node" id="node-szyv3rb3g">
         Region X<div class="value">120</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-y60c53epv">
+      <div class="node" id="node-dybllhkbo">
         Region Y<div class="value">80</div>
       </div>
     </li>
@@ -497,41 +497,106 @@ function addShareButton() {
   var shareDiv = document.createElement('div');
   shareDiv.className = 'share-control';
   shareDiv.style.position = 'fixed';
-  shareDiv.style.top = '50px';
+  shareDiv.style.top = '10px'; // 右上に配置
   shareDiv.style.right = '10px';
   shareDiv.style.zIndex = '1000';
   shareDiv.style.background = '#fff';
   shareDiv.style.padding = '5px 10px';
   shareDiv.style.borderRadius = '4px';
   shareDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+  shareDiv.style.display = 'flex'; // フレックスボックスを使用
+  shareDiv.style.alignItems = 'center'; // 中央揃え
   
   var shareButton = document.createElement('button');
   shareButton.id = 'shareButton';
-  shareButton.textContent = '現在の表示状態を共有';
+  shareButton.textContent = '現在のURLをコピー';
   shareButton.style.padding = '5px 10px';
   shareButton.style.cursor = 'pointer';
   shareButton.style.backgroundColor = '#4CAF50';
   shareButton.style.color = 'white';
   shareButton.style.border = 'none';
   shareButton.style.borderRadius = '4px';
+  shareButton.style.position = 'relative'; // ツールチップの配置のため
+  shareButton.style.overflow = 'hidden'; // エフェクトのため
+  
+  // ボタン内にチェックマークアニメーション用の要素を追加
+  var checkmark = document.createElement('span');
+  checkmark.id = 'checkmarkEffect';
+  checkmark.style.position = 'absolute';
+  checkmark.style.width = '20px';
+  checkmark.style.height = '20px';
+  checkmark.style.top = '50%';
+  checkmark.style.left = '50%';
+  checkmark.style.transform = 'translate(-50%, -50%) scale(0)';
+  checkmark.style.opacity = '0';
+  checkmark.style.transition = 'transform 0.3s, opacity 0.3s';
+  checkmark.style.pointerEvents = 'none'; // クリックイベントを通過
+  
+  // SVGチェックマークを作成
+  var svgNS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('width', '20');
+  svg.setAttribute('height', '20');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.style.fill = 'none';
+  svg.style.stroke = 'white';
+  svg.style.strokeWidth = '3';
+  svg.style.strokeLinecap = 'round';
+  svg.style.strokeLinejoin = 'round';
+  
+  var path = document.createElementNS(svgNS, 'path');
+  path.setAttribute('d', 'M20 6L9 17l-5-5');
+  svg.appendChild(path);
+  checkmark.appendChild(svg);
+  
+  shareButton.appendChild(checkmark);
   
   // Add event listener
-  shareButton.onclick = function() {
+  shareButton.onclick = function(e) {
+    // チェックマークアニメーションを表示
+    var checkmark = document.getElementById('checkmarkEffect');
+    
+    // チェックマークを表示
+    checkmark.style.transform = 'translate(-50%, -50%) scale(1)';
+    checkmark.style.opacity = '1';
+    
+    // ボタンのテキストを一時的に非表示
+    var originalText = shareButton.textContent;
+    shareButton.style.color = 'rgba(255, 255, 255, 0)';
+    
+    // アニメーションが終わったらリセット
+    setTimeout(function() {
+      checkmark.style.transform = 'translate(-50%, -50%) scale(0)';
+      checkmark.style.opacity = '0';
+      shareButton.style.color = 'white';
+    }, 1000);
+    
+    // URLをコピー
     copyShareUrlToClipboard();
   };
   
-  // Add tooltip span
-  var tooltip = document.createElement('span');
+  // ツールチップ要素を作成
+  var tooltip = document.createElement('div');
   tooltip.id = 'shareTooltip';
-  tooltip.textContent = '';
-  tooltip.style.marginLeft = '10px';
+  tooltip.textContent = '現在のURLをコピーしました';
+  tooltip.style.position = 'absolute';
+  tooltip.style.top = '100%';
+  tooltip.style.left = '50%';
+  tooltip.style.transform = 'translateX(-50%)';
+  tooltip.style.backgroundColor = '#333';
+  tooltip.style.color = 'white';
+  tooltip.style.padding = '5px 10px';
+  tooltip.style.borderRadius = '4px';
   tooltip.style.fontSize = '12px';
+  tooltip.style.whiteSpace = 'nowrap';
   tooltip.style.opacity = '0';
   tooltip.style.transition = 'opacity 0.3s';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.zIndex = '1001';
+  shareButton.appendChild(tooltip);
   
   // Append to share div
   shareDiv.appendChild(shareButton);
-  shareDiv.appendChild(tooltip);
   
   // Append to body
   document.body.appendChild(shareDiv);
@@ -579,6 +644,24 @@ function copyShareUrlToClipboard() {
     updateShareUrl();
   }
   
+  // クリップボードAPIが利用可能な場合はそちらを使用
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(window._shareUrl)
+      .then(function() {
+        showCopySuccess();
+      })
+      .catch(function(err) {
+        // 失敗した場合は従来の方法を使用
+        fallbackCopyToClipboard();
+      });
+  } else {
+    // 従来の方法でコピー
+    fallbackCopyToClipboard();
+  }
+}
+
+// 従来のクリップボードコピー方法
+function fallbackCopyToClipboard() {
   // Create temporary input element
   var tempInput = document.createElement('input');
   tempInput.style.position = 'absolute';
@@ -588,18 +671,24 @@ function copyShareUrlToClipboard() {
   
   // Select and copy
   tempInput.select();
-  document.execCommand('copy');
+  var success = document.execCommand('copy');
   document.body.removeChild(tempInput);
   
+  if (success) {
+    showCopySuccess();
+  }
+}
+
+// コピー成功時の表示
+function showCopySuccess() {
   // Show tooltip
   var tooltip = document.getElementById('shareTooltip');
-  tooltip.textContent = 'リンクをコピーしました！';
   tooltip.style.opacity = '1';
   
-  // Hide tooltip after 2 seconds
+  // ツールチップを非表示にする
   setTimeout(function() {
     tooltip.style.opacity = '0';
-  }, 2000);
+  }, 1000); // チェックマークアニメーションと同じタイミング
 }
 
 // すべてのノードを展開状態にリセットする関数
