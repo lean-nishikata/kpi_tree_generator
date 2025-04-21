@@ -4,20 +4,14 @@ function kpiTreeInit() {
   console.log('KPI Tree initializing...');
   console.log('URL:', window.location.href);
   
-  // まずURLパラメータから方向を取得
-  var urlDirection = getDirectionFromUrl();
-  
-  // Apply theme and direction from config or URL
+  // 常に横型レイアウトを使用
   var theme = document.body.getAttribute('data-theme') || 'default';
-  var direction = urlDirection || document.body.getAttribute('data-direction') || 'vertical';
+  var direction = 'horizontal';
   
   console.log('KPI Tree initializing with direction:', direction);
   
   // 方向を設定
   setDirection(direction);
-  
-  // Add direction toggle control
-  addDirectionToggle(direction);
   
   // Add share button for permanent link
   addShareButton();
@@ -52,17 +46,10 @@ function kpiTreeInit() {
   }
 }
 
-// URLパラメータから方向を取得
+// 方向は常に横型に固定
 function getDirectionFromUrl() {
-  var urlParams = new URLSearchParams(window.location.search);
-  var direction = urlParams.get('direction');
-  
-  if (direction === 'vertical' || direction === 'horizontal') {
-    console.log('Direction from URL:', direction);
-    return direction;
-  }
-  
-  return null;
+  // 常に横型レイアウトを返す
+  return 'horizontal';
 }
 
 // 方向を設定する関数
@@ -142,66 +129,11 @@ function setupToggleButtons() {
   }
 }
 
-// Add direction toggle dropdown
+// レイアウト切り替え機能は削除されました
 function addDirectionToggle(initialDirection) {
-  // Create toggle control
-  var controlDiv = document.createElement('div');
-  controlDiv.className = 'direction-control';
-  controlDiv.style.position = 'fixed';
-  controlDiv.style.top = '10px';
-  controlDiv.style.right = '10px';
-  controlDiv.style.zIndex = '1000';
-  controlDiv.style.background = '#fff';
-  controlDiv.style.padding = '5px 10px';
-  controlDiv.style.borderRadius = '4px';
-  controlDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-  
-  // Create select element
-  var select = document.createElement('select');
-  select.id = 'directionToggle';
-  
-  // Add options
-  var vertOption = document.createElement('option');
-  vertOption.value = 'vertical';
-  vertOption.textContent = '縦向きレイアウト';
-  vertOption.selected = initialDirection === 'vertical';
-  
-  var horizOption = document.createElement('option');
-  horizOption.value = 'horizontal';
-  horizOption.textContent = '横向きレイアウト';
-  horizOption.selected = initialDirection === 'horizontal';
-  
-  select.appendChild(vertOption);
-  select.appendChild(horizOption);
-  
-  // Add event listener using old-school approach
-  select.onchange = function() {
-    // 新しい方向を設定
-    setDirection(this.value);
-    
-    // Save preference to localStorage
-    localStorage.setItem('kpiTreeDirection', this.value);
-    
-    // Update share URL
-    updateShareUrl();
-  };
-  
-  // Add label
-  var label = document.createElement('label');
-  label.htmlFor = 'directionToggle';
-  label.textContent = 'レイアウト: ';
-  label.style.marginRight = '5px';
-  label.style.fontWeight = 'bold';
-  
-  // Append to control div
-  controlDiv.appendChild(label);
-  controlDiv.appendChild(select);
-  
-  // Append to body
-  document.body.appendChild(controlDiv);
-  
-  // 初期値をセレクトボックスに設定
-  select.value = initialDirection;
+  // 横型レイアウトに固定されているため、何もしない
+  console.log('Direction toggle removed, using horizontal layout only');
+  return;
 }
 
 // Save tree state to localStorage
@@ -323,7 +255,7 @@ function addShareButton() {
 function updateShareUrl() {
   var state = saveTreeState();
   var stateParam = generateStateParam(state);
-  var direction = document.body.getAttribute('data-direction') || 'vertical';
+  var direction = 'horizontal'; // 常に横型レイアウトを使用
   
   // Create URL with parameters
   var url = new URL(window.location.href);
@@ -333,7 +265,7 @@ function updateShareUrl() {
   
   // パラメータを追加
   url.searchParams.set('state', stateParam);
-  url.searchParams.set('direction', direction);
+  // 方向パラメータは不要になったため、追加しない
   
   // Store URL for copy button
   window._shareUrl = url.toString();
