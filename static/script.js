@@ -216,7 +216,7 @@ function addShareButton() {
   shareDiv.style.borderRadius = '4px';
   shareDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
   shareDiv.style.display = 'flex'; // フレックスボックスを使用
-  shareDiv.style.alignItems = 'center'; // 中央揃え
+  shareDiv.style.alignItems = 'flex-start'; // 上詰め
   
   var shareButton = document.createElement('button');
   shareButton.id = 'shareButton';

@@ -30,56 +30,7 @@ h1 {
   margin: 0;
 }
 
-/* Vertical direction styles */
-.direction-vertical .kpi-tree {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
 
-.direction-vertical .kpi-tree ul {
-  list-style-type: none;
-  padding: 20px 0 0 0;
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  position: relative;
-}
-
-.direction-vertical .kpi-tree li {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 15px;
-}
-
-.direction-vertical .kpi-tree ul::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-top: 2px solid #ccc;
-  width: 100%;
-}
-
-.direction-vertical .children > li::before {
-  content: '';
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  border-left: 2px solid #ccc;
-  height: 20px;
-  transform: translateX(-50%);
-}
-
-.direction-vertical .operator {
-  margin: 10px 0;
-}
-
-.direction-vertical .toggle-btn {
-  margin-top: 10px;
-  margin-bottom: 0;
-}
 
 /* Horizontal direction styles */
 .direction-horizontal .kpi-tree {
@@ -98,7 +49,7 @@ h1 {
 .direction-horizontal .kpi-tree li {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
 }
 
