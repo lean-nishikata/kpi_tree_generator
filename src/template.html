@@ -6,6 +6,16 @@
   <title>{{TITLE}}</title>
   <style>
     {{STYLE}}
+    /* カスタムスタイルのオーバーライド */
+    .direction-horizontal .kpi-tree li {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start !important;
+      margin: 3px 0;
+    }
+    .direction-vertical {
+      display: none;
+    }
   </style>
 </head>
 <body data-theme="{{THEME}}" data-direction="{{DIRECTION}}">
