@@ -8,8 +8,8 @@ services:
     volumes:
       - ./config:/app/config
       - ./output:/app/output
-      # キーをボリュームマウントする場合、ビルド時のものより優先される
-      # - ./keys:/app/keys
+      # 認証キーをマウントしてコンテナ内で使用できるようにする
+      - ./keys:/app/keys
     environment:
       - NODE_ENV=production
       # 環境変数はDockerfile内で設定済み、必要に応じてここで上書き可能
