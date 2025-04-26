@@ -204,38 +204,88 @@ async function getCellValue(spreadsheetId, range) {
       throw new Error(`シートが見つかりません: ${sheetName}`);
     }
     
-    // A1表記をrow/col座標に変換
-    const { rowIndex, colIndex } = convertA1ToRowCol(cellRef);
-    
-    // セルの読み込み
-    await sheet.loadCells({
-      startRowIndex: rowIndex,
-      endRowIndex: rowIndex + 1,
-      startColumnIndex: colIndex,
-      endColumnIndex: colIndex + 1
-    });
-    
-    // セルの値を取得
-    const cell = sheet.getCell(rowIndex, colIndex);
-    const value = cell.value;
-    
-    // 値の種類に応じて適切に処理
-    if (value === null || value === undefined) {
-      console.log(`セル ${cellRef} の値が空です`);
-      return 0; // 数値の場合は0をデフォルト値として返す
-    } else if (typeof value === 'object') {
-      console.log(`セル ${cellRef} の値がオブジェクトです:`, value);
-      // オブジェクトの場合はJSON文字列に変換
+    try {
+      // 特定のセルを直接API経由で取得する（シート内ですべての値を取得する代わりに）
+      const sheetName = sheet.title;
+      const range = `${sheetName}!${cellRef}`;
+      console.log(`直接APIで値を取得: ${range}`);
+      
+      // Google APIを直接呼び出してセル値を取得
+      const response = await doc.axios.get(`/values/${range}`);
+      const values = response.data.values;
+      
+      if (!values || values.length === 0 || values[0].length === 0) {
+        console.log(`セル ${cellRef} の値が空です（API経由）`);
+        return 0;
+      }
+      
+      // API経由での値取得
+      const cellValue = values[0][0];
+      console.log(`API経由で取得した値: ${cellValue} (${typeof cellValue})`);
+      
+      // 数値への変換を試みる
+      if (typeof cellValue === 'string' && !isNaN(Number(cellValue))) {
+        const numValue = Number(cellValue);
+        console.log(`文字列から数値に変換: ${numValue}`);
+        return numValue;
+      }
+      
+      // その他の値はそのまま返す
+      return cellValue;
+    } catch (apiError) {
+      console.warn(`API経由の値取得に失敗: ${apiError.message}、従来の方法で再試行`);
+      
       try {
-        return JSON.stringify(value);
-      } catch (e) {
-        console.warn(`オブジェクトのJSON変換に失敗: ${e.message}`);
-        return String(value); // 標準的な文字列化
+        // 従来の方法でフォールバック
+        // A1表記をrow/col座標に変換
+        const { rowIndex, colIndex } = convertA1ToRowCol(cellRef);
+        
+        // セルの読み込み
+        await sheet.loadCells({
+          startRowIndex: rowIndex,
+          endRowIndex: rowIndex + 1,
+          startColumnIndex: colIndex,
+          endColumnIndex: colIndex + 1
+        });
+        
+        // セルの値を取得
+        const cell = sheet.getCell(rowIndex, colIndex);
+        const value = cell.value;
+        
+        // 値の種類に応じて適切に処理
+        if (value === null || value === undefined) {
+          console.log(`セル ${cellRef} の値が空です`);
+          return 0; // 数値の場合は0をデフォルト値として返す
+        } else if (typeof value === 'object') {
+          // オブジェクトの場合、安全な方法で文字列化
+          if (value instanceof Date) {
+            return value.toISOString();
+          } else {
+            try {
+              const safeObj = {};
+              // 安全なプロパティのみをコピー
+              for (const key in value) {
+                if (typeof value[key] !== 'function' && key !== '_spreadsheet' && !key.startsWith('_')) {
+                  safeObj[key] = value[key];
+                }
+              }
+              const jsonStr = JSON.stringify(safeObj);
+              console.log(`安全にJSON変換: ${jsonStr}`);
+              return jsonStr;
+            } catch (e) {
+              console.warn(`オブジェクトのJSON変換に失敗: ${e.message}`);
+              return "オブジェクト (詳細表示不可)";
+            }
+          }
+        }
+        
+        console.log(`セル ${cellRef} から値を取得: ${value} (${typeof value})`);
+        return value;
+      } catch (fallbackError) {
+        console.error(`セル値取得の代替方法も失敗: ${fallbackError.message}`);
+        return "ERROR: 値取得失敗";
       }
     }
-    
-    console.log(`セル ${cellRef} から値を取得: ${value} (${typeof value})`);
-    return value;
     
   } catch (error) {
     console.error('スプレッドシートアクセスエラー:', error);
