@@ -103,10 +103,19 @@ async function generateKPITree() {
     if (config.root) {
       console.log('スプレッドシート参照の解決を開始...');
       try {
-        config.root = await resolveSpreadsheetReferences(config.root);
-        console.log('スプレッドシート参照の解決が完了しました');
+        // キーファイルの存在を確認
+        const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
+        if (keyPath && fs.existsSync(keyPath)) {
+          console.log(`認証キーファイルを確認: ${keyPath}`);
+          config.root = await resolveSpreadsheetReferences(config.root);
+          console.log('スプレッドシート参照の解決が完了しました');
+        } else {
+          console.warn(`警告: スプレッドシート認証キーファイルが見つかりません: ${keyPath || '未設定'}`);
+          console.warn('スプレッドシート参照はスキップされます。通常のKPIツリーとして処理します。');
+        }
       } catch (error) {
         console.error('スプレッドシート参照の解決中にエラーが発生しました:', error.message);
+        console.warn('エラーが発生しましたが、処理を続行します');
       }
     }
     

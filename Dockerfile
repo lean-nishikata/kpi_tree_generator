@@ -5,8 +5,11 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 
-# 先に認証ディレクトリとファイルをコピー
-COPY keys /app/keys
+# 先に認証ディレクトリを作成
+RUN mkdir -p /app/keys && chmod 700 /app/keys
+
+# 認証ファイルがある場合はコピー（なくても失敗しないように条件分岐）
+COPY keys/*.json /app/keys/ 2>/dev/null || :
 # 権限を設定（セキュリティのため、読み取り権限を制限）
 RUN chmod -R 700 /app/keys
 
