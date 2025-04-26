@@ -174,19 +174,25 @@ async function generateKPITree() {
     // PUBLIC_URL変数を設定するスクリプトを生成
     // リダイレクト先で決定論的に動作するよう改善
     const publicUrlScript = publicUrl ? `<script>
-    // リダイレクト環境で動作するPUBLIC_URL設定
+    // リダイレクト環境で動作するPUBLIC_URL設定 - GCS対応強化版
     (function() {
-      window.PUBLIC_URL = "${publicUrl}";
-      // 現在のURLがGCSの場合、それを使用
+      // 強制的にYAMLで設定した公開URLを使用
+      var FIXED_PUBLIC_URL = "${publicUrl}";
+      
+      // キャッシュバスティング用タイムスタンプ
+      var CACHE_BUSTER = new Date().getTime();
+      
+      // 常にグローバルに利用可能な形で公開URLを設定
+      window.PUBLIC_URL = FIXED_PUBLIC_URL;
+      window._publicBaseUrl = FIXED_PUBLIC_URL;
+      
+      console.log('キャッシュ対策タイムスタンプ:', CACHE_BUSTER);
+      console.log('強制的に設定した公開URL:', FIXED_PUBLIC_URL);
+      
+      // GCSリダイレクトを検出しても上書きしない
       if (window.location.href.includes('googleusercontent.com')) {
-        console.log('リダイレクト先を検出: ' + window.location.href);
-        // ファイル名部分を取得
-        var pathParts = window.location.pathname.split('/');
-        var fileName = pathParts[pathParts.length - 1] || 'index.html';
-        // 現在のURLをベースとして使用
-        window.PUBLIC_URL = window.location.href;
+        console.log('リダイレクト先を検出しましたが、YAML設定の公開URLを優先します: ' + FIXED_PUBLIC_URL);
       }
-      console.log('PUBLIC_URL設定: ' + window.PUBLIC_URL);
     })();
     </script>` : '';
     
