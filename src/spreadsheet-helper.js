@@ -184,16 +184,42 @@ async function getCellValue(spreadsheetId, range) {
       // データの形式を検証
       if (typeof cellValue === 'object') {
         try {
+          // オブジェクトがnullの場合
+          if (cellValue === null) {
+            return "";
+          }
+          
+          // 日付オブジェクトの場合
+          if (cellValue instanceof Date) {
+            return cellValue.toISOString();
+          }
+          
           // オブジェクトから安全に値を取り出す試み
           if (cellValue.data && cellValue.data.values && 
               Array.isArray(cellValue.data.values) && 
               cellValue.data.values.length > 0) {
             return cellValue.data.values[0][0];
-          } else {
-            // その他の形式はエラーとして扱う
-            return "ERROR: Object data";
           }
+          
+          // APIレスポンスオブジェクトから値を抽出する試み
+          if (cellValue.formattedValue) {
+            return cellValue.formattedValue;
+          }
+          
+          // 単純なキー値ペアから値を抽出する試み
+          if (cellValue["0"] !== undefined) {
+            return cellValue["0"];
+          }
+          
+          // valueプロパティがある場合
+          if (cellValue.value !== undefined) {
+            return cellValue.value;
+          }
+          
+          // 最後の手段として文字列化
+          return JSON.stringify(cellValue);
         } catch (objError) {
+          console.error('オブジェクト解析エラー:', objError);
           return "ERROR: Object parsing";
         }
       }
@@ -286,69 +312,97 @@ async function resolveSpreadsheetReferences(node) {
             }
             
             try {
-              // オブジェクトを検出した場合、再取得を試みる
-              if (cellValue && (cellValue.spreadsheetId || cellValue.jwtClient)) {
-                
-                try {
-                  // check-sheets-values.jsと同じ方法で直接値を再取得
-                  const { id, range } = node.value.spreadsheet;
-                  
-                  // 認証情報を取得
-                  const serviceAccountKey = loadServiceAccountKey();
-                  if (!serviceAccountKey) {
-                    throw new Error('認証情報の読み込みに失敗しました');
-                  }
-
-                  // googleapis を使用した直接アクセス
-                  const { google } = require('googleapis');
-                  const auth = new google.auth.JWT(
-                    serviceAccountKey.client_email,
-                    null,
-                    serviceAccountKey.private_key,
-                    ['https://www.googleapis.com/auth/spreadsheets.readonly']
-                  );
-                  
-                  // Sheets API クライアントの初期化
-                  const sheets = google.sheets({ version: 'v4', auth });
-                  
-                  // 値を取得（check-sheets-values.jsと同じ方法）
-                  const response = await sheets.spreadsheets.values.get({
-                    spreadsheetId: id,
-                    range: range,
-                  });
-                  
-                  if (response.data && response.data.values && response.data.values.length > 0) {
-                    const directValue = response.data.values[0][0];
-                    node.value = directValue;
-                    return; // 値が見つかったので終了
-                  }
-                } catch (retryError) {
-                  // エラーはサイレントに処理
-                }
-                
-                // 再取得に失敗した場合はERRORを表示
-                node.value = 'ERROR';
-                return; // エラー表示を設定して終了
-              }
+              // 最も直接的な方法でAPI再取得を試みる
+              const { id, range } = node.value.spreadsheet;
               
-              // 通常のオブジェクトはJSON文字列に変換
-              const jsonString = JSON.stringify(safeObj);
-              // 単純な値の場合は文字列から直接値を取り出す
-              // オブジェクトから直接値が取り出せる場合は取り出す
-              if (jsonString.startsWith('{"0":')) {
-                try {
-                  // {"0":"値"} という形式から値を取り出す
-                  const parsed = JSON.parse(jsonString);
-                  node.value = parsed["0"];
-                } catch (e) {
-                  node.value = jsonString;
+              // 認証情報を取得
+              const serviceAccountKey = loadServiceAccountKey();
+              if (!serviceAccountKey) {
+                throw new Error('認証情報の読み込みに失敗しました');
+              }
+
+              // googleapis を使用した直接アクセス
+              const { google } = require('googleapis');
+              const auth = new google.auth.JWT(
+                serviceAccountKey.client_email,
+                null,
+                serviceAccountKey.private_key,
+                ['https://www.googleapis.com/auth/spreadsheets.readonly']
+              );
+              
+              // Sheets API クライアントの初期化
+              const sheets = google.sheets({ version: 'v4', auth });
+              
+              // 値を取得
+              const response = await sheets.spreadsheets.values.get({
+                spreadsheetId: id,
+                range: range,
+              });
+              
+              if (response.data && response.data.values && response.data.values.length > 0) {
+                let directValue = response.data.values[0][0];
+                
+                // 取得した値を適切な型に変換
+                if (directValue === null || directValue === undefined) {
+                  // 空の値は0として扱う
+                  node.value = 0;
+                } else if (typeof directValue === 'object') {
+                  // オブジェクトの場合は文字列化
+                  if (directValue instanceof Date) {
+                    node.value = directValue.toISOString();
+                  } else {
+                    // その他のオブジェクトは値プロパティを試みる、なければ文字列化
+                    node.value = directValue.value !== undefined ? directValue.value : String(directValue);
+                  }
+                } else {
+                  // 文字列を数値に変換（可能な場合）
+                  node.value = typeof directValue === 'string' && !isNaN(Number(directValue)) 
+                    ? Number(directValue) 
+                    : directValue;
                 }
+                return; // 値が設定できたので終了
+              }
+            } catch (retryError) {
+              console.error('API再取得エラー:', retryError.message);
+            }
+            
+            // オブジェクトから意味のある値を抽出する
+            if (cellValue === null) {
+              node.value = 0;
+              return;
+            }
+            
+            // valueプロパティを持つ場合はそれを使用
+            if (cellValue.value !== undefined) {
+              node.value = cellValue.value;
+              return;
+            }
+            
+            // formattedValueプロパティを持つ場合はそれを使用
+            if (cellValue.formattedValue !== undefined) {
+              node.value = cellValue.formattedValue;
+              return;
+            }
+            
+            // 単純なキー値オブジェクトから値を抽出
+            if (cellValue["0"] !== undefined) {
+              node.value = cellValue["0"];
+              return;
+            }
+            
+            // どれも該当しない場合は文字列化して表示
+            try {
+              const jsonString = JSON.stringify(safeObj);
+              // 数値文字列の場合は数値に変換
+              if (!isNaN(Number(jsonString))) {
+                node.value = Number(jsonString);
               } else {
+                // その他はそのまま文字列として使用
                 node.value = jsonString;
               }
             } catch (jsonError) {
-              console.error('JSON変換エラー:', jsonError.message);
-              node.value = '変換エラー';
+              // JSON変換エラー時は単純な文字列化
+              node.value = String(cellValue);
             }
           }
         } catch (e) {
@@ -387,14 +441,33 @@ async function resolveSpreadsheetReferences(node) {
           // 文字列が数値に変換可能か試みる
           node.value = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
         } else if (typeof cellValue === 'object') {
-          // オブジェクトの場合は文字列化（日付などの特殊オブジェクト対応）
-          try {
-            const jsonString = JSON.stringify(cellValue);
-            console.log(`オブジェクト値を文字列化: ${jsonString}`);
-            node.value = jsonString;
-          } catch (e) {
-            console.warn(`オブジェクトの文字列化に失敗: ${e.message}`);
-            node.value = String(cellValue);
+          // オブジェクトの場合の処理改善
+          if (cellValue === null) {
+            // null値は0として扱う
+            node.value = 0;
+          } else if (cellValue instanceof Date) {
+            // 日付オブジェクト
+            node.value = cellValue.toISOString();
+          } else if (cellValue.value !== undefined) {
+            // 値プロパティがある場合
+            node.value = cellValue.value;
+          } else if (cellValue.formattedValue !== undefined) {
+            // 整形済み値がある場合
+            node.value = cellValue.formattedValue;
+          } else if (cellValue["0"] !== undefined) {
+            // キー "0" の値がある場合
+            node.value = cellValue["0"];
+          } else {
+            // その他のオブジェクトは文字列化
+            try {
+              const jsonString = JSON.stringify(cellValue);
+              console.log(`オブジェクト値を文字列化: ${jsonString}`);
+              // 数値文字列の場合は数値に変換
+              node.value = !isNaN(Number(jsonString)) ? Number(jsonString) : jsonString;
+            } catch (e) {
+              console.warn(`オブジェクトの文字列化に失敗: ${e.message}`);
+              node.value = String(cellValue);
+            }
           }
         } else {
           // その他の型は文字列化

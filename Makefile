@@ -9,27 +9,3 @@ run:
 .PHONY: sh
 sh:
 	docker-compose run --rm --entrypoint sh kpi-generator
-
-.PHONY: check-sheets
-check-sheets:
-	docker-compose run --rm --entrypoint node kpi-generator src/check-sheets.js $(id)
-
-.PHONY: check-value
-check-value:
-	docker-compose run --rm --entrypoint node kpi-generator src/check-sheets-values.js $(id) "$(range)"
-
-.PHONY: check-cell
-check-cell:
-	./check-cell.sh $(id) $(range)
-
-.PHONY: debug
-debug:
-	@echo "Checking service account key..."
-	@if [ -f "keys/service-account-key.json" ]; then \
-		echo "Key file exists"; \
-		ls -la keys/; \
-	else \
-		echo "Key file NOT found!"; \
-	fi
-	@echo "Checking environment..."
-	docker-compose run --rm --entrypoint sh kpi-generator -c "env | grep GOOGLE && ls -la /app/keys && cat /app/keys/service-account-key.json | head -5 || echo '認証ファイルの内容が読めません'"
