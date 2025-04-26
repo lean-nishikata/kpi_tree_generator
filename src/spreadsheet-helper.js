@@ -23,7 +23,9 @@ function getServiceAccountKeyPath() {
   
   // パスが存在するか確認
   if (!fs.existsSync(keyPath)) {
-    throw new Error(`サービスアカウントキーファイルが見つかりません: ${keyPath}`);
+    console.warn(`警告: サービスアカウントキーファイルが見つかりません: ${keyPath}`);
+    console.warn('スプレッドシート参照はスキップされます');
+    return null; // nullを返すことで、呼び出し元でエラー処理をスキップできる
   }
   
   return keyPath;
@@ -35,12 +37,19 @@ function getServiceAccountKeyPath() {
  */
 function loadServiceAccountKey() {
   const keyPath = getServiceAccountKeyPath();
+  
+  // キーパスがnullの場合（ファイルが見つからない場合）
+  if (!keyPath) {
+    return null;
+  }
+  
   try {
     const keyFileContent = fs.readFileSync(keyPath, 'utf8');
     return JSON.parse(keyFileContent);
   } catch (error) {
     console.error('サービスアカウントキーの読み込みエラー:', error);
-    throw new Error(`サービスアカウントキーファイルの読み込みに失敗しました: ${error.message}`);
+    console.warn('スプレッドシート参照はスキップされます');
+    return null;
   }
 }
 
@@ -57,6 +66,12 @@ async function getCellValue(spreadsheetId, range) {
     
     // サービスアカウントキーの読み込み
     const serviceAccountKey = loadServiceAccountKey();
+    
+    // 認証情報が読み込めなかった場合
+    if (!serviceAccountKey) {
+      console.warn('認証情報が読み込めないため、スプレッドシート参照をスキップします');
+      return "ERROR: Auth Failed";
+    }
     
     // JWTクライアントの作成
     const authClient = new JWT({
