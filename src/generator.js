@@ -264,8 +264,16 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     // オブジェクトの場合は文字列に変換
     if (typeof displayValue === 'object' && displayValue !== null) {
       try {
-        displayValue = JSON.stringify(displayValue);
+        // 直接文字列として扱う前にJSON文字列かどうかをチェック
+        if (typeof displayValue === 'string' && (displayValue.startsWith('{') || displayValue.startsWith('['))) {
+          // すでにJSON文字列の場合はそのまま使用
+          displayValue = displayValue;
+        } else {
+          // オブジェクトをJSON文字列に変換
+          displayValue = JSON.stringify(displayValue);
+        }
       } catch (e) {
+        console.error('値の変換エラー:', e);
         displayValue = String(displayValue);
       }
     }
