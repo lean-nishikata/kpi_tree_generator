@@ -21,6 +21,9 @@
 <body data-theme="{{THEME}}" data-direction="{{DIRECTION}}">
   <div class="container">
     <h1>{{TITLE}}</h1>
+    <div style="position: absolute; top: 10px; right: 10px;">
+      <button id="debug-button" style="padding: 5px; background-color: #333; color: white; border: 1px solid #666; cursor: pointer;">デバッグモード</button>
+    </div>
     <div class="kpi-tree-container theme-{{THEME}} direction-{{DIRECTION}}">
       <ul class="kpi-tree">
         {{TREE_HTML}}
@@ -31,6 +34,46 @@
   {{PUBLIC_URL_SCRIPT}}
   <script>
     {{SCRIPT}}
+  </script>
+  <script>
+    // デバッグボタンの処理
+    document.addEventListener('DOMContentLoaded', function() {
+      var debugButton = document.getElementById('debug-button');
+      if (debugButton) {
+        debugButton.addEventListener('click', function() {
+          try {
+            // 強制的にデバッグパネルを表示
+            window._debugMode = true;
+            localStorage.setItem('kpiTreeDebugMode', 'true');
+            
+            // デバッグ関数が存在するか確認
+            if (typeof createDebugPanel === 'function') {
+              createDebugPanel();
+              var log = document.getElementById('debug-log');
+              if (log) {
+                log.innerHTML = '<div>デバッグモードを有効化しました。</div>';
+              }
+            } else {
+              alert('デバッグ関数が読み込まれていません。ページを再読み込みしてください。');
+              window.location.reload();
+            }
+          } catch (e) {
+            alert('デバッグモードの有効化に失敗しました: ' + e.message);
+          }
+        });
+      }
+      
+      // 自動デバッグモードチェック
+      try {
+        if (localStorage.getItem('kpiTreeDebugMode') === 'true' && typeof createDebugPanel === 'function') {
+          console.log('保存された設定でデバッグモードを有効化します');
+          window._debugMode = true;
+          createDebugPanel();
+        }
+      } catch (e) {
+        console.error('デバッグモード確認中にエラーが発生しました:', e);
+      }
+    });
   </script>
 </body>
 </html>
