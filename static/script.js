@@ -1,13 +1,30 @@
 // KPI Tree JavaScript
 // Using old-school function approach to ensure maximum browser compatibility
 function kpiTreeInit() {
-  console.log('KPI Tree initializing...');
+  // 初期化開始を記録
+  var initTime = new Date().toISOString();
+  console.log('KPI Tree initializing at ' + initTime);
   console.log('URL:', window.location.href);
+  
+  // デバッグモードを有効化（URLに debug=true が含まれている場合）
+  var urlParams = new URLSearchParams(window.location.search);
+  var debugMode = urlParams.has('debug');
+  window._debugMode = debugMode;
+  
+  if (debugMode) {
+    createDebugPanel();
+    logToDebugPanel('KPI Tree initializing at ' + initTime);
+    logToDebugPanel('URL: ' + window.location.href);
+    logToDebugPanel('Search params: ' + window.location.search);
+  }
   
   // 公開URL情報があればグローバル変数に保存
   if (window.PUBLIC_URL) {
     window._publicBaseUrl = window.PUBLIC_URL;
     console.log('Public URL set from config:', window._publicBaseUrl);
+    if (debugMode) {
+      logToDebugPanel('Public URL set from config: ' + window._publicBaseUrl);
+    }
   }
   
   // 常に横型レイアウトを使用
@@ -180,26 +197,50 @@ function getStateFromUrl() {
   
   if (!stateParam) {
     console.log('No state parameter in URL');
+    if (window._debugMode) {
+      logToDebugPanel('No state parameter in URL');
+    }
     return {};
   }
   
   try {
     // URLデコード後、URL-safe base64 decode
     console.log('Raw state param:', stateParam);
+    if (window._debugMode) {
+      logToDebugPanel('Raw state param: ' + stateParam);
+    }
+    
     var decodedState = decodeURIComponent(stateParam);
     console.log('URL decoded state:', decodedState);
+    if (window._debugMode) {
+      logToDebugPanel('URL decoded state: ' + decodedState);
+    }
+    
     decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
     console.log('Base64 decoded state:', decodedState);
+    if (window._debugMode) {
+      logToDebugPanel('Base64 decoded state: ' + decodedState);
+    }
+    
     var parsedState = JSON.parse(decodedState);
     console.log('Parsed state:', parsedState);
+    if (window._debugMode) {
+      logToDebugPanel('Parsed state: ' + JSON.stringify(parsedState));
+    }
     
     // デバッグ: 各ノードIDが存在するか確認
     for (var nodeId in parsedState) {
       var element = document.getElementById(nodeId);
       if (!element) {
         console.warn('Node ID from URL not found in DOM:', nodeId);
+        if (window._debugMode) {
+          logToDebugPanel('WARNING: Node ID from URL not found in DOM: ' + nodeId);
+        }
       } else {
         console.log('Node ID from URL found in DOM:', nodeId, 'State:', parsedState[nodeId]);
+        if (window._debugMode) {
+          logToDebugPanel('Node ID found: ' + nodeId + ', State: ' + parsedState[nodeId]);
+        }
       }
     }
     
@@ -207,11 +248,23 @@ function getStateFromUrl() {
     if (Object.keys(parsedState).length > 0) {
       sessionStorage.setItem('kpiTreeState', JSON.stringify(parsedState));
       console.log('State saved to session storage for redirect handling');
+      if (window._debugMode) {
+        logToDebugPanel('State saved to session storage for redirect handling');
+      }
+      
+      // デバッグ用にローカルストレージにも保存
+      localStorage.setItem('kpiTreeStateDebug', JSON.stringify(parsedState));
+      if (window._debugMode) {
+        logToDebugPanel('State saved to local storage for debugging');
+      }
     }
     
     return parsedState;
   } catch (e) {
     console.error('Error parsing state from URL:', e);
+    if (window._debugMode) {
+      logToDebugPanel('ERROR: Error parsing state from URL: ' + e.message);
+    }
     return {};
   }
 }
@@ -561,10 +614,18 @@ function applyTreeState(state) {
   // 状態が空でないか確認
   if (!state || Object.keys(state).length === 0) {
     console.log('No state to apply');
+    if (window._debugMode) {
+      logToDebugPanel('No state to apply');
+    }
     return;
   }
   
   console.log('Applying tree state:', state);
+  if (window._debugMode) {
+    logToDebugPanel('Applying tree state: ' + JSON.stringify(state));
+    // デバッグモードでは状態適用前のツリー状態をハイライトで表示
+    highlightTreeState();
+  }
   
   // 各ノードに状態を適用
   for (var nodeId in state) {
@@ -573,32 +634,208 @@ function applyTreeState(state) {
     
     if (element && nodeState) {
       console.log('Applying state to node:', nodeId, 'State:', nodeState);
+      if (window._debugMode) {
+        logToDebugPanel('Applying state to node: ' + nodeId + ', State: ' + nodeState);
+        // デバッグモードでは要素に視覚的なマーカーを追加
+        element.setAttribute('data-debug-state', nodeState);
+        element.style.border = (nodeState === 'collapsed') ? '2px dashed red' : '2px dashed green';
+      }
       
       if (nodeState === 'collapsed') {
         // collapsedクラスを追加
         element.classList.add('collapsed');
+        if (window._debugMode) {
+          logToDebugPanel('Added .collapsed to: ' + nodeId);
+        }
         
         // 対応するボタンもトグル
         var button = document.querySelector('[data-target="' + nodeId + '"]');
         if (button) {
           button.classList.add('collapsed');
+          if (window._debugMode) {
+            logToDebugPanel('Added .collapsed to button for: ' + nodeId);
+            button.style.border = '2px dashed red';
+          }
+        } else if (window._debugMode) {
+          logToDebugPanel('WARNING: Button not found for: ' + nodeId);
         }
       } else if (nodeState === 'expanded') {
         // expandedの場合は確実にcollapsedクラスを削除
         element.classList.remove('collapsed');
+        if (window._debugMode) {
+          logToDebugPanel('Removed .collapsed from: ' + nodeId);
+        }
         
         // 対応するボタンもトグル
         var button = document.querySelector('[data-target="' + nodeId + '"]');
         if (button) {
           button.classList.remove('collapsed');
+          if (window._debugMode) {
+            logToDebugPanel('Removed .collapsed from button for: ' + nodeId);
+            button.style.border = '2px dashed green';
+          }
+        } else if (window._debugMode) {
+          logToDebugPanel('WARNING: Button not found for: ' + nodeId);
         }
       }
     } else {
       console.warn('Element not found for nodeId:', nodeId);
+      if (window._debugMode) {
+        logToDebugPanel('WARNING: Element not found for nodeId: ' + nodeId);
+      }
     }
   }
   
   console.log('Tree state applied successfully');
+  if (window._debugMode) {
+    logToDebugPanel('Tree state applied successfully');
+    // デバッグ用にDOM構造を表示
+    logDomStructure();
+  }
+}
+
+// デバッグパネルを作成する関数
+function createDebugPanel() {
+  var debugPanel = document.createElement('div');
+  debugPanel.id = 'debug-panel';
+  debugPanel.style.position = 'fixed';
+  debugPanel.style.bottom = '0';
+  debugPanel.style.right = '0';
+  debugPanel.style.width = '50%';
+  debugPanel.style.height = '300px';
+  debugPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  debugPanel.style.color = '#0f0';
+  debugPanel.style.overflow = 'auto';
+  debugPanel.style.padding = '10px';
+  debugPanel.style.fontSize = '12px';
+  debugPanel.style.fontFamily = 'monospace';
+  debugPanel.style.zIndex = '9999';
+  debugPanel.style.border = '1px solid #0f0';
+  
+  var header = document.createElement('div');
+  header.innerHTML = '<h3>KPI Tree Debug Panel</h3><p>URL: ' + window.location.href + '</p>';
+  header.style.marginBottom = '10px';
+  debugPanel.appendChild(header);
+  
+  var logContainer = document.createElement('div');
+  logContainer.id = 'debug-log';
+  logContainer.style.height = '85%';
+  logContainer.style.overflow = 'auto';
+  debugPanel.appendChild(logContainer);
+  
+  // 共有状態を表示するボタン
+  var showStateButton = document.createElement('button');
+  showStateButton.innerText = 'セッションストレージ確認';
+  showStateButton.style.margin = '5px';
+  showStateButton.onclick = function() {
+    var state = sessionStorage.getItem('kpiTreeState');
+    logToDebugPanel('Session Storage State: ' + (state || 'none'));
+    
+    var debugState = localStorage.getItem('kpiTreeStateDebug');
+    logToDebugPanel('Local Storage Debug State: ' + (debugState || 'none'));
+  };
+  debugPanel.appendChild(showStateButton);
+  
+  // DOM構造を表示するボタン
+  var showDomButton = document.createElement('button');
+  showDomButton.innerText = 'DOM構造確認';
+  showDomButton.style.margin = '5px';
+  showDomButton.onclick = logDomStructure;
+  debugPanel.appendChild(showDomButton);
+  
+  // 現在の状態をハイライトするボタン
+  var highlightButton = document.createElement('button');
+  highlightButton.innerText = '状態ハイライト';
+  highlightButton.style.margin = '5px';
+  highlightButton.onclick = highlightTreeState;
+  debugPanel.appendChild(highlightButton);
+  
+  // 状態適用テストボタン
+  var testStateButton = document.createElement('button');
+  testStateButton.innerText = '状態適用テスト';
+  testStateButton.style.margin = '5px';
+  testStateButton.onclick = function() {
+    var debugState = localStorage.getItem('kpiTreeStateDebug');
+    if (debugState) {
+      try {
+        var state = JSON.parse(debugState);
+        logToDebugPanel('Testing state application from local storage');
+        applyTreeState(state);
+      } catch(e) {
+        logToDebugPanel('ERROR: Failed to parse or apply debug state: ' + e.message);
+      }
+    } else {
+      logToDebugPanel('No debug state in local storage');
+    }
+  };
+  debugPanel.appendChild(testStateButton);
+  
+  document.body.appendChild(debugPanel);
+  logToDebugPanel('Debug panel initialized');
+}
+
+// デバッグパネルにログを追加する関数
+function logToDebugPanel(message) {
+  var logContainer = document.getElementById('debug-log');
+  if (logContainer) {
+    var timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+    var logEntry = document.createElement('div');
+    logEntry.innerHTML = '<span style="color:#aaa;">[' + timestamp + ']</span> ' + message;
+    logContainer.appendChild(logEntry);
+    logContainer.scrollTop = logContainer.scrollHeight;
+  }
+}
+
+// DOM構造を表示する関数
+function logDomStructure() {
+  logToDebugPanel('--- DOM Tree Structure ---');
+  var treeContainer = document.querySelector('.kpi-tree');
+  if (treeContainer) {
+    var nodes = treeContainer.querySelectorAll('li');
+    logToDebugPanel('Total nodes found: ' + nodes.length);
+    
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var nodeId = node.id;
+      var isCollapsed = node.classList.contains('collapsed');
+      var hasChildNodes = node.querySelector('ul') !== null;
+      
+      logToDebugPanel(
+        'Node #' + i + ': ' + nodeId + 
+        ' [collapsed: ' + isCollapsed + ']' +
+        ' [has children: ' + hasChildNodes + ']'
+      );
+    }
+  } else {
+    logToDebugPanel('ERROR: Could not find .kpi-tree container');
+  }
+  logToDebugPanel('--------------------------');
+}
+
+// 現在の状態をハイライトする関数
+function highlightTreeState() {
+  var treeContainer = document.querySelector('.kpi-tree');
+  if (treeContainer) {
+    var nodes = treeContainer.querySelectorAll('li');
+    logToDebugPanel('Highlighting current tree state for ' + nodes.length + ' nodes');
+    
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var nodeId = node.id;
+      var isCollapsed = node.classList.contains('collapsed');
+      var hasChildNodes = node.querySelector('ul') !== null;
+      
+      if (hasChildNodes) {
+        node.style.border = isCollapsed ? '2px solid red' : '2px solid green';
+        node.setAttribute('data-debug-highlighted', 'true');
+        
+        var button = document.querySelector('[data-target="' + nodeId + '"]');
+        if (button) {
+          button.style.border = isCollapsed ? '2px solid red' : '2px solid green';
+        }
+      }
+    }
+  }
 }
 
 // 初期ロード完了フラグ
