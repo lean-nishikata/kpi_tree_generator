@@ -47,8 +47,6 @@ function loadServiceAccountKey() {
     // ファイルサイズを確認（空ファイルやダミーファイルでないことを確認）
     const stats = fs.statSync(keyPath);
     if (stats.size < 100) {
-      console.warn(`警告: 認証ファイルが小さすぎます (${stats.size} bytes)`);
-      console.warn('認証ファイルが有効なJSONではない可能性があります');
       return null;
     }
     
@@ -57,17 +55,7 @@ function loadServiceAccountKey() {
     
     // ファイルの中身が空かチェック
     if (!keyFileContent || keyFileContent.trim() === '') {
-      console.warn('認証ファイルが空です');
       return null;
-    }
-    
-    // 認証ファイルの内容をデバッグ出力（先頭部分のみ）
-    console.log(`認証ファイル: ${keyPath} サイズ: ${stats.size} bytes`);
-    try {
-      const firstLine = keyFileContent.split('\n')[0];
-      console.log('最初の行:', firstLine);
-    } catch (e) {
-      console.log('認証ファイルの先頭部分の出力に失敗:', e.message);
     }
     
     // JSONとして解析
@@ -76,19 +64,14 @@ function loadServiceAccountKey() {
       
       // 最低限必要な項目があるか確認
       if (!parsed.client_email || !parsed.private_key) {
-        console.warn('警告: 認証ファイルに必要な項目が含まれていません');
         return null;
       }
       
       return parsed;
     } catch (jsonError) {
-      console.error('JSONパースエラー:', jsonError.message);
-      console.warn('認証ファイルが有効なJSONではありません');
       return null;
     }
   } catch (error) {
-    console.error('サービスアカウントキーの読み込みエラー:', error);
-    console.warn('スプレッドシート参照はスキップされます');
     return null;
   }
 }
@@ -109,7 +92,6 @@ async function getCellValue(spreadsheetId, range) {
     
     // 認証情報が読み込めなかった場合
     if (!serviceAccountKey) {
-      console.warn('認証情報が読み込めないため、スプレッドシート参照をスキップします');
       return "ERROR: Auth Failed";
     }
     
@@ -140,69 +122,8 @@ async function getCellValue(spreadsheetId, range) {
       });
       
       await doc.loadInfo();
-      return doc;
       
-    } catch (authError) {
-      console.error('スプレッドシート認証エラー:', authError.message);
-      
-      if (authError.message.includes('No key or keyFile set')) {
-        console.log('別の認証形式で再試行中...');
-        // キーファイルそのものをキー情報として使う（ファイルパスではなく）
-        try {
-          const doc2 = new GoogleSpreadsheet(spreadsheetId);
-          await doc2.useServiceAccountAuth(serviceAccountKey);
-          await doc2.loadInfo();
-          console.log(`代替認証成功: "${doc2.title}"`);
-          return doc2;
-        } catch (error2) {
-          console.error('代替認証も失敗:', error2.message);
-        }
-      }
-      
-      throw new Error(`スプレッドシートの認証に失敗しました: ${authError.message}`);
-    }
-    
-    // docがこの段階で返されているケースがあるため、docが未定義の場合の処理
-    if (!doc) {
-      console.error('スプレッドシートオブジェクトが未定義です');
-      throw new Error('スプレッドシートの認証に失敗しました');
-    }
-    
-    // シートの取得
-    console.log('シート情報を取得中...');
-    let sheet;
-    if (sheetName) {
-      console.log(`シート名 "${sheetName}" を検索中...`);
-      const cleanSheetName = sheetName.replace(/[']/g, '');
-      sheet = doc.sheetsByTitle[cleanSheetName];
-      
-      if (!sheet) {
-        console.log(`シート "${cleanSheetName}" が見つからないため、インデックスで検索します`);
-        // シート名が見つからない場合はインデックスでのアクセスを試みる
-        const sheetIndex = parseInt(sheetName.match(/\d+/)?.[0] || '0', 10) - 1;
-        sheet = doc.sheetsByIndex[Math.max(0, sheetIndex)];
-      }
-    } else {
-      // シート名がない場合は最初のシート
-      console.log('シート名が指定されていないため、最初のシートを使用します');
-      sheet = doc.sheetsByIndex[0];
-    }
-    
-    if (!sheet) {
-      throw new Error(`シートが見つかりません: ${sheetName}`);
-    }
-    
-    try {
-      // 特定のセルを直接API経由で取得する（check-sheets-values.jsと同じロジック）
-      console.log('Google Sheets API v4を使用して値を直接取得...');
-      
-      // 認証情報を取得
-      const serviceAccountKey = loadServiceAccountKey();
-      if (!serviceAccountKey) {
-        throw new Error('認証情報の読み込みに失敗しました');
-      }
-      
-      // googleapis を使用した直接アクセス（より低レベルのAPI）
+      // 直接アクセスのためGoogleSheetsAPIを使用
       const { google } = require('googleapis');
       const auth = new google.auth.JWT(
         serviceAccountKey.client_email,
@@ -213,17 +134,45 @@ async function getCellValue(spreadsheetId, range) {
       
       // Sheets API クライアントの初期化
       const sheets = google.sheets({ version: 'v4', auth });
+      return sheets;
       
-      // シート情報を取得
-      const sheetName = sheet.title;
-      const range = `${sheetName}!${cellRef}`;
-      console.log(`APIで値を取得: ${range}`);
+    } catch (authError) {
+      try {
+        // 別の方法で直接アクセス
+        const { google } = require('googleapis');
+        const auth = new google.auth.JWT(
+          serviceAccountKey.client_email,
+          null,
+          serviceAccountKey.private_key,
+          ['https://www.googleapis.com/auth/spreadsheets.readonly']
+        );
+        
+        // Sheets API クライアントの初期化
+        const sheets = google.sheets({ version: 'v4', auth });
+        return sheets;
+      } catch (error2) {
+        throw new Error('Failed to access spreadsheet');
+      }
+    }
+    
+    // 認証情報が返されたので直接APIにアクセス
+    const sheets = authClient; // 認証オブジェクトはもうsheetsクライアント
+    
+    // シート名とセルを取得
+    const [sheetName, cellRef] = range.split('!');
+    
+    if (!sheetName || !cellRef) {
+      throw new Error('Invalid range format');
+    }
+    
+    try {
+      // 値を直接取得
       
       // 値を取得（check-sheets-values.jsと同じ方法）
-      console.log('APIで値を取得中...');
+      const fullRange = `${sheetName}!${cellRef}`;
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
-        range: range,
+        range: fullRange,
       });
       
       // レスポンスの値を取得
@@ -236,68 +185,15 @@ async function getCellValue(spreadsheetId, range) {
       
       // API経由での値取得
       const cellValue = values[0][0];
-      console.log(`API経由で取得した値: ${cellValue} (${typeof cellValue})`);
-      
       // オブジェクトでなく直接値を返す
       return cellValue;
     } catch (apiError) {
-      console.warn(`API経由の値取得に失敗: ${apiError.message}、従来の方法で再試行`);
-      
-      try {
-        // 従来の方法でフォールバック
-        // A1表記をrow/col座標に変換
-        const { rowIndex, colIndex } = convertA1ToRowCol(cellRef);
-        
-        // セルの読み込み
-        await sheet.loadCells({
-          startRowIndex: rowIndex,
-          endRowIndex: rowIndex + 1,
-          startColumnIndex: colIndex,
-          endColumnIndex: colIndex + 1
-        });
-        
-        // セルの値を取得
-        const cell = sheet.getCell(rowIndex, colIndex);
-        const value = cell.value;
-        
-        // 値の種類に応じて適切に処理
-        if (value === null || value === undefined) {
-          console.log(`セル ${cellRef} の値が空です`);
-          return 0; // 数値の場合は0をデフォルト値として返す
-        } else if (typeof value === 'object') {
-          // オブジェクトの場合、安全な方法で文字列化
-          if (value instanceof Date) {
-            return value.toISOString();
-          } else {
-            try {
-              const safeObj = {};
-              // 安全なプロパティのみをコピー
-              for (const key in value) {
-                if (typeof value[key] !== 'function' && key !== '_spreadsheet' && !key.startsWith('_')) {
-                  safeObj[key] = value[key];
-                }
-              }
-              const jsonStr = JSON.stringify(safeObj);
-              console.log(`安全にJSON変換: ${jsonStr}`);
-              return jsonStr;
-            } catch (e) {
-              console.warn(`オブジェクトのJSON変換に失敗: ${e.message}`);
-              return "オブジェクト (詳細表示不可)";
-            }
-          }
-        }
-        
-        console.log(`セル ${cellRef} から値を取得: ${value} (${typeof value})`);
-        return value;
-      } catch (fallbackError) {
-        console.error(`セル値取得の代替方法も失敗: ${fallbackError.message}`);
-        return "ERROR: 値取得失敗";
-      }
+      // API呼び出しエラー
+      return "ERROR: 値取得失敗";
     }
     
   } catch (error) {
-    console.error('スプレッドシートアクセスエラー:', error);
-    throw new Error(`スプレッドシートからのデータ取得に失敗しました: ${error.message}`);
+    return "ERROR: Access Failed";
   }
 }
 
