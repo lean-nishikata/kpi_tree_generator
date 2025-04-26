@@ -90,10 +90,21 @@ function copyToClipboard() {
     
     // 公開URL設定を優先（GCSなどの環境向け）
     if (window.PUBLIC_URL) {
-      // 現在のハッシュも含めた公開URLを使用
-      var hash = window.location.hash;
-      shareUrl = window.PUBLIC_URL + (hash || '');
-      console.log('公開URLを使用した共有URL:', shareUrl);
+      // 現在の状態を表すハッシュパラメータを取得
+      var currentState = saveTreeState();
+      var stateFragment = '';
+      
+      // ツリー状態があればパラメータを生成
+      if (currentState && Object.keys(currentState).length > 0) {
+        var stateParam = generateStateParam(currentState);
+        if (stateParam) {
+          stateFragment = '#state=' + stateParam;
+        }
+      }
+      
+      // YAMLで指定された公開URLに現在の状態パラメータを結合
+      shareUrl = window.PUBLIC_URL + stateFragment;
+      console.log('公開URLと状態パラメータを結合した共有URL:', shareUrl);
     }
     
     // 最終的な共有URLの生成
