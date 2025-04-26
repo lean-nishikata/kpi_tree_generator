@@ -8,8 +8,12 @@ RUN npm install
 # 先に認証ディレクトリを作成
 RUN mkdir -p /app/keys && chmod 700 /app/keys
 
-# 認証ファイルがある場合はコピー（なくても失敗しないように条件分岐）
-COPY keys/*.json /app/keys/ 2>/dev/null || :
+# 認証ファイルをコピー試行（ビルド時に存在しなくてもエラーにしない方法）
+COPY keys/*.json /app/keys/ 2>/dev/null || true
+
+# 空のダミーファイルを作成（認証失敗時の動作確認用）
+RUN touch /app/keys/dummy.json
+
 # 権限を設定（セキュリティのため、読み取り権限を制限）
 RUN chmod -R 700 /app/keys
 
