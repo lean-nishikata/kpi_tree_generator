@@ -1,6 +1,8 @@
 const fs = require('fs-extra');
 const YAML = require('yaml');
 const path = require('path');
+const { resolveSpreadsheetReferences } = require('./spreadsheet-helper');
+require('dotenv').config();
 
 // Constants
 const TEMPLATE_PATH = path.join(__dirname, 'template.html');
@@ -96,6 +98,17 @@ async function generateKPITree() {
     // Read and parse YAML file
     const configData = await fs.readFile(configFile, 'utf8');
     const config = YAML.parse(configData);
+    
+    // Google Spreadsheetの参照を解決
+    if (config.root) {
+      console.log('スプレッドシート参照の解決を開始...');
+      try {
+        config.root = await resolveSpreadsheetReferences(config.root);
+        console.log('スプレッドシート参照の解決が完了しました');
+      } catch (error) {
+        console.error('スプレッドシート参照の解決中にエラーが発生しました:', error.message);
+      }
+    }
     
     // 出力先を単一のindex.htmlに変更
     if (!config.output) {

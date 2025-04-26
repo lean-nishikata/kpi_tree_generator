@@ -6,7 +6,9 @@ services:
     volumes:
       - ./config:/app/config
       - ./output:/app/output
+      - ./keys:/app/keys
     environment:
       - NODE_ENV=production
+      - GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
     # コマンドライン引数を渡すことができます（例：docker-compose run kpi-generator sales）
     # デフォルトはconfig.yaml

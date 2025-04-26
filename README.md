@@ -13,6 +13,7 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 - ツリーの状態をURLで共有可能
 ー 特定ノードへのリンクの生成と共有
 - スタンドアロンHTML形式によるCloud Storage等での簡単ホスティング
+- **Googleスプレッドシートから値を取得する機能**
 
 ## Dockerでの使用方法
 
@@ -26,6 +27,18 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
    （この例では `config/example.yaml` を使用します）
 3. 生成されたHTMLファイルは `output/example.html` に保存されます
 
+### Googleスプレッドシートとの連携
+
+1. Google Cloud Platformでサービスアカウントを作成し、JSONキーをダウンロード
+2. ダウンロードしたJSONキーを `keys` ディレクトリに `service-account-key.json` という名前で配置
+3. `.env.example` を `.env` にコピーして必要に応じて編集
+4. 連携したいGoogleスプレッドシートをサービスアカウントと共有（閲覧権限を付与）
+5. YAMLファイルでスプレッドシート参照を指定（`config/spreadsheet-example.yaml` を参照）
+6. 実行：
+   ```shell
+   docker-compose run kpi-generator spreadsheet-example
+   ```
+
 ### 手動でビルドして実行
 
 ```shell
@@ -33,7 +46,7 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 docker build -t kpi-tree-generator .
 
 # コンテナを実行（例：sales.yamlから生成）
-docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output kpi-tree-generator sales
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/keys:/app/keys -e GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json kpi-tree-generator sales
 ```
 
 ## 設定ファイルの指定
@@ -41,7 +54,7 @@ docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output kpi-tree-ge
 コマンドラインで設定ファイル名を指定できます（`.yaml` 拡張子は省略可能）:
 
 ```shell
-docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output kpi-tree-generator my_tree
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/keys:/app/keys -e GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json kpi-tree-generator my_tree
 ```
 
 - 指定したファイル名（例：`my_tree`）を使って `config/my_tree.yaml` を探します
@@ -86,6 +99,23 @@ root:
       operator: "+"
 ```
 
+### Googleスプレッドシート参照
+
+Googleスプレッドシートの値を参照するには、次の2つの方法があります：
+
+#### 1. オブジェクト形式（詳細設定可能）
+```yaml
+value:
+  spreadsheet:
+    id: "1AbCdEfGhIjKlMnOpQrStUvWxYz"  # スプレッドシートID
+    range: "Sheet1!B2"                 # シート名とセル参照
+```
+
+#### 2. 簡易表記（文字列形式）
+```yaml
+value: "=spreadsheet:1AbCdEfGhIjKlMnOpQrStUvWxYz:Sheet1!B2"
+```
+
 ### 重要な設定パラメータ
 
 - **title**: ツリーのタイトル
@@ -101,6 +131,7 @@ root:
 - `example.yaml` - 横向きのデフォルトテーマのKPIツリー
 - `vertical_example.yaml` - 縦向きの赤テーマのKPIツリー
 - `sales.yaml` - 縦向きの青テーマの売上ツリー
+- `spreadsheet-example.yaml` - Googleスプレッドシートと連携する例
 
 ## ブラウザでの表示
 
