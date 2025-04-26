@@ -1,6 +1,5 @@
 node_modules/
-# output/*を一時的にコメントアウトして除外を解除
-# output/*
-# !output/.gitkeep
+output/*
+!output/.gitkeep
 npm-debug.log
 .DS_Store
