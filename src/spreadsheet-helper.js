@@ -116,13 +116,6 @@ async function getCellValue(spreadsheetId, range) {
     // キー内容の確認（先頭と末尾の不要な空白を削除）
     const cleanedPrivateKey = serviceAccountKey.private_key.trim();
     
-    console.log('認証情報: ', {
-      email: serviceAccountKey.client_email,
-      keyLength: cleanedPrivateKey.length,
-      keyStart: cleanedPrivateKey.substring(0, 20) + '...',
-      keyEnd: '...' + cleanedPrivateKey.substring(cleanedPrivateKey.length - 20)
-    });
-    
     // JWTクライアントの作成（直接キーファイルパスを指定）
     const authClient = new JWT({
       email: serviceAccountKey.client_email,
@@ -132,26 +125,21 @@ async function getCellValue(spreadsheetId, range) {
     
     try {
       // スプレッドシートへのアクセス
-      console.log('スプレッドシート認証開始:', spreadsheetId);
       const doc = new GoogleSpreadsheet(spreadsheetId);
       
       // プライベートキーの検証
       if (!serviceAccountKey.private_key.includes('BEGIN PRIVATE KEY') || 
           !serviceAccountKey.private_key.includes('END PRIVATE KEY')) {
-        console.error('プライベートキーの形式が不正です');
         throw new Error('Invalid private key format');
       }
       
       // 直接サービスアカウント認証を使用
-      console.log(`サービスアカウント ${serviceAccountKey.client_email} で認証中...`);
       await doc.useServiceAccountAuth({
         client_email: serviceAccountKey.client_email,
         private_key: serviceAccountKey.private_key
       });
       
-      console.log('スプレッドシート情報の読み込み...');
       await doc.loadInfo();
-      console.log(`スプレッドシート "${doc.title}" にアクセス成功`);
       return doc;
       
     } catch (authError) {
@@ -391,12 +379,10 @@ async function resolveSpreadsheetReferences(node) {
             try {
               // オブジェクトを検出した場合、再取得を試みる
               if (cellValue && (cellValue.spreadsheetId || cellValue.jwtClient)) {
-                console.log('APIレスポンスオブジェクトを検出');
                 
                 try {
                   // check-sheets-values.jsと同じ方法で直接値を再取得
                   const { id, range } = node.value.spreadsheet;
-                  console.log(`値の再取得を試みます: ${id} ${range}`);
                   
                   // 認証情報を取得
                   const serviceAccountKey = loadServiceAccountKey();
@@ -417,7 +403,6 @@ async function resolveSpreadsheetReferences(node) {
                   const sheets = google.sheets({ version: 'v4', auth });
                   
                   // 値を取得（check-sheets-values.jsと同じ方法）
-                  console.log('APIで値を直接取得中...');
                   const response = await sheets.spreadsheets.values.get({
                     spreadsheetId: id,
                     range: range,
@@ -425,26 +410,22 @@ async function resolveSpreadsheetReferences(node) {
                   
                   if (response.data && response.data.values && response.data.values.length > 0) {
                     const directValue = response.data.values[0][0];
-                    console.log('APIから直接値を取得成功:', directValue);
                     node.value = directValue;
                     return; // 値が見つかったので終了
                   }
                 } catch (retryError) {
-                  console.error('値の再取得に失敗:', retryError.message);
+                  // エラーはサイレントに処理
                 }
                 
                 // 再取得に失敗した場合はERRORを表示
-                console.log('値の再取得に失敗したため、ERRORを表示します');
                 node.value = 'ERROR';
                 return; // エラー表示を設定して終了
               }
               
               // 通常のオブジェクトはJSON文字列に変換
               const jsonString = JSON.stringify(safeObj);
-              console.log(`オブジェクト値を文字列化成功: ${jsonString}`);
               // 単純な値の場合は文字列から直接値を取り出す
               if (jsonString === '{"0":"¥8,977,221"}') {
-                console.log('特殊なケースを検出: 直接値を使用');
                 node.value = '¥8,977,221';
               } else {
                 node.value = jsonString;
