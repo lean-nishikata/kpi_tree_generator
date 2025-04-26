@@ -322,18 +322,18 @@ function updateShareUrl() {
   var stateParam = generateStateParam(state);
   var direction = 'horizontal'; // 常に横型レイアウトを使用
   
-  // Create URL with parameters
-  var url = new URL(window.location.href);
-  // URLのハッシュ部分とクエリパラメータを削除
-  url.hash = '';
-  url.search = '';
+  // GCSと互換性のある方法でURLを構築
+  // ファイル名のみを取得（パス情報なし）
+  var fileName = window.location.pathname.split('/').pop();
+  if (!fileName) {
+    fileName = 'index.html'; // デフォルト
+  }
   
-  // パラメータを追加
-  url.searchParams.set('state', stateParam);
-  // 方向パラメータは不要になったため、追加しない
+  // クエリ文字列を構築
+  var queryString = '?state=' + stateParam;
   
-  // Store URL for copy button
-  window._shareUrl = url.toString();
+  // Store URL for copy button（相対パスを使用）
+  window._shareUrl = fileName + queryString;
   console.log('Share URL updated:', window._shareUrl);
   
   // 現在のURLパラメータをチェック
@@ -343,7 +343,7 @@ function updateShareUrl() {
   // 初期ロード時にURLパラメータがある場合は更新しない
   if (window._initialLoadComplete || !hasStateParam) {
     // ブラウザのURLを動的に更新
-    updateBrowserUrl(url.toString());
+    updateBrowserUrl(queryString);
   } else {
     console.log('Skipping URL update on initial load with state parameters');
   }
@@ -351,33 +351,60 @@ function updateShareUrl() {
 
 // Copy share URL to clipboard
 function copyShareUrlToClipboard() {
-  if (!window._shareUrl) {
-    updateShareUrl();
+  var shareUrl = window._shareUrl;
+  
+  if (!shareUrl) {
+    console.error('No share URL available');
+    return;
   }
   
-  // クリップボードAPIが利用可能な場合はそちらを使用
+  // 完全なURLを構築（可能な場合）
+  var fullUrl;
+  if (shareUrl.startsWith('http')) {
+    // すでに完全URLの場合
+    fullUrl = shareUrl;
+  } else {
+    // ドメイン部分を追加
+    var baseUrl = window.location.origin;
+    var pathParts = window.location.pathname.split('/');
+    pathParts.pop(); // ファイル名を削除
+    var currentPath = pathParts.join('/');
+    
+    // GCSのURLパスを保持するため、クエリ文字列のみを更新
+    if (shareUrl.startsWith('?')) {
+      fullUrl = window.location.origin + window.location.pathname + shareUrl;
+    } else {
+      // ファイル名が含まれている場合
+      fullUrl = window.location.origin + currentPath + '/' + shareUrl;
+    }
+  }
+  
+  console.log('Copying full URL to clipboard:', fullUrl);
+  
+  // Try to use the modern Clipboard API
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(window._shareUrl)
+    navigator.clipboard.writeText(fullUrl)
       .then(function() {
+        console.log('Share URL copied to clipboard successfully');
         showCopySuccess();
       })
       .catch(function(err) {
-        // 失敗した場合は従来の方法を使用
-        fallbackCopyToClipboard();
+        console.error('Could not copy text: ', err);
+        fallbackCopyToClipboard(fullUrl);
       });
   } else {
-    // 従来の方法でコピー
-    fallbackCopyToClipboard();
+    // Use fallback method
+    fallbackCopyToClipboard(fullUrl);
   }
 }
 
 // 従来のクリップボードコピー方法
-function fallbackCopyToClipboard() {
+function fallbackCopyToClipboard(text) {
   // Create temporary input element
   var tempInput = document.createElement('input');
   tempInput.style.position = 'absolute';
   tempInput.style.left = '-9999px';
-  tempInput.value = window._shareUrl;
+  tempInput.value = text; // 引数で受け取ったtextを使用
   document.body.appendChild(tempInput);
   
   // Select and copy
@@ -387,6 +414,9 @@ function fallbackCopyToClipboard() {
   
   if (success) {
     showCopySuccess();
+    console.log('URL copied using fallback method:', text);
+  } else {
+    console.error('Failed to copy URL using fallback method');
   }
 }
 
@@ -421,11 +451,13 @@ function resetAllNodes() {
 }
 
 // ブラウザのURLを動的に更新する関数
-function updateBrowserUrl(url) {
+function updateBrowserUrl(queryString) {
   // History APIを使用してURLを更新
   if (window.history && window.history.replaceState) {
     try {
-      window.history.replaceState({}, document.title, url);
+      // GCSと互換性を持たせるため、クエリ文字列のみを変更
+      window.history.replaceState({}, document.title, queryString);
+      console.log('Browser URL updated with query string:', queryString);
     } catch (e) {
       console.error('Error updating browser URL:', e);
     }
