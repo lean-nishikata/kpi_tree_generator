@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{TITLE}}</title>
+  <link rel="stylesheet" href="css/style.css">
   <style>
-    {{STYLE}}
-    
     /* 追加のカスタムスタイル - 水平レイアウト専用 */
     .kpi-tree li {
       display: flex;
@@ -21,6 +20,7 @@
     .direction-horizontal {
       display: block;
     }
+  
   </style>
 </head>
 <body data-theme="{{THEME}}">
@@ -34,9 +34,11 @@
   </div>
   
   {{PUBLIC_URL_SCRIPT}}
-  <script>
-    {{SCRIPT}}
-  </script>
+  <script src="js/core.js"></script>
+  <script src="js/tree.js"></script>
+  <script src="js/url.js"></script>
+  <script src="js/share.js"></script>
+  <script src="js/anchor.js"></script>
 
 </body>
 </html>
