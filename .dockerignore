@@ -1,4 +1,16 @@
 node_modules
 npm-debug.log
+Dockerfile
+docker-compose.yml
+.git
+.github
+.gitignore
+README.md
+LICENSE
+.env
+.env.*
+# コンテナ内で使用するため、keysディレクトリは除外しない
+
+# 出力はボリュームマウントするため除外可能
 output/*
 !output/.gitkeep

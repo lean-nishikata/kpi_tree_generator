@@ -29,9 +29,14 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 
 ### Googleスプレッドシートとの連携
 
+#### イメージビルド時に認証情報を組み込む方法（推奨）
+
 1. Google Cloud Platformでサービスアカウントを作成し、JSONキーをダウンロード
-2. ダウンロードしたJSONキーを `keys` ディレクトリに `service-account-key.json` という名前で配置
-3. `.env.example` を `.env` にコピーして必要に応じて編集
+2. ダウンロードしたJSONキーを `keys/service-account-key.json` という名前で配置
+3. Dockerイメージをビルド：
+   ```shell
+   docker-compose build
+   ```
 4. 連携したいGoogleスプレッドシートをサービスアカウントと共有（閲覧権限を付与）
 5. YAMLファイルでスプレッドシート参照を指定（`config/spreadsheet-example.yaml` を参照）
 6. 実行：
@@ -39,13 +44,33 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
    docker-compose run kpi-generator spreadsheet-example
    ```
 
+#### 実行時に認証情報をマウントする方法
+
+1. `docker-compose.yml` の以下の行のコメントを解除：
+   ```yaml
+   # - ./keys:/app/keys
+   # - GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
+   ```
+2. Google Cloud Platformでサービスアカウントを作成し、JSONキーをダウンロード
+3. ダウンロードしたJSONキーを `keys/service-account-key.json` という名前で配置
+4. 実行：
+   ```shell
+   docker-compose run kpi-generator spreadsheet-example
+   ```
+
 ### 手動でビルドして実行
 
+イメージビルド時に認証情報を含める場合：
 ```shell
 # Dockerイメージをビルド
 docker build -t kpi-tree-generator .
 
 # コンテナを実行（例：sales.yamlから生成）
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output kpi-tree-generator sales
+```
+
+実行時に認証情報をマウントする場合：
+```shell
 docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/keys:/app/keys -e GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json kpi-tree-generator sales
 ```
 
@@ -54,7 +79,7 @@ docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/k
 コマンドラインで設定ファイル名を指定できます（`.yaml` 拡張子は省略可能）:
 
 ```shell
-docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/keys:/app/keys -e GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json kpi-tree-generator my_tree
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output kpi-tree-generator my_tree
 ```
 
 - 指定したファイル名（例：`my_tree`）を使って `config/my_tree.yaml` を探します

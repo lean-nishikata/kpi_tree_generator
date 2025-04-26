@@ -2,13 +2,17 @@ version: '3'
 
 services:
   kpi-generator:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ./config:/app/config
       - ./output:/app/output
-      - ./keys:/app/keys
+      # キーをボリュームマウントする場合、ビルド時のものより優先される
+      # - ./keys:/app/keys
     environment:
       - NODE_ENV=production
-      - GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
+      # 環境変数はDockerfile内で設定済み、必要に応じてここで上書き可能
+      # - GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
     # コマンドライン引数を渡すことができます（例：docker-compose run kpi-generator sales）
     # デフォルトはconfig.yaml
