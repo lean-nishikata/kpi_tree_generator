@@ -415,8 +415,57 @@ function addShareButton() {
   // Append to share div
   shareDiv.appendChild(shareButton);
   
-  // Append to body
+  // デバッグボタンを追加
+  var debugButton = document.createElement('button');
+  debugButton.id = 'debugButton';
+  debugButton.textContent = 'デバッグモード';
+  debugButton.style.padding = '5px 10px';
+  debugButton.style.cursor = 'pointer';
+  debugButton.style.backgroundColor = '#333';
+  debugButton.style.color = 'white';
+  debugButton.style.border = 'none';
+  debugButton.style.borderRadius = '4px';
+  debugButton.style.marginTop = '5px'; // ボタンの間に余白を追加
+  debugButton.style.display = 'block'; // 下に配置
+  debugButton.style.width = '100%'; // 幅を合わせる
+  
+  // デバッグボタンのクリックイベント
+  debugButton.addEventListener('click', function() {
+    try {
+      // 強制的にデバッグモードを有効化
+      window._debugMode = true;
+      localStorage.setItem('kpiTreeDebugMode', 'true');
+      
+      if (typeof createDebugPanel === 'function') {
+        createDebugPanel();
+        var log = document.getElementById('debug-log');
+        if (log) {
+          log.innerHTML = '<div>デバッグモードを有効化しました。</div>';
+        }
+      } else {
+        alert('デバッグ関数が読み込まれていません。ページを再読み込みしてください。');
+        window.location.reload();
+      }
+    } catch (e) {
+      alert('デバッグモードの有効化に失敗しました: ' + e.message);
+    }
+  });
+  
+  shareDiv.appendChild(debugButton);
   document.body.appendChild(shareDiv);
+  
+  // 自動デバッグモードチェック
+  try {
+    if (localStorage.getItem('kpiTreeDebugMode') === 'true' && typeof createDebugPanel === 'function') {
+      console.log('保存された設定でデバッグモードを有効化します');
+      window._debugMode = true;
+      setTimeout(function() {
+        createDebugPanel();
+      }, 1000); // ページ読み込み完了後にデバッグパネルを表示
+    }
+  } catch (e) {
+    console.error('デバッグモード確認中にエラーが発生しました:', e);
+  }
   
   // Initialize share URL
   updateShareUrl();
