@@ -72,7 +72,7 @@ async function generateKPITree() {
     
     // If not found, try to use example.yaml
     if (!configFile) {
-      console.log(`Config file '${configName}.yaml' not found, trying example.yaml...`);
+      // 設定ファイルが見つからない場合はexample.yamlを試みる
       
       const examplePaths = [
         '/app/config/example.yaml',
@@ -88,12 +88,11 @@ async function generateKPITree() {
       }
       
       if (!configFile) {
-        console.error('No config file found. Please provide a valid YAML configuration file.');
-        process.exit(1);
+        throw new Error('No config file found. Please provide a valid YAML configuration file.');
       }
     }
     
-    console.log(`Using configuration file: ${configFile}`);
+    // 設定ファイルを使用
     
     // Read and parse YAML file
     const configData = await fs.readFile(configFile, 'utf8');
@@ -101,17 +100,12 @@ async function generateKPITree() {
     
     // Google Spreadsheetの参照を解決
     if (config.root) {
-      console.log('スプレッドシート参照の解決を開始...');
       try {
         // キーファイルの存在を確認
         const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
         if (keyPath && fs.existsSync(keyPath)) {
-          console.log(`認証キーファイルを確認: ${keyPath}`);
           config.root = await resolveSpreadsheetReferences(config.root);
-          console.log('スプレッドシート参照の解決が完了しました');
         } else {
-          console.warn(`警告: スプレッドシート認証キーファイルが見つかりません: ${keyPath || '未設定'}`);
-          console.warn('スプレッドシート参照をERRORとして表示します');
           // スプレッドシート参照を持つノードのvalueを"ERROR"に置き換える関数
           const markSpreadsheetRefAsError = (node) => {
             if (!node) return node;
@@ -128,7 +122,10 @@ async function generateKPITree() {
             
             // 子ノードも再帰的に処理
             if (node.children && Array.isArray(node.children)) {
-              node.children = node.children.map(child => markSpreadsheetRefAsError(child));
+              // null/undefinedのノードをフィルタリングして安全に処理
+              node.children = node.children
+                .filter(child => child !== null && child !== undefined)
+                .map(child => markSpreadsheetRefAsError(child));
             }
             
             return node;
@@ -138,8 +135,7 @@ async function generateKPITree() {
           config.root = markSpreadsheetRefAsError(config.root);
         }
       } catch (error) {
-        console.error('スプレッドシート参照の解決中にエラーが発生しました:', error.message);
-        console.warn('エラーが発生しましたが、処理を続行します');
+        // エラーは抑制して処理を続行
       }
     }
     
@@ -174,7 +170,6 @@ async function generateKPITree() {
     
     // Get public URL if defined in YAML
     const publicUrl = config.public_url || '';
-    console.log(`Public URL from config: ${publicUrl}`);
     
     // PUBLIC_URL変数を設定するスクリプトを生成
     // リダイレクト先で決定論的に動作するよう改善
@@ -218,9 +213,7 @@ ${combinedScripts}
     // HTMLファイルを出力
     await fs.writeFile(outputFile, finalHtml);
     
-    console.log(`KPI tree generated successfully: ${outputFile}`);
-    console.log('All scripts and styles embedded in a single HTML file');
-    console.log('File is ready for direct GCS upload');
+    // 生成完了
   } catch (error) {
     console.error('Error generating KPI tree:', error);
     process.exit(1);
@@ -239,6 +232,11 @@ function hashString(str) {
 
 // 決定論的なノードIDを生成する関数
 function generateDeterministicId(node, path) {
+  // ノードがnullまたはundefinedの場合、安全なデフォルト値を返す
+  if (!node) {
+    return `node-default-${path}`;
+  }
+  
   // ノードの内容とパス情報からハッシュを生成
   const nodeText = node.text || '';
   const nodeValue = node.value || '';
@@ -248,6 +246,11 @@ function generateDeterministicId(node, path) {
 
 // Function to generate HTML for the tree
 function generateTreeHtml(node, level = 0, path = 'root') {
+  // ノードがない場合は空文字列を返す
+  if (!node) {
+    return '';
+  }
+  
   // ノードのテキストと位置情報から一意なIDを生成
   const nodeId = generateDeterministicId(node, path);
   const hasChildren = node.children && node.children.length > 0;
@@ -296,9 +299,11 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     
     // Add each child with operator
     node.children.forEach((child, index) => {
+      // nullまたはundefinedの子ノードをスキップ
+      if (!child) return;
+      
       // 子ノードにはインデックスを含むパスを渡す
       html += generateTreeHtml(child, level + 1, `${path}-${index}`);
-      
       
       // Add operator between nodes if specified (except for the last child)
       if (child.operator && index < node.children.length - 1) {
