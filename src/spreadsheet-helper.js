@@ -113,29 +113,90 @@ async function getCellValue(spreadsheetId, range) {
       return "ERROR: Auth Failed";
     }
     
-    // JWTクライアントの作成
+    // キー内容の確認（先頭と末尾の不要な空白を削除）
+    const cleanedPrivateKey = serviceAccountKey.private_key.trim();
+    
+    console.log('認証情報: ', {
+      email: serviceAccountKey.client_email,
+      keyLength: cleanedPrivateKey.length,
+      keyStart: cleanedPrivateKey.substring(0, 20) + '...',
+      keyEnd: '...' + cleanedPrivateKey.substring(cleanedPrivateKey.length - 20)
+    });
+    
+    // JWTクライアントの作成（直接キーファイルパスを指定）
     const authClient = new JWT({
       email: serviceAccountKey.client_email,
-      key: serviceAccountKey.private_key,
+      key: cleanedPrivateKey, // 余分な空白を削除したキー
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
     });
     
-    // スプレッドシートへのアクセス
-    const doc = new GoogleSpreadsheet(spreadsheetId);
-    await doc.useServiceAccountAuth(authClient);
-    await doc.loadInfo();
+    try {
+      // スプレッドシートへのアクセス
+      console.log('スプレッドシート認証開始:', spreadsheetId);
+      const doc = new GoogleSpreadsheet(spreadsheetId);
+      
+      // プライベートキーの検証
+      if (!serviceAccountKey.private_key.includes('BEGIN PRIVATE KEY') || 
+          !serviceAccountKey.private_key.includes('END PRIVATE KEY')) {
+        console.error('プライベートキーの形式が不正です');
+        throw new Error('Invalid private key format');
+      }
+      
+      // 直接サービスアカウント認証を使用
+      console.log(`サービスアカウント ${serviceAccountKey.client_email} で認証中...`);
+      await doc.useServiceAccountAuth({
+        client_email: serviceAccountKey.client_email,
+        private_key: serviceAccountKey.private_key
+      });
+      
+      console.log('スプレッドシート情報の読み込み...');
+      await doc.loadInfo();
+      console.log(`スプレッドシート "${doc.title}" にアクセス成功`);
+      return doc;
+      
+    } catch (authError) {
+      console.error('スプレッドシート認証エラー:', authError.message);
+      
+      if (authError.message.includes('No key or keyFile set')) {
+        console.log('別の認証形式で再試行中...');
+        // キーファイルそのものをキー情報として使う（ファイルパスではなく）
+        try {
+          const doc2 = new GoogleSpreadsheet(spreadsheetId);
+          await doc2.useServiceAccountAuth(serviceAccountKey);
+          await doc2.loadInfo();
+          console.log(`代替認証成功: "${doc2.title}"`);
+          return doc2;
+        } catch (error2) {
+          console.error('代替認証も失敗:', error2.message);
+        }
+      }
+      
+      throw new Error(`スプレッドシートの認証に失敗しました: ${authError.message}`);
+    }
+    
+    // docがこの段階で返されているケースがあるため、docが未定義の場合の処理
+    if (!doc) {
+      console.error('スプレッドシートオブジェクトが未定義です');
+      throw new Error('スプレッドシートの認証に失敗しました');
+    }
     
     // シートの取得
+    console.log('シート情報を取得中...');
     let sheet;
     if (sheetName) {
-      sheet = doc.sheetsByTitle[sheetName.replace(/[']/g, '')];
+      console.log(`シート名 "${sheetName}" を検索中...`);
+      const cleanSheetName = sheetName.replace(/[']/g, '');
+      sheet = doc.sheetsByTitle[cleanSheetName];
+      
       if (!sheet) {
+        console.log(`シート "${cleanSheetName}" が見つからないため、インデックスで検索します`);
         // シート名が見つからない場合はインデックスでのアクセスを試みる
         const sheetIndex = parseInt(sheetName.match(/\d+/)?.[0] || '0', 10) - 1;
         sheet = doc.sheetsByIndex[Math.max(0, sheetIndex)];
       }
     } else {
       // シート名がない場合は最初のシート
+      console.log('シート名が指定されていないため、最初のシートを使用します');
       sheet = doc.sheetsByIndex[0];
     }
     
