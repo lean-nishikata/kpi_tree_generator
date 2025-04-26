@@ -180,106 +180,109 @@ function loadTreeState() {
 // Get state from URL parameters
 function getStateFromUrl() {
   var stateParam;
+  var sessionState = sessionStorage.getItem('kpiTreeState');
   
-  // 1. オリジナルパラメータが保存されていれば、それを最優先で使用
+  console.log('Getting state from URL...');
+  
+  // 1. セッションにすでにパース済みの状態があれば優先使用
+  if (sessionState) {
+    try {
+      var parsedSessionState = JSON.parse(sessionState);
+      console.log('Found parsed state in session storage, using it directly');
+      return parsedSessionState;
+    } catch (e) {
+      console.warn('Error parsing session state, falling back to URL params', e);
+      // セッション状態のパースに失敗した場合は、次の方法を使用
+    }
+  }
+  
+  // 2. オリジナルパラメータが保存されていれば、それを使用
   if (window._originalStateParam) {
-    console.log('Using original state parameter from initial page load');
-
     stateParam = window._originalStateParam;
-  } else {
-    // 2. セッションストレージにオリジナルパラメータがあれば使用（ページリロード時など）
-    var storedOriginalParam = sessionStorage.getItem('originalStateParam');
-    if (storedOriginalParam) {
-      console.log('Using original state parameter from session storage');
-
-      stateParam = storedOriginalParam;
-    } else {
-      // 3. 通常のURLSearchParamsを試す
-      var urlParams = new URLSearchParams(window.location.search);
-      stateParam = urlParams.get('state');
+    console.log('Using original state parameter from window object:', stateParam);
+  }
+  // 3. セッションストレージにオリジナルパラメータがあれば使用
+  else if (sessionStorage.getItem('originalStateParam')) {
+    stateParam = sessionStorage.getItem('originalStateParam');
+    console.log('Using original state parameter from session storage:', stateParam);
+  }
+  // 4. 通常のURLSearchParamsを試す
+  else {
+    var urlParams = new URLSearchParams(window.location.search);
+    stateParam = urlParams.get('state');
+    console.log('Using state parameter from URLSearchParams:', stateParam);
+    
+    // 5. それでもなければURL全体からstate=を抽出
+    if (!stateParam) {
+      var fullUrl = window.location.href;
+      var stateIndex = fullUrl.indexOf('state=');
       
-      // 4. 通常の方法で取得できない場合（GCSリダイレクトなど）、URLの文字列全体から探す
-      if (!stateParam) {
-        console.log('Standard URL param not found, trying alternative method for GCS redirect URL');
-
+      if (stateIndex !== -1) {
+        var stateSubstring = fullUrl.substring(stateIndex + 6); // 'state='.length = 6
         
-        var fullUrl = window.location.href;
-        var stateIndex = fullUrl.indexOf('state=');
-        
-        if (stateIndex !== -1) {
-          // state=以降の部分を取得
-          var stateSubstring = fullUrl.substring(stateIndex + 6); // 'state='.length = 6
-          
-          // 次のパラメータがある場合は&までを取得、なければ最後まで
-          var nextParamIndex = stateSubstring.indexOf('&');
-          if (nextParamIndex !== -1) {
-            stateParam = stateSubstring.substring(0, nextParamIndex);
-          } else {
-            stateParam = stateSubstring;
-          }
-          
-          console.log('Found state parameter in redirect URL:', stateParam);
-
+        var nextParamIndex = stateSubstring.indexOf('&');
+        if (nextParamIndex !== -1) {
+          stateParam = stateSubstring.substring(0, nextParamIndex);
+        } else {
+          stateParam = stateSubstring;
         }
+        
+        console.log('Found state parameter in full URL string:', stateParam);
       }
     }
   }
   
   if (!stateParam) {
-    console.log('No state parameter found in URL using any method');
-
+    console.log('No state parameter found using any method, returning empty state');
     return {};
   }
   
   try {
     // URLデコード後、URL-safe base64 decode
-    console.log('Raw state param:', stateParam);
-
+    console.log('Processing state param:', stateParam);
     
     var decodedState = decodeURIComponent(stateParam);
     console.log('URL decoded state:', decodedState);
-
     
     decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
     console.log('Base64 decoded state:', decodedState);
-
     
     var parsedState = JSON.parse(decodedState);
     console.log('Parsed state:', parsedState);
-
     
-    // デバッグ: 各ノードIDが存在するか確認
+    // レイアウト状態のDOMIDsの存在を確認
+    var existingNodeCount = 0;
+    var totalNodeCount = 0;
+    
     for (var nodeId in parsedState) {
+      totalNodeCount++;
       var element = document.getElementById(nodeId);
       if (!element) {
         console.warn('Node ID from URL not found in DOM:', nodeId);
-
       } else {
+        existingNodeCount++;
         console.log('Node ID from URL found in DOM:', nodeId, 'State:', parsedState[nodeId]);
-
       }
     }
+    
+    console.log(`Found ${existingNodeCount} of ${totalNodeCount} nodes in the DOM`);
     
     // 復元した状態をセッションストレージに保存
     if (Object.keys(parsedState).length > 0) {
       sessionStorage.setItem('kpiTreeState', JSON.stringify(parsedState));
-      console.log('State saved to session storage for redirect handling');
-
+      console.log('State saved to session storage for future reference');
       
-      // デバッグ用にローカルストレージにも保存
       try {
         localStorage.setItem('kpiTreeStateDebug', JSON.stringify(parsedState));
-
+        console.log('State also saved to local storage for debug purposes');
       } catch (e) {
-        console.warn('Could not save to localStorage (possibly due to security restrictions):', e);
-
+        console.warn('Could not save state to localStorage:', e);
       }
     }
     
     return parsedState;
   } catch (e) {
-    console.error('Error parsing state from URL:', e);
-
+    console.error('Error parsing state from URL parameter:', e);
     return {};
   }
 }
@@ -576,12 +579,80 @@ function handleRedirectParams() {
   // URLパラメータを確認
   var urlParams = new URLSearchParams(window.location.search);
   var hasStateParam = urlParams.has('state');
+  var originalParamFromSession = sessionStorage.getItem('originalStateParam');
+  var savedTreeState = sessionStorage.getItem('kpiTreeState');
   
-  // URLにステートパラメータがなく、セッションストレージにステートがある場合（リダイレクト後の状態）
-  if (!hasStateParam && sessionStorage.getItem('kpiTreeState')) {
+  console.log('Checking for redirect params:', {
+    hasStateInUrl: hasStateParam,
+    hasOriginalParam: !!originalParamFromSession,
+    hasSavedState: !!savedTreeState
+  });
+  
+  // 1. URLに状態パラメータがあるが、セッションに元の値がある場合 （GCSリダイレクト後）
+  if (hasStateParam && originalParamFromSession) {
+    console.log('Detected potential redirect scenario - comparing URL state with original state');
+    var currentStateParam = urlParams.get('state');
+    
+    // URLパラメータが元の値と異なる場合は、元の値を優先
+    if (currentStateParam !== originalParamFromSession) {
+      console.log('URL state param changed after redirect, restoring original state');
+      var savedState = null;
+      
+      // 元のオブジェクト状態を操作
+      if (savedTreeState) {
+        try {
+          savedState = JSON.parse(savedTreeState);
+          console.log('Using pre-parsed state object from session storage');
+        } catch (parseError) {
+          console.warn('Error parsing saved state:', parseError);
+        }
+      }
+      
+      // パース済み状態がない場合、オリジナルパラメータからデコード
+      if (!savedState) {
+        try {
+          var decodedState = decodeURIComponent(originalParamFromSession);
+          decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
+          savedState = JSON.parse(decodedState);
+          console.log('Successfully decoded original state from session storage');
+        } catch (decodeError) {
+          console.error('Failed to decode original state:', decodeError);
+          return false; // デコード失敗時は何もしない
+        }
+      }
+      
+      // URLを更新
+      if (savedState && Object.keys(savedState).length > 0) {
+        var queryString = '?state=' + originalParamFromSession;
+        console.log('Restoring original state in URL:', queryString);
+        
+        // ブラウザのURLを更新（History APIを使用）
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, document.title, window.location.pathname + queryString);
+          console.log('Browser URL updated with original state param');
+        }
+        
+        // 状態を適用
+        if (document.readyState === 'loading') {
+          console.log('DOM not yet ready, setting up listener for state application');
+          document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM now ready, applying original state');
+            applyTreeState(savedState);
+          });
+        } else {
+          console.log('DOM already ready, applying original state now');
+          applyTreeState(savedState);
+        }
+        
+        return true; // 状態適用済みを返す
+      }
+    }
+  }
+  // 2. URLにステートパラメータがなく、セッションストレージにステートがある場合
+  else if (!hasStateParam && savedTreeState) {
     try {
       // セッションストレージから状態を取得
-      var savedState = JSON.parse(sessionStorage.getItem('kpiTreeState'));
+      var savedState = JSON.parse(savedTreeState);
       console.log('Found saved state in session storage:', savedState);
       
       if (savedState && Object.keys(savedState).length > 0) {
@@ -595,13 +666,10 @@ function handleRedirectParams() {
         // ブラウザのURLを更新（History APIを使用）
         if (window.history && window.history.replaceState) {
           window.history.replaceState({}, document.title, window.location.pathname + queryString);
-          console.log('Browser URL updated:', window.location.pathname + queryString);
+          console.log('Browser URL updated with session state');
         }
         
-        // デバッグモードの場合、パネルにも表示
-
-        
-        // DOMContentLoadedを待ってから状態を適用
+        // DOMに状態を適用
         if (document.readyState === 'loading') {
           console.log('DOM not yet ready, setting up listener for state application');
           document.addEventListener('DOMContentLoaded', function() {
@@ -609,14 +677,9 @@ function handleRedirectParams() {
             applyTreeState(savedState);
           });
         } else {
-          // DOM既に読み込み済みの場合は直接適用
           console.log('DOM already ready, applying session state now');
           applyTreeState(savedState);
         }
-        
-        // 処理完了後、セッションストレージをクリア
-        sessionStorage.removeItem('kpiTreeState');
-        console.log('Session storage cleared after state restoration');
         
         return true; // 状態適用済みを返す
       }
@@ -721,9 +784,16 @@ function saveOriginalStateParam() {
   // URLの生のパラメータを取得（リダイレクト前に実行）
   var fullUrl = window.location.href;
   var stateIndex = fullUrl.indexOf('state=');
+  var urlParams = new URLSearchParams(window.location.search);
+  var stateFromParams = urlParams.get('state');
   
-  if (stateIndex !== -1) {
-    // state=以降の部分を取得
+  // 状態パラメータを取得する複数の方法を試す
+  if (stateFromParams) {
+    // 1. 標準のURLSearchParamsで取得できた場合
+    window._originalStateParam = stateFromParams;
+    console.log('Original state parameter saved from URLSearchParams:', window._originalStateParam);
+  } else if (stateIndex !== -1) {
+    // 2. パラメータが見つからない場合、URL全体から探索
     var stateSubstring = fullUrl.substring(stateIndex + 6); // 'state='.length = 6
     
     // 次のパラメータがある場合は&までを取得、なければ最後まで
@@ -734,15 +804,34 @@ function saveOriginalStateParam() {
       window._originalStateParam = stateSubstring;
     }
     
-    console.log('Original state parameter saved:', window._originalStateParam);
-    
-    // セッションストレージにも保存（リダイレクト時の参照用）
+    console.log('Original state parameter saved from URL string:', window._originalStateParam);
+  }
+  
+  // オリジナルの状態パラメータが見つかった場合、セッションストレージに保存
+  if (window._originalStateParam) {
+    // セッションストレージにストリングとして保存
     try {
+      // オリジナルパラメータを保存
       sessionStorage.setItem('originalStateParam', window._originalStateParam);
       console.log('Original state param saved to session storage');
+      
+      // デコードしたオブジェクトも保存しておく
+      try {
+        var decodedState = decodeURIComponent(window._originalStateParam);
+        decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
+        var parsedState = JSON.parse(decodedState);
+        
+        // オブジェクト状態を保存
+        sessionStorage.setItem('kpiTreeState', JSON.stringify(parsedState));
+        console.log('Decoded state object saved to session storage');
+      } catch (decodeError) {
+        console.warn('Could not decode original state parameter:', decodeError);
+      }
     } catch (e) {
       console.warn('Could not save original state to sessionStorage:', e);
     }
+  } else {
+    console.log('No state parameter found in original URL');
   }
 }
 
