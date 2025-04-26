@@ -217,7 +217,25 @@ async function getCellValue(spreadsheetId, range) {
     
     // セルの値を取得
     const cell = sheet.getCell(rowIndex, colIndex);
-    return cell.value;
+    const value = cell.value;
+    
+    // 値の種類に応じて適切に処理
+    if (value === null || value === undefined) {
+      console.log(`セル ${cellRef} の値が空です`);
+      return 0; // 数値の場合は0をデフォルト値として返す
+    } else if (typeof value === 'object') {
+      console.log(`セル ${cellRef} の値がオブジェクトです:`, value);
+      // オブジェクトの場合はJSON文字列に変換
+      try {
+        return JSON.stringify(value);
+      } catch (e) {
+        console.warn(`オブジェクトのJSON変換に失敗: ${e.message}`);
+        return String(value); // 標準的な文字列化
+      }
+    }
+    
+    console.log(`セル ${cellRef} から値を取得: ${value} (${typeof value})`);
+    return value;
     
   } catch (error) {
     console.error('スプレッドシートアクセスエラー:', error);
@@ -264,9 +282,34 @@ async function resolveSpreadsheetReferences(node) {
   if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
     const { id, range } = node.value.spreadsheet;
     try {
-      const value = await getCellValue(id, range);
-      // 数値に変換を試みる
-      node.value = isNaN(Number(value)) ? value : Number(value);
+      const cellValue = await getCellValue(id, range);
+      console.log(`スプレッドシートから値を取得 (${range}):`, cellValue, typeof cellValue);
+      
+      // 値のタイプに応じた処理
+      if (cellValue === null || cellValue === undefined) {
+        console.log(`スプレッドシートセル ${range} の値が空のため0を使用`);
+        node.value = 0;
+      } else if (typeof cellValue === 'number') {
+        // 数値はそのまま使用
+        node.value = cellValue;
+      } else if (typeof cellValue === 'string') {
+        // 文字列が数値に変換可能か試みる
+        node.value = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
+      } else if (typeof cellValue === 'object') {
+        // オブジェクトの場合は文字列化（日付などの特殊オブジェクト対応）
+        try {
+          const jsonString = JSON.stringify(cellValue);
+          console.log(`オブジェクト値を文字列化: ${jsonString}`);
+          node.value = jsonString;
+        } catch (e) {
+          console.warn(`オブジェクトの文字列化に失敗: ${e.message}`);
+          node.value = String(cellValue);
+        }
+      } else {
+        // その他の型は文字列化
+        node.value = String(cellValue);
+      }
+      
     } catch (error) {
       console.error(`スプレッドシート参照の解決に失敗: ${error.message}`);
       node.value = 'ERROR';
@@ -280,8 +323,33 @@ async function resolveSpreadsheetReferences(node) {
       const id = parts[0];
       const range = parts[1];
       try {
-        const value = await getCellValue(id, range);
-        node.value = isNaN(Number(value)) ? value : Number(value);
+        const cellValue = await getCellValue(id, range);
+        console.log(`文字列形式の参照から値を取得 (${range}):`, cellValue, typeof cellValue);
+        
+        // 値のタイプに応じた処理
+        if (cellValue === null || cellValue === undefined) {
+          console.log(`スプレッドシートセル ${range} の値が空のため0を使用`);
+          node.value = 0;
+        } else if (typeof cellValue === 'number') {
+          // 数値はそのまま使用
+          node.value = cellValue;
+        } else if (typeof cellValue === 'string') {
+          // 文字列が数値に変換可能か試みる
+          node.value = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
+        } else if (typeof cellValue === 'object') {
+          // オブジェクトの場合は文字列化（日付などの特殊オブジェクト対応）
+          try {
+            const jsonString = JSON.stringify(cellValue);
+            console.log(`オブジェクト値を文字列化: ${jsonString}`);
+            node.value = jsonString;
+          } catch (e) {
+            console.warn(`オブジェクトの文字列化に失敗: ${e.message}`);
+            node.value = String(cellValue);
+          }
+        } else {
+          // その他の型は文字列化
+          node.value = String(cellValue);
+        }
       } catch (error) {
         console.error(`スプレッドシート参照の解決に失敗: ${error.message}`);
         node.value = 'ERROR';
