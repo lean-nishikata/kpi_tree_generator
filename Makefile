@@ -16,7 +16,7 @@ check-sheets:
 
 .PHONY: check-value
 check-value:
-	docker-compose run --rm --entrypoint node kpi-generator src/check-sheets-values.js $(id) $(range)
+	docker-compose run --rm --entrypoint node kpi-generator src/check-sheets-values.js $(id) "$(range)"
 
 .PHONY: debug
 debug:
