@@ -495,8 +495,10 @@ async function resolveSpreadsheetReferences(node) {
   if (node.children && Array.isArray(node.children)) {
     const processedChildren = [];
     for (const child of node.children) {
-      const processedChild = await resolveSpreadsheetReferences(child);
-      processedChildren.push(processedChild);
+      if (child) { // childがnullまたはundefinedでないことを確認
+        const processedChild = await resolveSpreadsheetReferences(child);
+        processedChildren.push(processedChild);
+      }
     }
     node.children = processedChildren;
   }
