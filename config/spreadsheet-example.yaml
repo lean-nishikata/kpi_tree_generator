@@ -1,0 +1,51 @@
+title: "スプレッドシート連携KPIツリー"
+theme: "blue"
+
+# 公開時のURL設定（GCSなどでホスティングする場合に使用）
+public_url: "https://storage.googleapis.com/your-bucket/spreadsheet-example.html"
+
+root:
+  text: "売上 (単位:億円)"
+  # スプレッドシートから直接値を取得
+  value:
+    spreadsheet:
+      id: "1AbCdEfGhIjKlMnOpQrStUvWxYz"  # あなたのスプレッドシートIDに置き換えてください
+      range: "Sheet1!B2"  # 対象セル
+
+  children:
+    - text: "製品A"
+      # 簡易表記方式でスプレッドシートから値を取得
+      value: "=spreadsheet:1AbCdEfGhIjKlMnOpQrStUvWxYz:Sheet1!B3"
+      children:
+        - text: "直販"
+          value:
+            spreadsheet:
+              id: "1AbCdEfGhIjKlMnOpQrStUvWxYz"
+              range: "Sheet1!B4"
+          operator: "+"
+        - text: "パートナー販売"
+          value:
+            spreadsheet:
+              id: "1AbCdEfGhIjKlMnOpQrStUvWxYz"
+              range: "Sheet1!B5"
+          operator: "+"
+      operator: "+"
+    - text: "製品B"
+      value:
+        spreadsheet:
+          id: "1AbCdEfGhIjKlMnOpQrStUvWxYz"
+          range: "Sheet1!C3"
+      children:
+        - text: "地域X"
+          value:
+            spreadsheet:
+              id: "1AbCdEfGhIjKlMnOpQrStUvWxYz"
+              range: "Sheet1!C4"
+          operator: "+"
+        - text: "地域Y"
+          value:
+            spreadsheet:
+              id: "1AbCdEfGhIjKlMnOpQrStUvWxYz"
+              range: "Sheet1!C5"
+          operator: "+"
+      operator: "+"

@@ -7,12 +7,14 @@ RUN npm install
 
 COPY . .
 
-# 出力ディレクトリを作成し、権限を設定
+# 出力ディレクトリとキーディレクトリを作成し、権限を設定
 RUN mkdir -p /app/output && chmod 777 /app/output
+RUN mkdir -p /app/keys && chmod 700 /app/keys
 
 VOLUME ["/app/config"]
 VOLUME ["/app/output"]
+VOLUME ["/app/keys"]
 
-# Default config is 'config' but can be overridden as docker run command argument
+# デフォルトは引数なしでnpm startを実行（package.jsonのscripts.startを使用）
 ENTRYPOINT ["node", "src/generator.js"]
 CMD ["config"]

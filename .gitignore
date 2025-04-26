@@ -4,3 +4,7 @@ output/
 !output/.gitkeep
 npm-debug.log
 .DS_Store
+
+# Google API credentials
+/keys/*.json
+.env

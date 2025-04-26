@@ -1,0 +1,266 @@
+title: 利益KPIツリー
+theme: default
+
+public_url: "https://storage.cloud.google.com/cc-data-platform-kpi-tree-viewer-prod/index.html"
+
+root:
+  text: 利益
+  operator: "-"
+  url: "https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd"
+  value: 1000
+  children:
+  - text: 売上
+    operator: "-"
+    value: 1000
+    children:
+    - text: 販売所収益
+      operator: "+"
+      value: 1000
+      url: "https://lookerstudio.google.com/u/0/reporting/4565e709-4733-42d8-955a-e56dbbe8c332/page/p_xsek8mmgrd"
+      children:
+      - text: スプレッド
+        operator: "*"
+        value: 1000
+      - text: 取引金額
+        operator: "*"
+        value: 1000
+        children:
+        - text: 取引単価
+          operator: "*"
+          value: 1000
+        - text: 取引ユーザー数
+          operator: "*"
+          value: 1000
+          children:
+          - text: 既存顧客のうち取引ユーザー
+            operator: "*"
+            value: 1000
+            children:
+            - text: 月末本人確認済既存口座数
+              operator: "*"
+              value: 1000
+            - text: 既存ユーザー取引率
+              operator: "*"
+              value: 1000
+          - text: 新規顧客のうち取引ユーザー
+            operator: "*"
+            value: 1000
+            children:
+            - text: 新規口座開設数
+              operator: "*"
+              value: 1000
+              children:
+              - text: 広告宣伝費
+                operator: "*"
+                value: 1000
+              - text: Blended CPA
+                operator: "*"
+                value: 1000
+            - text: 新規ユーザー取引率
+              operator: "*"
+              value: 1000
+    - text: 販売所以外収益
+      operator: "+"
+      value: 1000
+      url: "https://lookerstudio.google.com/u/0/reporting/f2d1fa3c-f6cc-47bd-832b-5935c4f206e9/page/p_xsek8mmgrd"
+      children:
+      - text: 取引所
+        operator: "+"
+        value: 1000
+        url: "https://lookerstudio.google.com/u/0/reporting/758085d1-c9d8-4e7e-898f-8a2d74904045/page/p_xsek8mmgrd"
+        children:
+        - text: 出来高
+          operator: "+"
+          value: 1000
+          children:
+          - text: MTU
+            operator: "*"
+            value: 1000
+          - text: 平均約定回数
+            operator: "*"
+            value: 1000
+          - text: 平均約定金額
+            operator: "*"
+            value: 1000
+        - text: 手数料率
+          operator: "+"
+          value: 1000
+      - text: つみたて
+        operator: "+"
+        value: 1000
+        url: "https://lookerstudio.google.com/u/0/reporting/e4ad8b3b-913a-4312-8ed1-3709a5b75956/page/p_9nnkwdngrd"
+        children:
+        - text: つみたて件数
+          operator: "*"
+          value: 1000
+          children:
+          - text: 新規UU
+            operator: "+"
+            value: 1000
+          - text: 再開UU
+            operator: "+"
+            value: 1000
+          - text: 継続UU
+            operator: "+"
+            value: 1000
+        - text: ARPPU
+          operator: "*"
+          value: 1000
+          children:
+          - text: 一人当たりつみたて金額
+            operator: "*"
+            value: 1000
+          - text: スプレッド
+            operator: "*"
+            value: 1000
+      - text: 日本円入出金・暗号資産送金
+        operator: "+"
+        value: 1000
+        children:
+        - text: 入金
+          operator: "*"
+          value: 1000
+          children:
+          - text: 入金金額
+            operator: "+"
+            value: 1000
+          - text: 手数料率
+            operator: "+"
+            value: 1000
+        - text: 出金
+          operator: "+"
+          value: 1000
+          children:
+          - text: 出金金額
+            operator: "*"
+            value: 1000
+          - text: 手数料率
+            operator: "*"
+            value: 1000
+        - text: 暗号資産送金
+          operator: "+"
+          value: 1000
+          children:
+          - text: 送金金額
+            operator: "*"
+            value: 1000
+            children:
+            - text: 送金UU
+              operator: "*"
+              value: 1000
+            - text: 平均送金金額
+              operator: "*"
+              value: 1000
+          - text: 手数料率
+            operator: "*"
+            value: 1000
+      - text: ステーキング
+        operator: "+"
+        value: 1000
+        children:
+        - text: ETH保有金額
+          operator: "*"
+          value: 1000
+          children:
+          - text: 保有UU
+            operator: "*"
+            value: 1000
+          - text: 一人当たり保有金額
+            operator: "*"
+            value: 1000
+        - text: 手数料率
+          operator: "*"
+          value: 1000
+      - text: NFT
+        operator: "+"
+        value: 1000
+        children:
+        - text: CC出品
+          operator: "*"
+          value: 1000
+        - text: CtoC
+          operator: "*"
+          value: 1000
+        - text: 発行体
+          operator: "*"
+          value: 1000
+        - text: 出庫手数料
+          operator: "*"
+          value: 1000
+      - text: IEO
+        operator: "+"
+        value: 1000
+        children:
+        - text: PLT
+          operator: "*"
+          value: 1000
+        - text: FNCT
+          operator: "*"
+          value: 1000
+        - text: BRIL
+          operator: "*"
+          value: 1000
+      - text: OnRamp
+        operator: "+"
+        value: 1000
+        children:
+        - text: MTU
+          operator: "*"
+          value: 1000
+          children:
+          - text: MTUrate
+            operator: "*"
+            value: 1000
+          - text: MAU
+            operator: "*"
+            value: 1000
+        - text: ARPPU
+          operator: "*"
+          value: 1000
+          children:
+          - text: 一人当たり売買金額
+            operator: "*"
+            value: 1000
+          - text: スプレッド
+            operator: "*"
+            value: 1000
+      - text: リワード
+        operator: "+"
+        value: 1000
+        children:
+        - text: 案件クリアUU
+          operator: "*"
+          value: 1000
+        - text: CCが受け取る広告費
+          operator: "*"
+          value: 1000
+      - text: 実現損益
+        operator: "+"
+        value: 1000
+        children:
+        - text: 有料会員登録UU
+          operator: "*"
+          value: 1000
+        - text: ARPPU
+          operator: "*"
+          value: 1000
+      - text: でんき・ガス
+        operator: "+"
+        value: 1000
+        children:
+        - text: 契約UU
+          operator: "*"
+          value: 1000
+        - text: ARPPU
+          operator: "*"
+          value: 1000
+      - text: Coincheck Prime
+        operator: "+"
+        value: 1000
+        children:
+        - text: アセットロック
+          operator: "*"
+          value: 1000
+        - text: 大口OTC
+          operator: "*"
+          value: 1000
