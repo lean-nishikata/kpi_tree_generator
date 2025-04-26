@@ -1,38 +1,54 @@
 /**
  * KPIツリージェネレーター：ツリー操作機能
- * ツリーノードの操作と状態管理機能を提供します
+ * ツリーノードの操作と状態管理を担当するモジュールです
+ * 
+ * ツリーの開閉状態の保存、読み込み、適用を管理します。
+ * トグルボタンの設定やイベントハンドラの登録も行います。
  */
 
-// トグルボタンの設定
+/**
+ * トグルボタンの初期化とイベントハンドラの設定
+ * 各ノードの折りたたみ/展開ボタンにクリックイベントを登録します
+ */
 function setupToggleButtons() {
+  // すべてのトグルボタンを取得
   var toggleButtons = document.querySelectorAll('.toggle-btn');
   if (!toggleButtons.length) return;
   
+  // 各ボタンにイベントハンドラを設定
   toggleButtons.forEach(function(button) {
     var targetId = button.getAttribute('data-target');
     var target = document.getElementById(targetId);
     if (!target) return;
     
+    // クリック時のイベントハンドラ
     button.onclick = function() {
+      // トグル動作を実行
       target.classList.toggle('collapsed');
       button.classList.toggle('collapsed');
+      
+      // 状態を保存してURLを更新
       saveTreeState();
       updateShareUrl();
     };
   });
 }
 
-// ツリーの状態を保存
+/**
+ * ツリーの現在の開閉状態を取得して保存
+ * 
+ * @returns {Object} 折りたたまれたノードIDとその状態を含むオブジェクト
+ */
 function saveTreeState() {
+  // すべての子ノードとその開閉状態を取得
   var state = {};
-  
   document.querySelectorAll('.children').forEach(function(child) {
     if (child.id) {
       state[child.id] = child.classList.contains('collapsed') ? 'collapsed' : 'expanded';
     }
   });
   
-  // collapsedのみ抽出して省サイズ化
+  // 最小データ化: 折りたたまれたノードのみを抽出してURLパラメータを省サイズ化
   var filteredState = {};
   for (var nodeId in state) {
     if (state[nodeId] === 'collapsed') {
@@ -40,13 +56,22 @@ function saveTreeState() {
     }
   }
   
-  // 状態をローカルストレージに保存（通常の使用向け）
-  localStorage.setItem('kpiTreeState', JSON.stringify(state));
+  // 完全な状態をローカルストレージに保存（通常の使用向け）
+  try {
+    localStorage.setItem('kpiTreeState', JSON.stringify(state));
+  } catch (e) {
+    console.warn('ローカルストレージへの状態保存失敗:', e);
+  }
   
+  // 最小化された状態を返す（URLパラメータ用）
   return Object.keys(filteredState).length > 0 ? filteredState : {};
 }
 
-// ツリーの状態を読み込む
+/**
+ * ローカルストレージから保存されたツリー状態を読み込む
+ * 
+ * @returns {Object} 保存されていたツリー状態のオブジェクト。存在しない場合は空オブジェクト
+ */
 function loadTreeState() {
   try {
     var savedState = localStorage.getItem('kpiTreeState');
@@ -57,35 +82,49 @@ function loadTreeState() {
   }
 }
 
-// すべてのノードを展開状態にリセット
+/**
+ * 全ノードを展開状態にリセット
+ * ツリー全体を展開状態に戻します
+ */
 function resetAllNodes() {
-  // すべての子要素とボタンからcollapsedクラスを削除
+  // すべての子ノードを展開状態に設定
   document.querySelectorAll('.children').forEach(function(child) {
     child.classList.remove('collapsed');
   });
   
+  // すべてのトグルボタンを非折りたたみ状態に設定
   document.querySelectorAll('.toggle-btn').forEach(function(button) {
     button.classList.remove('collapsed');
   });
 }
 
-// ツリー状態を適用
+/**
+ * ツリー状態をDOMに適用
+ * URLハッシュなどから取得した状態をツリー表示に反映させます
+ * 
+ * @param {Object} state - 適用するツリー状態のオブジェクト 
+ */
 function applyTreeState(state) {
+  // 状態が空の場合は何もしない
   if (!state || Object.keys(state).length === 0) return;
   
+  // 先にすべて展開状態にリセット
   resetAllNodes();
   
+  // 指定された状態を適用
   for (var nodeId in state) {
     var nodeState = state[nodeId];
     var node = document.getElementById(nodeId);
     var button = null;
     
+    // 対応するトグルボタンを探す
     document.querySelectorAll('.toggle-btn').forEach(function(btn) {
       if (btn.getAttribute('data-target') === nodeId) {
         button = btn;
       }
     });
     
+    // ノードとボタンが見つかった場合は状態を設定
     if (node && button) {
       if (nodeState === 'collapsed') {
         node.classList.add('collapsed');
@@ -97,6 +136,7 @@ function applyTreeState(state) {
     }
   }
   
+  // 状態をストレージに保存し、初期化完了フラグを設定
   saveTreeState();
   window._initialLoadComplete = true;
 }
