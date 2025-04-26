@@ -101,8 +101,24 @@ async function generateKPITree() {
     const publicUrl = config.public_url || '';
     console.log(`Public URL from config: ${publicUrl}`);
     
-    // Create script to initialize public URL variable
-    const publicUrlScript = publicUrl ? `<script>window.PUBLIC_URL = "${publicUrl}";</script>` : '';
+    // PUBLIC_URL変数を設定するスクリプトを生成
+    // リダイレクト先で決定論的に動作するよう改善
+    const publicUrlScript = publicUrl ? `<script>
+    // リダイレクト環境で動作するPUBLIC_URL設定
+    (function() {
+      window.PUBLIC_URL = "${publicUrl}";
+      // 現在のURLがGCSの場合、それを使用
+      if (window.location.href.includes('googleusercontent.com')) {
+        console.log('リダイレクト先を検出: ' + window.location.href);
+        // ファイル名部分を取得
+        var pathParts = window.location.pathname.split('/');
+        var fileName = pathParts[pathParts.length - 1] || 'index.html';
+        // 現在のURLをベースとして使用
+        window.PUBLIC_URL = window.location.href;
+      }
+      console.log('PUBLIC_URL設定: ' + window.PUBLIC_URL);
+    })();
+    </script>` : '';
     
     let html = template
       .replace(/\{\{TITLE\}\}/g, title)
