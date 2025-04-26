@@ -13,6 +13,33 @@ const JS_URL_PATH = path.join(__dirname, '..', 'static', 'js', 'url.js');
 const JS_SHARE_PATH = path.join(__dirname, '..', 'static', 'js', 'share.js');
 const JS_ANCHOR_PATH = path.join(__dirname, '..', 'static', 'js', 'anchor.js');
 
+// 全てのスクリプトを読み込んで結合する関数
+async function loadAllScripts() {
+  const coreJs = await fs.readFile(JS_CORE_PATH, 'utf8');
+  const treeJs = await fs.readFile(JS_TREE_PATH, 'utf8');
+  const urlJs = await fs.readFile(JS_URL_PATH, 'utf8');
+  const shareJs = await fs.readFile(JS_SHARE_PATH, 'utf8');
+  const anchorJs = await fs.readFile(JS_ANCHOR_PATH, 'utf8');
+  
+  return `
+// KPIツリージェネレーター JavaScript 結合ファイル
+// core.js
+${coreJs}
+
+// tree.js
+${treeJs}
+
+// url.js
+${urlJs}
+
+// share.js
+${shareJs}
+
+// anchor.js
+${anchorJs}
+`;
+}
+
 // Main function
 async function generateKPITree() {
   try {
@@ -70,16 +97,16 @@ async function generateKPITree() {
     const configData = await fs.readFile(configFile, 'utf8');
     const config = YAML.parse(configData);
     
-    // Set default output directory based on config name
+    // 出力先を単一のindex.htmlに変更
     if (!config.output) {
       // Check if running in Docker or local
       const isDocker = await fs.pathExists('/app');
       if (isDocker) {
-        config.output = `/app/output/${configName}/index.html`;
+        config.output = `/app/output/${configName}.html`;
       } else {
         // Extract just the filename without path
         const fileName = path.basename(configName);
-        config.output = path.join(process.cwd(), 'output', fileName, 'index.html');
+        config.output = path.join(process.cwd(), 'output', `${fileName}.html`);
       }
     }
     
@@ -89,8 +116,10 @@ async function generateKPITree() {
     // Generate the tree HTML
     const treeHtml = generateTreeHtml(config.root);
     
-    // スタイルファイルのみここで読み込む (JSファイルはコピーする)
+    // スタイルと全てのJSを読み込む
     const styleContent = await fs.readFile(STYLE_PATH, 'utf8');
+    // 全てのJSファイルを結合
+    const combinedScripts = await loadAllScripts();
     
     // Replace placeholders in template
     const title = config.title || 'KPI Tree';
@@ -132,30 +161,20 @@ async function generateKPITree() {
     // 出力ファイルパスを決定
     const outputFile = config.output;
     const outputDir = path.dirname(outputFile);
-    const jsDir = path.join(outputDir, 'js');
-    const cssDir = path.join(outputDir, 'css');
     
-    // 出力ディレクトリ構造を作成
+    // 出力ディレクトリを作成
     await fs.ensureDir(outputDir);
-    await fs.ensureDir(jsDir);
-    await fs.ensureDir(cssDir);
     
+    // 結合したJSを埋め込むため、テンプレート内のプレースホルダーを置き換え
+    let finalHtml = html.replace('<!-- COMBINED_SCRIPTS_PLACEHOLDER -->', `<script>
+${combinedScripts}
+</script>`);
     // HTMLファイルを出力
-    await fs.writeFile(outputFile, html);
-    
-    // JSファイルをコピー
-    await fs.copyFile(JS_CORE_PATH, path.join(jsDir, 'core.js'));
-    await fs.copyFile(JS_TREE_PATH, path.join(jsDir, 'tree.js'));
-    await fs.copyFile(JS_URL_PATH, path.join(jsDir, 'url.js'));
-    await fs.copyFile(JS_SHARE_PATH, path.join(jsDir, 'share.js'));
-    await fs.copyFile(JS_ANCHOR_PATH, path.join(jsDir, 'anchor.js'));
-    
-    // CSSファイルをコピー
-    await fs.copyFile(STYLE_PATH, path.join(cssDir, 'style.css'));
+    await fs.writeFile(outputFile, finalHtml);
     
     console.log(`KPI tree generated successfully: ${outputFile}`);
-    console.log(`All files placed in: ${outputDir}`);
-    console.log('Directory structure ready for GCS upload');
+    console.log('All scripts and styles embedded in a single HTML file');
+    console.log('File is ready for direct GCS upload');
   } catch (error) {
     console.error('Error generating KPI tree:', error);
     process.exit(1);
