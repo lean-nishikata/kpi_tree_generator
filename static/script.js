@@ -5,29 +5,87 @@ function kpiTreeInit() {
   window._initialLoadComplete = false;
   window._shareUrl = null;
   
-  // 公開URLが設定されていれば保存
-  if (window.PUBLIC_URL) {
-    window._publicBaseUrl = window.PUBLIC_URL;
-  }
+  // リダイレクトパラメータを処理
+  handleUrlRedirects();
   
-  // 横向きレイアウトに設定
+  // 固定で横レイアウトに設定
   setDirection('horizontal');
   
-  // 共有ボタンを追加
+  // 共有ボタンの追加
   addShareButton();
   
-  // URLパラメータの状態を取得し適用
+  // URLからツリー状態を取得
   var state = getStateFromUrl();
+  
+  // 状態が空の場合はセッションストレージからそのまま取得を試みる
+  if (!state || Object.keys(state).length === 0) {
+    try {
+      var savedStateParam = sessionStorage.getItem('originalStateParam');
+      if (savedStateParam) {
+        // 保存されたパラメータから状態をデコード
+        var decodedState = decodeURIComponent(savedStateParam.split('.')[0]);
+        decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
+        state = JSON.parse(decodedState);
+        console.log('セッションストレージから状態を復元:', state);
+      }
+    } catch (e) {
+      console.error('セッションからの状態読み込み失敗:', e);
+    }
+  }
+  
+  // ツリー状態を適用
   applyTreeState(state);
   
   // トグルボタンの設定
   setupToggleButtons();
   
-  // 初期状態のURLを更新
+  // 共有URLを更新
   setTimeout(updateShareUrl, 500);
   
-  // 初期化完了を記録
+  // 初期ロード完了フラグをセット
   window._initialLoadComplete = true;
+}
+
+// リダイレクト時のパラメータ保持を処理する関数
+function handleUrlRedirects() {
+  // URLパラメータをセッションストレージに保存する処理
+  function saveStateParamToStorage() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var stateParam = urlParams.get('state');
+    
+    if (stateParam) {
+      try {
+        // セッションストレージに保存
+        sessionStorage.setItem('originalStateParam', stateParam);
+        return true;
+      } catch (e) {
+        console.error('パラメータの保存に失敗:', e);
+      }
+    }
+    return false;
+  }
+  
+  // Google Storageリダイレクトを検出
+  var isGcsRedirect = window.location.href.includes('googleusercontent.com') && 
+                     (!document.referrer || document.referrer.includes('storage.cloud.google.com'));
+  
+  // 1. 最初のアクセス時にパラメータを保存
+  if (!isGcsRedirect) {
+    saveStateParamToStorage();
+  }
+  // 2. リダイレクト後なら保存済みパラメータを復元
+  else {
+    var savedState = sessionStorage.getItem('originalStateParam');
+    if (savedState) {
+      var currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('state', savedState);
+      window.history.replaceState({}, document.title, currentUrl.toString());
+      console.log('リダイレクト後にstateパラメータを復元しました:', savedState);
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 // 方向を設定する関数
@@ -117,7 +175,25 @@ function getStateFromUrl() {
   var stateParam = urlParams.get('state');
   
   if (!stateParam) {
-    return {}; // パラメータがなければ空オブジェクトを返す
+    // 1. URLから取得できない場合はセッションストレージから取得を試みる
+    try {
+      var savedStateParam = sessionStorage.getItem('originalStateParam');
+      if (savedStateParam) {
+        stateParam = savedStateParam;
+        console.log('セッションストレージからパラメータを取得:', stateParam);
+      } else {
+        return {}; // パラメータがなければ空オブジェクトを返す
+      }
+    } catch (storageError) {
+      return {}; // エラー時は空オブジェクトを返す
+    }
+  } else {
+    // 取得したパラメータをセッションに保存
+    try {
+      sessionStorage.setItem('originalStateParam', stateParam);
+    } catch (e) {
+      // 保存失敗しても続行
+    }
   }
   
   try {
@@ -451,24 +527,55 @@ function applyTreeState(state) {
   window._initialLoadComplete = true;
 }
 
-// 初期ロード完了フラグ
-window._initialLoadComplete = false;
+// Capture state parameter before DOMContentLoaded
+(function() {
+  try {
+    // ページが実際にロードされる前に状態パラメータを保存
+    var urlParams = new URLSearchParams(window.location.search);
+    var stateParam = urlParams.get('state');
+    if (stateParam) {
+      window._originalStateParam = stateParam;
+      if (window.sessionStorage) {
+        sessionStorage.setItem('originalStateParam', stateParam);
+        console.log('Early state parameter capture success');
+      }
+    }
+  } catch (e) {
+    console.error('Early state parameter capture failed:', e);
+  }
+})();
 
-// オリジナルのstateパラメータを保存するグローバル変数
-window._originalStateParam = null;
+// ページURLを監視して変更を検出
+function monitorUrlChanges() {
+  var lastUrl = window.location.href;
+  setInterval(function() {
+    if (lastUrl !== window.location.href) {
+      console.log('URL changed from', lastUrl, 'to', window.location.href);
+      lastUrl = window.location.href;
+      
+      // Googleストレージへのリダイレクトをチェック
+      if (window.location.href.includes('googleusercontent.com')) {
+        console.log('Google Storage redirect detected');
+        var savedState = sessionStorage.getItem('originalStateParam');
+        if (savedState) {
+          // リダイレクト後は状態を復元
+          var state = getStateFromUrl();
+          applyTreeState(state);
+        }
+      }
+    }
+  }, 500); // 500ms間隔で確認
+}
 
 // Run initialization when page is loaded
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM content loaded, initializing KPI tree');
   
-  // 最初のページロード時にオリジナルのURLパラメータを保存
-  saveOriginalStateParam();
+  // URL監視を開始
+  monitorUrlChanges();
   
   // KPIツリーの動作を初期化
   kpiTreeInit();
-  
-  // リダイレクトパラメータの処理
-  var redirectHandled = handleRedirectParams();
   
   // 通常のURL処理（リダイレクト処理されていない場合のみ）
   if (!redirectHandled) {
