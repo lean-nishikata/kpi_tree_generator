@@ -158,12 +158,7 @@ async function getCellValue(spreadsheetId, range) {
     // 認証情報が返されたので直接APIにアクセス
     const sheets = authClient; // 認証オブジェクトはもうsheetsクライアント
     
-    // シート名とセルを取得
-    const [sheetName, cellRef] = range.split('!');
-    
-    if (!sheetName || !cellRef) {
-      throw new Error('Invalid range format');
-    }
+    // シート名とセル参照は既に取得済み（関数の先頭で分離している）
     
     try {
       // 値を直接取得
