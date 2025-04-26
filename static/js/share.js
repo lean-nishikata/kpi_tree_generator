@@ -88,8 +88,11 @@ function copyToClipboard() {
       // ストレージエラーがあっても処理を継続
     }
     
-    // 公開URL設定を優先（GCSなどの環境向け）
+    // 公開URL設定を強制的に使用（GCSなどの環境向け）
     if (window.PUBLIC_URL) {
+      console.log('共有URL生成前のPUBLIC_URL:', window.PUBLIC_URL);
+      console.log('現在の共有URL候補:', shareUrl);
+      
       // 現在の状態を表すハッシュパラメータを取得
       var currentState = saveTreeState();
       var stateFragment = '';
@@ -102,9 +105,17 @@ function copyToClipboard() {
         }
       }
       
+      // 強制的にクリップボードにコピーされるURLをYAML設定値に修正
+      var yamlPublicUrl = window.PUBLIC_URL;
+      
+      // URLの末尾のスラッシュを削除（あれば）
+      if (yamlPublicUrl.endsWith('/')) {
+        yamlPublicUrl = yamlPublicUrl.slice(0, -1);
+      }
+      
       // YAMLで指定された公開URLに現在の状態パラメータを結合
-      shareUrl = window.PUBLIC_URL + stateFragment;
-      console.log('公開URLと状態パラメータを結合した共有URL:', shareUrl);
+      shareUrl = yamlPublicUrl + stateFragment;
+      console.log('公開URLを強制使用した共有URL:', shareUrl);
     }
     
     // 最終的な共有URLの生成
