@@ -217,35 +217,56 @@ function loadTreeState() {
 
 // Get state from URL parameters
 function getStateFromUrl() {
-  // 1. 通常のURLSearchParamsを試す
-  var urlParams = new URLSearchParams(window.location.search);
-  var stateParam = urlParams.get('state');
+  var stateParam;
   
-  // 2. 通常の方法で取得できない場合（GCSリダイレクトなど）、URLの文字列全体から探す
-  if (!stateParam) {
-    console.log('Standard URL param not found, trying alternative method for GCS redirect URL');
+  // 1. オリジナルパラメータが保存されていれば、それを最優先で使用
+  if (window._originalStateParam) {
+    console.log('Using original state parameter from initial page load');
     if (window._debugMode) {
-      logToDebugPanel('Standard param not found, trying GCS redirect URL parsing');
+      logToDebugPanel('Using original state parameter');
     }
-    
-    var fullUrl = window.location.href;
-    var stateIndex = fullUrl.indexOf('state=');
-    
-    if (stateIndex !== -1) {
-      // state=以降の部分を取得
-      var stateSubstring = fullUrl.substring(stateIndex + 6); // 'state='.length = 6
-      
-      // 次のパラメータがある場合は&までを取得、なければ最後まで
-      var nextParamIndex = stateSubstring.indexOf('&');
-      if (nextParamIndex !== -1) {
-        stateParam = stateSubstring.substring(0, nextParamIndex);
-      } else {
-        stateParam = stateSubstring;
-      }
-      
-      console.log('Found state parameter in redirect URL:', stateParam);
+    stateParam = window._originalStateParam;
+  } else {
+    // 2. セッションストレージにオリジナルパラメータがあれば使用（ページリロード時など）
+    var storedOriginalParam = sessionStorage.getItem('originalStateParam');
+    if (storedOriginalParam) {
+      console.log('Using original state parameter from session storage');
       if (window._debugMode) {
-        logToDebugPanel('Found state in redirect URL: ' + stateParam.substring(0, 20) + '...');
+        logToDebugPanel('Using original state from session storage');
+      }
+      stateParam = storedOriginalParam;
+    } else {
+      // 3. 通常のURLSearchParamsを試す
+      var urlParams = new URLSearchParams(window.location.search);
+      stateParam = urlParams.get('state');
+      
+      // 4. 通常の方法で取得できない場合（GCSリダイレクトなど）、URLの文字列全体から探す
+      if (!stateParam) {
+        console.log('Standard URL param not found, trying alternative method for GCS redirect URL');
+        if (window._debugMode) {
+          logToDebugPanel('Standard param not found, trying GCS redirect URL parsing');
+        }
+        
+        var fullUrl = window.location.href;
+        var stateIndex = fullUrl.indexOf('state=');
+        
+        if (stateIndex !== -1) {
+          // state=以降の部分を取得
+          var stateSubstring = fullUrl.substring(stateIndex + 6); // 'state='.length = 6
+          
+          // 次のパラメータがある場合は&までを取得、なければ最後まで
+          var nextParamIndex = stateSubstring.indexOf('&');
+          if (nextParamIndex !== -1) {
+            stateParam = stateSubstring.substring(0, nextParamIndex);
+          } else {
+            stateParam = stateSubstring;
+          }
+          
+          console.log('Found state parameter in redirect URL:', stateParam);
+          if (window._debugMode) {
+            logToDebugPanel('Found state in redirect URL: ' + stateParam.substring(0, 20) + '...');
+          }
+        }
       }
     }
   }
@@ -690,27 +711,33 @@ function handleRedirectParams() {
         
         // ブラウザのURLを更新（History APIを使用）
         if (window.history && window.history.replaceState) {
-          window.history.replaceState({}, document.title, queryString);
-          
-          // DOMContentLoadedを待ってから状態を適用
-          if (document.readyState === 'loading') {
-            console.log('DOM not yet ready, setting up listener for state application');
-            document.addEventListener('DOMContentLoaded', function() {
-              console.log('DOM now ready, applying session state');
-              applyTreeState(savedState);
-            });
-          } else {
-            // DOM既に読み込み済みの場合は直接適用
-            console.log('DOM already ready, applying session state now');
-            applyTreeState(savedState);
-          }
-          
-          // 処理完了後、セッションストレージをクリア
-          sessionStorage.removeItem('kpiTreeState');
-          console.log('Session storage cleared after state restoration');
-          
-          return true; // 状態適用済みを返す
+          window.history.replaceState({}, document.title, window.location.pathname + queryString);
+          console.log('Browser URL updated:', window.location.pathname + queryString);
         }
+        
+        // デバッグモードの場合、パネルにも表示
+        if (window._debugMode) {
+          logToDebugPanel('Browser URL updated: ' + window.location.pathname + queryString);
+        }
+        
+        // DOMContentLoadedを待ってから状態を適用
+        if (document.readyState === 'loading') {
+          console.log('DOM not yet ready, setting up listener for state application');
+          document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM now ready, applying session state');
+            applyTreeState(savedState);
+          });
+        } else {
+          // DOM既に読み込み済みの場合は直接適用
+          console.log('DOM already ready, applying session state now');
+          applyTreeState(savedState);
+        }
+        
+        // 処理完了後、セッションストレージをクリア
+        sessionStorage.removeItem('kpiTreeState');
+        console.log('Session storage cleared after state restoration');
+        
+        return true; // 状態適用済みを返す
       }
     } catch (e) {
       console.error('Error handling redirect params:', e);
@@ -976,28 +1003,74 @@ function highlightTreeState() {
       }
     }
   }
-}
 
 // 初期ロード完了フラグ
 window._initialLoadComplete = false;
 
+// オリジナルのstateパラメータを保存するグローバル変数
+window._originalStateParam = null;
+
 // Run initialization when page is loaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() {
-    kpiTreeInit();
-    // 初期ロード完了をマーク
-    setTimeout(function() {
-      window._initialLoadComplete = true;
-      console.log('Initial load complete');
-    }, 1000);
-  });
-} else {
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM content loaded, initializing KPI tree');
+  
+  // 最初のページロード時にオリジナルのURLパラメータを保存
+  saveOriginalStateParam();
+  
+  // KPIツリーの動作を初期化
   kpiTreeInit();
-  // 初期ロード完了をマーク
-  setTimeout(function() {
-    window._initialLoadComplete = true;
-    console.log('Initial load complete');
-  }, 1000);
+  
+  // リダイレクトパラメータの処理
+  var redirectHandled = handleRedirectParams();
+  
+  // 通常のURL処理（リダイレクト処理されていない場合のみ）
+  if (!redirectHandled) {
+    // URLからツリー状態を取得して適用
+    var state = getStateFromUrl();
+    
+    if (Object.keys(state).length > 0) {
+      console.log('Applying state from URL');
+      applyTreeState(state);
+    }
+  }
+  
+  // 分析ボタン追加
+  addShareButton();
+  
+  // 初期ロード完了フラグをセット
+  window._initialLoadComplete = true;
+  
+  console.log('KPI tree initialization complete');
+});
+
+// 最初のページロード時にオリジナルのstateパラメータを保存する関数
+function saveOriginalStateParam() {
+  // URLの生のパラメータを取得（リダイレクト前に実行）
+  var fullUrl = window.location.href;
+  var stateIndex = fullUrl.indexOf('state=');
+  
+  if (stateIndex !== -1) {
+    // state=以降の部分を取得
+    var stateSubstring = fullUrl.substring(stateIndex + 6); // 'state='.length = 6
+    
+    // 次のパラメータがある場合は&までを取得、なければ最後まで
+    var nextParamIndex = stateSubstring.indexOf('&');
+    if (nextParamIndex !== -1) {
+      window._originalStateParam = stateSubstring.substring(0, nextParamIndex);
+    } else {
+      window._originalStateParam = stateSubstring;
+    }
+    
+    console.log('Original state parameter saved:', window._originalStateParam);
+    
+    // セッションストレージにも保存（リダイレクト時の参照用）
+    try {
+      sessionStorage.setItem('originalStateParam', window._originalStateParam);
+      console.log('Original state param saved to session storage');
+    } catch (e) {
+      console.warn('Could not save original state to sessionStorage:', e);
+    }
+  }
 }
 
 // デバッグ用：URLパラメータの変更を監視
