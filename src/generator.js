@@ -111,7 +111,9 @@ async function generateKPITree() {
       
     // 生成後のHTMLを強制的に水平レイアウトに修正
     html = html.replace(/data-direction="vertical"/g, 'data-direction="horizontal"');
-    html = html.replace(/direction-vertical/g, 'direction-horizontal');
+    html = html.replace(/class="kpi-tree-container theme-(\w+) direction-vertical"/g, 'class="kpi-tree-container theme-$1 direction-horizontal"');
+    
+    // CSSのdisplay:noneは修正しない（.direction-verticalのまま残す）
     
     // Determine output file path
     const outputFile = config.output;
