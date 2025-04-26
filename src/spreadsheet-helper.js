@@ -134,7 +134,25 @@ async function getCellValue(spreadsheetId, range) {
       
       // Sheets API クライアントの初期化
       const sheets = google.sheets({ version: 'v4', auth });
-      return sheets;
+      
+      // 値を取得（実際のセルの値を返すように修正）
+      const fullRange = `${sheetName}!${cellRef}`;
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: spreadsheetId,
+        range: fullRange,
+      });
+      
+      // レスポンスの値を取得
+      const values = response.data.values;
+      
+      if (!values || values.length === 0 || values[0].length === 0) {
+        console.log(`セル ${cellRef} の値が空です（API経由）`);
+        return 0;
+      }
+      
+      // API経由での値取得
+      const cellValue = values[0][0];
+      return cellValue;
       
     } catch (authError) {
       try {
@@ -149,7 +167,25 @@ async function getCellValue(spreadsheetId, range) {
         
         // Sheets API クライアントの初期化
         const sheets = google.sheets({ version: 'v4', auth });
-        return sheets;
+        
+        // 値を取得（実際のセルの値を返すように修正）
+        const fullRange = `${sheetName}!${cellRef}`;
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: spreadsheetId,
+          range: fullRange,
+        });
+        
+        // レスポンスの値を取得
+        const values = response.data.values;
+        
+        if (!values || values.length === 0 || values[0].length === 0) {
+          console.log(`セル ${cellRef} の値が空です（API経由）`);
+          return 0;
+        }
+        
+        // API経由での値取得
+        const cellValue = values[0][0];
+        return cellValue;
       } catch (error2) {
         throw new Error('Failed to access spreadsheet');
       }
