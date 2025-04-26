@@ -44,8 +44,34 @@ function loadServiceAccountKey() {
   }
   
   try {
+    // ファイルサイズを確認（空ファイルやダミーファイルでないことを確認）
+    const stats = fs.statSync(keyPath);
+    if (stats.size < 100) {
+      console.warn(`警告: 認証ファイルが小さすぎます (${stats.size} bytes)`);
+      console.warn('認証ファイルが有効なJSONではない可能性があります');
+      return null;
+    }
+    
+    // ファイル内容を読み込み
     const keyFileContent = fs.readFileSync(keyPath, 'utf8');
-    return JSON.parse(keyFileContent);
+    console.log('認証ファイルの先頭部分:', keyFileContent.substring(0, 50) + '...');
+    
+    // JSONとして解析
+    try {
+      const parsed = JSON.parse(keyFileContent);
+      
+      // 最低限必要な項目があるか確認
+      if (!parsed.client_email || !parsed.private_key) {
+        console.warn('警告: 認証ファイルに必要な項目が含まれていません');
+        return null;
+      }
+      
+      return parsed;
+    } catch (jsonError) {
+      console.error('JSONパースエラー:', jsonError.message);
+      console.warn('認証ファイルが有効なJSONではありません');
+      return null;
+    }
   } catch (error) {
     console.error('サービスアカウントキーの読み込みエラー:', error);
     console.warn('スプレッドシート参照はスキップされます');

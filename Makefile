@@ -20,4 +20,4 @@ debug:
 		echo "Key file NOT found!"; \
 	fi
 	@echo "Checking environment..."
-	docker-compose run --rm --entrypoint sh kpi-generator -c "env | grep GOOGLE"
+	docker-compose run --rm --entrypoint sh kpi-generator -c "env | grep GOOGLE && ls -la /app/keys && cat /app/keys/service-account-key.json | head -5 || echo '認証ファイルの内容が読めません'"
