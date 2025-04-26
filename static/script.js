@@ -637,11 +637,17 @@ function handleRedirectParams() {
           console.log('DOM not yet ready, setting up listener for state application');
           document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM now ready, applying original state');
-            applyTreeState(savedState);
+            // 少し遅延させて確実に適用
+            setTimeout(function() {
+              applyTreeState(savedState);
+            }, 200);
           });
         } else {
           console.log('DOM already ready, applying original state now');
-          applyTreeState(savedState);
+          // 少し遅延させて確実に適用
+          setTimeout(function() {
+            applyTreeState(savedState);
+          }, 200);
         }
         
         return true; // 状態適用済みを返す
@@ -696,11 +702,43 @@ function applyTreeState(state) {
   // 状態が空でないか確認
   if (!state || Object.keys(state).length === 0) {
     console.log('No state to apply');
-
     return;
   }
   
-  console.log('Applying tree state:', state);
+  console.log('Applying tree state to', Object.keys(state).length, 'nodes');
+  var appliedCount = 0;
+  var missingCount = 0;
+  
+  // 再帰的にツリーを展開する処理
+  function ensureParentNodesExpanded(element) {
+    // 親要素が.kpi-tree liである場合、その子供の宛先なのでチェック
+    var parent = element.parentElement;
+    while (parent) {
+      if (parent.classList && parent.classList.contains('kpi-tree')) {
+        // ツリールートに到達したので終了
+        break;
+      }
+      
+      // 親要素がノードで、その子要素コンテナがあれば展開する
+      if (parent.tagName.toLowerCase() === 'li') {
+        var childrenContainer = parent.querySelector('ul');
+        if (childrenContainer && childrenContainer.id) {
+          // 親ノードの子供コンテナを展開する
+          childrenContainer.classList.remove('collapsed');
+          
+          // ボタンもトグル
+          var button = document.querySelector('[data-target="' + childrenContainer.id + '"]');
+          if (button) {
+            button.classList.remove('collapsed');
+          }
+          
+          console.log('Ensuring parent container is expanded:', childrenContainer.id);
+        }
+      }
+      
+      parent = parent.parentElement;
+    }
+  }
   
   // 各ノードに状態を適用
   for (var nodeId in state) {
@@ -708,12 +746,13 @@ function applyTreeState(state) {
     var nodeState = state[nodeId];
     
     if (element && nodeState) {
-      console.log('Applying state to node:', nodeId, 'State:', nodeState);
+      // 直接的な親ノードを展開状態にすることで、子供要素が見えるようにする
+      ensureParentNodesExpanded(element);
       
+      // ノード自体の状態を適用
       if (nodeState === 'collapsed') {
         // collapsedクラスを追加
         element.classList.add('collapsed');
-
         
         // 対応するボタンもトグル
         var button = document.querySelector('[data-target="' + nodeId + '"]');
@@ -723,7 +762,6 @@ function applyTreeState(state) {
       } else if (nodeState === 'expanded') {
         // expandedの場合は確実にcollapsedクラスを削除
         element.classList.remove('collapsed');
-
         
         // 対応するボタンもトグル
         var button = document.querySelector('[data-target="' + nodeId + '"]');
@@ -731,13 +769,18 @@ function applyTreeState(state) {
           button.classList.remove('collapsed');
         }
       }
+      
+      appliedCount++;
     } else {
       console.warn('Element not found for nodeId:', nodeId);
-
+      missingCount++;
     }
   }
   
-  console.log('Tree state applied successfully');
+  console.log(`Tree state applied successfully: ${appliedCount} nodes applied, ${missingCount} nodes not found`);
+  
+  // すべての状態適用後に、スクロール位置をトップに戻す
+  window.scrollTo(0, 0);
 }
 
 // 初期ロード完了フラグ
@@ -766,7 +809,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (Object.keys(state).length > 0) {
       console.log('Applying state from URL');
-      applyTreeState(state);
+      // DOM完全読み込み後に適用を確実に実行
+      if (document.readyState === 'loading') {
+        console.log('DOM still loading, deferring state application');
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('DOM now loaded, applying state');
+          setTimeout(function() {
+            applyTreeState(state);
+          }, 100); // 少し遅延させて確実に適用
+        });
+      } else {
+        // 少し遅延させてツリー状態を適用
+        setTimeout(function() {
+          applyTreeState(state);
+        }, 100);
+      }
     }
   }
   
