@@ -258,7 +258,19 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     nodeContent = `<a href="${node.url}" target="_blank">${nodeContent}</a>`;
   }
   if (node.value !== undefined) {
-    nodeContent += `<div class="value">${node.value}</div>`;
+    // オブジェクトや複雑な値の場合は適切に文字列化
+    let displayValue = node.value;
+    
+    // オブジェクトの場合は文字列に変換
+    if (typeof displayValue === 'object' && displayValue !== null) {
+      try {
+        displayValue = JSON.stringify(displayValue);
+      } catch (e) {
+        displayValue = String(displayValue);
+      }
+    }
+    
+    nodeContent += `<div class="value">${displayValue}</div>`;
   }
   
   // Start the node HTML
