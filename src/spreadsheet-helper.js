@@ -54,7 +54,21 @@ function loadServiceAccountKey() {
     
     // ファイル内容を読み込み
     const keyFileContent = fs.readFileSync(keyPath, 'utf8');
-    console.log('認証ファイルの先頭部分:', keyFileContent.substring(0, 50) + '...');
+    
+    // ファイルの中身が空かチェック
+    if (!keyFileContent || keyFileContent.trim() === '') {
+      console.warn('認証ファイルが空です');
+      return null;
+    }
+    
+    // 認証ファイルの内容をデバッグ出力（先頭部分のみ）
+    console.log(`認証ファイル: ${keyPath} サイズ: ${stats.size} bytes`);
+    try {
+      const firstLine = keyFileContent.split('\n')[0];
+      console.log('最初の行:', firstLine);
+    } catch (e) {
+      console.log('認証ファイルの先頭部分の出力に失敗:', e.message);
+    }
     
     // JSONとして解析
     try {
