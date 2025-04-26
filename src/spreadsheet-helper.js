@@ -181,10 +181,21 @@ async function getCellValue(spreadsheetId, range) {
       // API経由での値取得 - check-sheets-values.jsと同じロジック
       const cellValue = values[0][0];
       
-      // データの形式を検証し直接値を返す
+      // データの形式を検証
       if (typeof cellValue === 'object') {
-        // APIレスポンスを文字列化するのではなく、値のみを取り出す
-        return "¥8,977,221"; // このケースが問題になっている値
+        try {
+          // オブジェクトから安全に値を取り出す試み
+          if (cellValue.data && cellValue.data.values && 
+              Array.isArray(cellValue.data.values) && 
+              cellValue.data.values.length > 0) {
+            return cellValue.data.values[0][0];
+          } else {
+            // その他の形式はエラーとして扱う
+            return "ERROR: Object data";
+          }
+        } catch (objError) {
+          return "ERROR: Object parsing";
+        }
       }
       
       // プリミティブ値はそのまま返す
@@ -323,8 +334,15 @@ async function resolveSpreadsheetReferences(node) {
               // 通常のオブジェクトはJSON文字列に変換
               const jsonString = JSON.stringify(safeObj);
               // 単純な値の場合は文字列から直接値を取り出す
-              if (jsonString === '{"0":"¥8,977,221"}') {
-                node.value = '¥8,977,221';
+              // オブジェクトから直接値が取り出せる場合は取り出す
+              if (jsonString.startsWith('{"0":')) {
+                try {
+                  // {"0":"値"} という形式から値を取り出す
+                  const parsed = JSON.parse(jsonString);
+                  node.value = parsed["0"];
+                } catch (e) {
+                  node.value = jsonString;
+                }
               } else {
                 node.value = jsonString;
               }
