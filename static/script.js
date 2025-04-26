@@ -1,9 +1,14 @@
 // KPIツリージェネレーター用JavaScript
 // 初期化時に実行される関数
 function kpiTreeInit() {
-  // グローバル変数の初期化
   window._initialLoadComplete = false;
   window._shareUrl = null;
+  
+  // PUBLIC_URLが設定されていれば保存
+  if (window.PUBLIC_URL) {
+    window._publicBaseUrl = window.PUBLIC_URL;
+    console.log('PUBLIC_URL設定:', window._publicBaseUrl);
+  }
   
   // リダイレクトパラメータを処理
   handleUrlRedirects();
@@ -332,16 +337,22 @@ function addShareButton() {
 
 // ツリー状態が変更されたときにURLを更新
 function updateShareUrl() {
-  // 現在のツリー状態を取得
+  // ツリーの現在の状態を取得
   var state = saveTreeState();
   
-  // 開閉状態が変更されている場合のみパラメータを生成
   if (state && Object.keys(state).length > 0) {
+    // 状態パラメータを生成
     var stateParam = generateStateParam(state);
-    // クエリパラメータを生成
+    
+    // クエリパラメータを構築
     var queryString = stateParam ? '?state=' + stateParam : '';
     
-    // 共有URLを設定
+    // 常にPUBLIC_URLを使うように設定
+    if (window.PUBLIC_URL) {
+      window._publicBaseUrl = window.PUBLIC_URL;
+    }
+    
+    // 共有URL（ファイル名＋クエリパラメータ）を設定
     if (window._publicBaseUrl) {
       window._shareUrl = window._publicBaseUrl + queryString;
     } else {
@@ -349,10 +360,23 @@ function updateShareUrl() {
       window._shareUrl = fileName + queryString;
     }
     
-    // ブラウザのURLを更新
+    // セッションストレージに現在のパラメータを保存
+    if (stateParam) {
+      try {
+        sessionStorage.setItem('originalStateParam', stateParam);
+      } catch (e) {
+        console.error('パラメータ保存エラー:', e);
+      }
+    }
+    
+    // ブラウザのURLを更新（履歴に残さない）
     updateBrowserUrl(queryString);
   } else {
-    // 変更がない場合はベースURLのみ
+    // すべて展開状態の場合
+    if (window.PUBLIC_URL) {
+      window._publicBaseUrl = window.PUBLIC_URL;
+    }
+    
     if (window._publicBaseUrl) {
       window._shareUrl = window._publicBaseUrl;
     } else {
@@ -360,7 +384,7 @@ function updateShareUrl() {
       window._shareUrl = fileName;
     }
     
-    // ブラウザのURLからクエリパラメータを削除
+    // ブラウザのURLを更新（クエリなし）
     updateBrowserUrl('');
   }
   
@@ -368,12 +392,70 @@ function updateShareUrl() {
   console.log('Share URL updated:', window._shareUrl);
 }
 
+// 共有ボタンクリック時の処理
+function copyToClipboard() {
+  // 共有URL更新を確実に実行
+  updateShareUrl();
+  
+  // 常にPUBLIC_URLをベースにした共有URLを使用
+  var shareUrl = window._shareUrl;
+  
+  // 状態パラメータを取得
+  var stateParam = '';
+  try {
+    stateParam = sessionStorage.getItem('originalStateParam');
+  } catch (e) {
+    console.error('パラメータ取得エラー:', e);
+  }
+  
+  // 共有URLを生成
+  const url = shareUrl;
+  
+  // クリップボードAPIが使用可能な場合
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(showCopySuccess)
+      .catch(function() {
+        fallbackCopyToClipboard(url);
+      });
+  } else {
+    fallbackCopyToClipboard(url);
+  }
+}
+
+// コピー成功表示
+function showCopySuccess() {
+  showCopyMessage('URLをコピーしました');
+}
+
+// メッセージ表示
+function showCopyMessage(message) {
+  var messageElement = document.getElementById('copy-message');
+  if (!messageElement) {
+    messageElement = document.createElement('div');
+    messageElement.id = 'copy-message';
+    messageElement.style.position = 'fixed';
+    messageElement.style.bottom = '20px';
+    messageElement.style.left = '50%';
+    messageElement.style.transform = 'translateX(-50%)';
+    messageElement.style.padding = '10px 20px';
+    messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    messageElement.style.color = 'white';
+    messageElement.style.borderRadius = '4px';
+    messageElement.style.zIndex = '9999';
+    messageElement.style.transition = 'opacity 0.3s';
+    document.body.appendChild(messageElement);
+  }
+  messageElement.textContent = message;
+  messageElement.style.opacity = '1';
+  setTimeout(function() { messageElement.style.opacity = '0'; }, 3000);
+}
+
 // URLをクリップボードにコピー
 function copyShareUrlToClipboard() {
   var shareUrl = window._shareUrl;
   if (!shareUrl) return;
   
-  // 完全URLを生成
   var fullUrl;
   if (shareUrl.startsWith('http')) {
     fullUrl = shareUrl;
@@ -406,24 +488,16 @@ function fallbackCopyToClipboard(text) {
   document.body.appendChild(tempInput);
   
   tempInput.select();
+  tempInput.setSelectionRange(0, 99999); // モバイル対応
+  
   var success = document.execCommand('copy');
   document.body.removeChild(tempInput);
   
   if (success) {
-    showCopySuccess();
+    showCopyMessage('URLをコピーしました: ' + text);
+  } else {
+    showCopyMessage('コピーに失敗しました。手動でコピーしてください: ' + text);
   }
-}
-
-// コピー成功表示
-function showCopySuccess() {
-  var tooltip = document.getElementById('shareTooltip');
-  if (!tooltip) return;
-  
-  tooltip.style.opacity = '1';
-  
-  setTimeout(function() {
-    tooltip.style.opacity = '0';
-  }, 1000);
 }
 
 // すべてのノードを展開状態にリセット
