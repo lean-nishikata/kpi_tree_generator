@@ -142,7 +142,7 @@ function addShareButton() {
   var shareDiv = document.createElement('div');
   shareDiv.className = 'share-control';
   shareDiv.style.position = 'fixed';
-  shareDiv.style.bottom = '20px';
+  shareDiv.style.top = '20px';
   shareDiv.style.right = '20px';
   shareDiv.style.zIndex = '1000';
   
