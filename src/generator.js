@@ -111,7 +111,31 @@ async function generateKPITree() {
           console.log('スプレッドシート参照の解決が完了しました');
         } else {
           console.warn(`警告: スプレッドシート認証キーファイルが見つかりません: ${keyPath || '未設定'}`);
-          console.warn('スプレッドシート参照はスキップされます。通常のKPIツリーとして処理します。');
+          console.warn('スプレッドシート参照をERRORとして表示します');
+          // スプレッドシート参照を持つノードのvalueを"ERROR"に置き換える関数
+          const markSpreadsheetRefAsError = (node) => {
+            if (!node) return node;
+            
+            // valueがスプレッドシート参照の場合
+            if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
+              node.value = 'ERROR';
+            }
+            
+            // 文字列形式のスプレッドシート参照
+            if (node.value && typeof node.value === 'string' && node.value.startsWith('=spreadsheet:')) {
+              node.value = 'ERROR';
+            }
+            
+            // 子ノードも再帰的に処理
+            if (node.children && Array.isArray(node.children)) {
+              node.children = node.children.map(child => markSpreadsheetRefAsError(child));
+            }
+            
+            return node;
+          };
+          
+          // ツリー全体のスプレッドシート参照をERRORに置き換え
+          config.root = markSpreadsheetRefAsError(config.root);
         }
       } catch (error) {
         console.error('スプレッドシート参照の解決中にエラーが発生しました:', error.message);
