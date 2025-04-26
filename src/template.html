@@ -4,7 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{TITLE}}</title>
-  <link rel="stylesheet" href="css/style.css">
+  {{PUBLIC_URL_SCRIPT}}
+  <!-- ベースパスを自動設定 -->
+  <script>
+    // PUBLIC_URLからベースパスを設定
+    var basePath = '';
+    if (window.PUBLIC_URL) {
+      // 最後のスラッシュを処理
+      var publicUrl = window.PUBLIC_URL;
+      var lastSlashIndex = publicUrl.lastIndexOf('/');
+      if (lastSlashIndex !== -1 && lastSlashIndex !== publicUrl.length - 1) {
+        // 末尾にindex.htmlがある場合、それを除去
+        publicUrl = publicUrl.substring(0, lastSlashIndex + 1);
+      }
+      // 末尾にスラッシュがなければ追加
+      if (!publicUrl.endsWith('/')) {
+        publicUrl += '/';
+      }
+      basePath = publicUrl;
+    }
+    document.write('<link rel="stylesheet" href="' + basePath + 'css/style.css">');
+  </script>
   <style>
     /* 追加のカスタムスタイル - 水平レイアウト専用 */
     .kpi-tree li {
@@ -33,12 +53,14 @@
     </div>
   </div>
   
-  {{PUBLIC_URL_SCRIPT}}
-  <script src="js/core.js"></script>
-  <script src="js/tree.js"></script>
-  <script src="js/url.js"></script>
-  <script src="js/share.js"></script>
-  <script src="js/anchor.js"></script>
+  <!-- JSファイルを動的に読み込み -->
+  <script>
+    // ベースパスを使用してJSを読み込む
+    var jsFiles = ['core.js', 'tree.js', 'url.js', 'share.js', 'anchor.js'];
+    jsFiles.forEach(function(file) {
+      document.write('<script src="' + basePath + 'js/' + file + '"><\/script>');
+    });
+  </script>
 
 </body>
 </html>
