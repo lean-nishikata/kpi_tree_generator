@@ -4,6 +4,12 @@ function kpiTreeInit() {
   console.log('KPI Tree initializing...');
   console.log('URL:', window.location.href);
   
+  // 公開URL情報があればグローバル変数に保存
+  if (window.PUBLIC_URL) {
+    window._publicBaseUrl = window.PUBLIC_URL;
+    console.log('Public URL set from config:', window._publicBaseUrl);
+  }
+  
   // 常に横型レイアウトを使用
   var theme = document.body.getAttribute('data-theme') || 'default';
   var direction = 'horizontal';
@@ -16,20 +22,40 @@ function kpiTreeInit() {
   // Add share button for permanent link
   addShareButton();
   
+  // URLパラメータから状態を取得
+  var stateFromUrl = getStateFromUrl();
+  console.log('State from URL:', stateFromUrl);
+  
+  // ノードの状態を復元
+  for (var nodeId in stateFromUrl) {
+    var element = document.getElementById(nodeId);
+    var state = stateFromUrl[nodeId];
+    if (element && state) {
+      if (state === 'collapsed') {
+        element.classList.add('collapsed');
+        
+        // 対応するボタンもトグル
+        var button = document.querySelector('[data-target="' + nodeId + '"]');
+        if (button) {
+          button.classList.add('collapsed');
+        }
+      }
+    }
+  }
+  
+  // リダイレクト時のURLパラメータを処理
+  handleRedirectParams();
+  
   // DOMContentLoadedイベントが発火した後にセットアップを行う
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       // Initialize toggle buttons
       setupToggleButtons();
       
-      // URLパラメータがない場合のみURLを更新
-      var urlParams = new URLSearchParams(window.location.search);
-      if (!urlParams.has('state')) {
-        // 初期化後にシェアURLを更新
-        setTimeout(function() {
-          updateShareUrl();
-        }, 500);
-      }
+      // 初期化後、最初のリンクを生成
+      setTimeout(function() {
+        updateShareUrl();
+      }, 500); // 初期化後に遅延実行
     });
   } else {
     // すでにDOMContentLoadedイベントが発火している場合は直接実行
@@ -188,6 +214,12 @@ function getStateFromUrl() {
       }
     }
     
+    // 復元した状態をセッションストレージに保存
+    if (Object.keys(parsedState).length > 0) {
+      sessionStorage.setItem('kpiTreeState', JSON.stringify(parsedState));
+      console.log('State saved to session storage for redirect handling');
+    }
+    
     return parsedState;
   } catch (e) {
     console.error('Error parsing state from URL:', e);
@@ -320,20 +352,31 @@ function addShareButton() {
 function updateShareUrl() {
   var state = saveTreeState();
   var stateParam = generateStateParam(state);
-  var direction = 'horizontal'; // 常に横型レイアウトを使用
-  
-  // GCSと互換性のある方法でURLを構築
-  // ファイル名のみを取得（パス情報なし）
-  var fileName = window.location.pathname.split('/').pop();
-  if (!fileName) {
-    fileName = 'index.html'; // デフォルト
-  }
   
   // クエリ文字列を構築
   var queryString = '?state=' + stateParam;
   
-  // Store URL for copy button（相対パスを使用）
-  window._shareUrl = fileName + queryString;
+  // 公開URLが設定されているか確認
+  var baseUrl = '';
+  if (window._publicBaseUrl) {
+    // 設定ファイルから読み込んだ公開URLを使用
+    baseUrl = window._publicBaseUrl;
+    console.log('Using public URL from config:', baseUrl);
+    
+    // 公開URLにパラメータを追加
+    window._shareUrl = baseUrl + queryString;
+  } else {
+    // GCSと互換性のある方法でURLを構築
+    // ファイル名のみを取得（パス情報なし）
+    var fileName = window.location.pathname.split('/').pop();
+    if (!fileName) {
+      fileName = 'index.html'; // デフォルト
+    }
+    
+    // 相対パスを使用
+    window._shareUrl = fileName + queryString;
+  }
+  
   console.log('Share URL updated:', window._shareUrl);
   
   // 現在のURLパラメータをチェック
@@ -458,8 +501,68 @@ function updateBrowserUrl(queryString) {
       // GCSと互換性を持たせるため、クエリ文字列のみを変更
       window.history.replaceState({}, document.title, queryString);
       console.log('Browser URL updated with query string:', queryString);
+      
+      // 状態をセッションストレージに保存（リダイレクト対応用）
+      var state = saveTreeState();
+      if (Object.keys(state).length > 0) {
+        sessionStorage.setItem('kpiTreeState', JSON.stringify(state));
+        console.log('Tree state saved to session storage');
+      }
     } catch (e) {
       console.error('Error updating browser URL:', e);
+    }
+  }
+}
+
+// リダイレクト時のURLパラメータを処理する関数
+function handleRedirectParams() {
+  // URLパラメータを確認
+  var urlParams = new URLSearchParams(window.location.search);
+  var hasStateParam = urlParams.has('state');
+  
+  // URLにステートパラメータがなく、セッションストレージにステートがある場合（リダイレクト後の状態）
+  if (!hasStateParam && sessionStorage.getItem('kpiTreeState')) {
+    try {
+      // セッションストレージから状態を取得
+      var savedState = JSON.parse(sessionStorage.getItem('kpiTreeState'));
+      console.log('Found saved state in session storage:', savedState);
+      
+      if (savedState && Object.keys(savedState).length > 0) {
+        // 状態パラメータを生成
+        var stateParam = generateStateParam(savedState);
+        
+        // URLを更新
+        var queryString = '?state=' + stateParam;
+        console.log('Restoring state from session storage, updating URL to:', queryString);
+        
+        // ブラウザのURLを更新（History APIを使用）
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, document.title, queryString);
+          
+          // 状態を適用
+          for (var nodeId in savedState) {
+            var element = document.getElementById(nodeId);
+            var state = savedState[nodeId];
+            if (element && state) {
+              if (state === 'collapsed') {
+                element.classList.add('collapsed');
+                
+                // 対応するボタンもトグル
+                var button = document.querySelector('[data-target="' + nodeId + '"]');
+                if (button) {
+                  button.classList.add('collapsed');
+                }
+              }
+            }
+          }
+          
+          // 処理完了後、セッションストレージをクリア
+          sessionStorage.removeItem('kpiTreeState');
+          console.log('Session storage cleared after state restoration');
+        }
+      }
+    } catch (e) {
+      console.error('Error handling redirect params:', e);
     }
   }
 }
