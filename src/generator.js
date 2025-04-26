@@ -264,20 +264,43 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     // オブジェクトや複雑な値の場合は適切に文字列化
     let displayValue = node.value;
     
-    // オブジェクトの場合は文字列に変換
+    // APIレスポンスオブジェクトの検出と適切な処理
     if (typeof displayValue === 'object' && displayValue !== null) {
-      try {
-        // 直接文字列として扱う前にJSON文字列かどうかをチェック
-        if (typeof displayValue === 'string' && (displayValue.startsWith('{') || displayValue.startsWith('['))) {
-          // すでにJSON文字列の場合はそのまま使用
-          displayValue = displayValue;
+      // APIレスポンス特有のプロパティを検出
+      if (displayValue.context || displayValue.spreadsheetId || 
+          displayValue._rawSheets || displayValue.authMode || 
+          displayValue.jwtClient || displayValue._options) {
+        
+        // APIレスポンスから実際のデータを抽出する
+        if (displayValue.data && displayValue.data.values && 
+            Array.isArray(displayValue.data.values) && 
+            displayValue.data.values.length > 0 && 
+            displayValue.data.values[0].length > 0) {
+          // check-sheets-values.jsと同じ方法でデータにアクセス
+          displayValue = displayValue.data.values[0][0];
         } else {
-          // オブジェクトをJSON文字列に変換
-          displayValue = JSON.stringify(displayValue);
+          // データが見つからない場合はエラーメッセージ
+          displayValue = "API値取得エラー";
         }
-      } catch (e) {
-        console.error('値の変換エラー:', e);
-        displayValue = String(displayValue);
+      } else {
+        try {
+          // その他のオブジェクトはJSONとして文字列化
+          displayValue = JSON.stringify(displayValue);
+          
+          // 単純な値の場合は直接取り出す
+          if (displayValue.startsWith('{"0"')) {
+            try {
+              const parsed = JSON.parse(displayValue);
+              if (parsed["0"]) {
+                displayValue = parsed["0"];
+              }
+            } catch (jsonErr) {
+              // パースエラーなら元の文字列表現を使用
+            }
+          }
+        } catch (e) {
+          displayValue = "オブジェクト変換エラー";
+        }
       }
     }
     
