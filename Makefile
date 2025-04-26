@@ -10,6 +10,10 @@ run:
 sh:
 	docker-compose run --rm --entrypoint sh kpi-generator
 
+.PHONY: check-sheets
+check-sheets:
+	docker-compose run --rm kpi-generator node src/check-sheets.js $(id)
+
 .PHONY: debug
 debug:
 	@echo "Checking service account key..."
