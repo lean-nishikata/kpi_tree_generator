@@ -10,6 +10,9 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 - サブツリーの折りたたみ機能
 - 折りたたみ状態の保存と記憶
 - 縦向き・横向きレイアウトの切り替え
+- ツリーの状態をURLで共有可能
+ー 特定ノードへのリンクの生成と共有
+- スタンドアロンHTML形式によるCloud Storage等での簡単ホスティング
 
 ## Dockerでの使用方法
 
@@ -53,6 +56,7 @@ docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output kpi-tree-ge
 title: "KPI ツリーの例"        # タイトル
 theme: "default"              # テーマ（default, blue, red）
 direction: "horizontal"       # レイアウト方向（horizontal または vertical）
+public_url: "https://storage.cloud.google.com/my-bucket/kpi.html"  # 公開ホスティングURL
 
 # ツリーのルートノード
 root:
@@ -82,6 +86,14 @@ root:
       operator: "+"
 ```
 
+### 重要な設定パラメータ
+
+- **title**: ツリーのタイトル
+- **theme**: テーマ色（"default", "blue", "red"）
+- **direction**: レイアウト方向（"horizontal" または "vertical"）
+- **public_url**: 公開ホスティングURL（例：Google Cloud Storage URL）
+  - この設定は共有リンク生成とGCSリダイレクトに必要です
+
 ## 付属の設定例
 
 いくつかのサンプル設定ファイルが用意されています：
@@ -102,3 +114,59 @@ root:
 
 - テーマを変更するには、YAMLファイルの `theme` パラメータを変更します（"default", "blue", "red"）
 - ノードの色やサイズを変更する場合は、`static/style.css` ファイルをカスタマイズしてください
+
+## Google Cloud Storage（GCS）での公開方法
+
+生成したKPIツリーをGoogle Cloud Storageや他の静的ホスティングサービスで公開する方法です。
+
+### 1. 準備と生成
+
+1. YAML設定ファイルに `public_url` パラメータを設定
+
+```yaml
+title: "KPIツリー"
+public_url: "https://storage.cloud.google.com/your-bucket/kpi.html"
+root:
+  # ツリーの定義
+```
+
+2. HTMLファイルの生成
+
+```shell
+node src/generator.js config/your-config.yaml
+```
+
+このコマンドにより `output/your-config.html` に単一のHTMLファイルが生成されます。
+
+### 2. GCSへのアップロード
+
+1. 生成されたHTMLファイルをGCSバケットにアップロード
+
+```shell
+gsutil cp output/your-config.html gs://your-bucket/kpi.html
+```
+
+2. ファイルを公開設定にする
+
+```shell
+gsutil acl ch -u AllUsers:R gs://your-bucket/kpi.html
+```
+
+### 3. 共有リンクの利用
+
+これで、あなたのKPIツリーは以下の機能を備えたURLで共有できます：
+
+- **ツリーの開閉状態を含むURL**: `https://storage.cloud.google.com/your-bucket/kpi.html#state=...`
+- **特定ノードへのリンク**: `https://storage.cloud.google.com/your-bucket/kpi.html#state=...&node=...`
+
+生成されたHTMLは以下の特徴を持ちます：
+
+- スタンドアロンHTML: すべてのJSとCSSが埋め込まれているため、単一ファイルのみで動作
+- リダイレクト対応: GCSが行うリダイレクト後もURLハッシュパラメータを保持
+- 共有機能: 各ノードにアンカーリンク機能があり、クリックでそのノードへのリンクをコピー
+
+### 注意点
+
+- `public_url` パラメータは、実際にファイルをアップロードするURLと正確に一致させてください
+- GCSのリダイレクト環境では、クエリパラメータは保持されませんが、URLハッシュ（#以降）は保持されます
+- 生成されたHTMLは全てのJSとCSSを含むためファイルサイズが大きくなりますが、外部参照の問題を避けるための設計です
