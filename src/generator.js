@@ -124,9 +124,29 @@ async function generateKPITree() {
   }
 }
 
+// シンプルなハッシュ関数
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0; // 32bit整数に変換
+  }
+  return Math.abs(hash).toString(36).substr(0, 9);
+}
+
+// 決定論的なノードIDを生成する関数
+function generateDeterministicId(node, path) {
+  // ノードの内容とパス情報からハッシュを生成
+  const nodeText = node.text || '';
+  const nodeValue = node.value || '';
+  const content = `${nodeText}-${nodeValue}-${path}`;
+  return `node-${hashString(content)}`;
+}
+
 // Function to generate HTML for the tree
-function generateTreeHtml(node, level = 0) {
-  const nodeId = `node-${Math.random().toString(36).substr(2, 9)}`;
+function generateTreeHtml(node, level = 0, path = 'root') {
+  // ノードのテキストと位置情報から一意なIDを生成
+  const nodeId = generateDeterministicId(node, path);
   const hasChildren = node.children && node.children.length > 0;
   
   // Create node content
@@ -153,7 +173,9 @@ function generateTreeHtml(node, level = 0) {
     
     // Add each child with operator
     node.children.forEach((child, index) => {
-      html += generateTreeHtml(child, level + 1);
+      // 子ノードにはインデックスを含むパスを渡す
+      html += generateTreeHtml(child, level + 1, `${path}-${index}`);
+      
       
       // Add operator between nodes if specified (except for the last child)
       if (child.operator && index < node.children.length - 1) {
