@@ -41,7 +41,7 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 5. YAMLファイルでスプレッドシート参照を指定（`config/spreadsheet-example.yaml` を参照）
 6. 実行：
    ```shell
-   docker-compose run kpi-generator spreadsheet-example
+   docker-compose run --rm kpi-generator spreadsheet-example
    ```
 
 #### 実行時に認証情報をマウントする方法
@@ -55,8 +55,24 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 3. ダウンロードしたJSONキーを `keys/service-account-key.json` という名前で配置
 4. 実行：
    ```shell
-   docker-compose run kpi-generator spreadsheet-example
+   docker-compose run --rm kpi-generator spreadsheet-example
    ```
+
+### Googleスプレッドシートの情報とセル値の確認
+
+スプレッドシートの情報やセル値を確認するためのツールが含まれています。
+
+1. スプレッドシートの基本情報を確認:
+   ```shell
+   make check-sheets id="あなたのスプレッドシートID"
+   ```
+
+2. 特定セルの値を確認:
+   ```shell
+   make check-value id="あなたのスプレッドシートID" range="シート名!A1"
+   ```
+   ※ シート名に空白や特殊文字が含まれる場合はダブルクォートで囲んでください
+   例: `range="Sheet 1!A1"`
 
 ### 手動でビルドして実行
 
@@ -226,3 +242,16 @@ gsutil acl ch -u AllUsers:R gs://your-bucket/kpi.html
 - `public_url` パラメータは、実際にファイルをアップロードするURLと正確に一致させてください
 - GCSのリダイレクト環境では、クエリパラメータは保持されませんが、URLハッシュ（#以降）は保持されます
 - 生成されたHTMLは全てのJSとCSSを含むためファイルサイズが大きくなりますが、外部参照の問題を避けるための設計です
+
+## トラブルシューティング
+
+### スプレッドシート参照の問題
+
+1. **[object Object] が表示される場合**:
+   - `make check-value` コマンドでセル値を確認する
+   - 正確なシート名とセル参照を使用しているか確認
+
+2. **認証エラーが発生する場合**:
+   - サービスアカウントキーファイルの配置を確認
+   - スプレッドシートがサービスアカウントと共有されているか確認
+   - `make debug` コマンドで認証情報を確認
