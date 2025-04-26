@@ -92,13 +92,21 @@ async function generateKPITree() {
     const theme = config.theme || 'default';
     const direction = config.direction || 'vertical';
     
+    // Get public URL if defined in YAML
+    const publicUrl = config.public_url || '';
+    console.log(`Public URL from config: ${publicUrl}`);
+    
+    // Create script to initialize public URL variable
+    const publicUrlScript = publicUrl ? `<script>window.PUBLIC_URL = "${publicUrl}";</script>` : '';
+    
     let html = template
       .replace(/\{\{TITLE\}\}/g, title)
       .replace(/\{\{TREE_HTML\}\}/g, treeHtml)
       .replace(/\{\{STYLE\}\}/g, styleContent)
       .replace(/\{\{SCRIPT\}\}/g, scriptContent)
       .replace(/\{\{THEME\}\}/g, theme)
-      .replace(/\{\{DIRECTION\}\}/g, direction);
+      .replace(/\{\{DIRECTION\}\}/g, direction)
+      .replace(/\{\{PUBLIC_URL_SCRIPT\}\}/g, publicUrlScript);
     
     // Determine output file path
     const outputFile = config.output;
