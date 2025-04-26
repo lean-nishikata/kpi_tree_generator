@@ -433,10 +433,10 @@ async function resolveSpreadsheetReferences(node) {
                   console.error('値の再取得に失敗:', retryError.message);
                 }
                 
-                // 再取得に失敗した場合は「summary!B1」用の固定値を使用
-                console.log('値の再取得に失敗したため、固定値を使用します');
-                node.value = '¥8,977,221';
-                return; // ハードコード値を設定したので終了
+                // 再取得に失敗した場合はERRORを表示
+                console.log('値の再取得に失敗したため、ERRORを表示します');
+                node.value = 'ERROR';
+                return; // エラー表示を設定して終了
               }
               
               // 通常のオブジェクトはJSON文字列に変換
