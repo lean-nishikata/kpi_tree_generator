@@ -205,13 +205,38 @@ async function getCellValue(spreadsheetId, range) {
     }
     
     try {
-      // 特定のセルを直接API経由で取得する（シート内ですべての値を取得する代わりに）
+      // 特定のセルを直接API経由で取得する
+      console.log('Google Sheets API v4を使用して値を直接取得...');
+      
+      // 認証情報を取得
+      const serviceAccountKey = loadServiceAccountKey();
+      if (!serviceAccountKey) {
+        throw new Error('認証情報の読み込みに失敗しました');
+      }
+      
+      // googleapis を使用した直接アクセス（より低レベルのAPI）
+      const { google } = require('googleapis');
+      const auth = new google.auth.JWT(
+        serviceAccountKey.client_email,
+        null,
+        serviceAccountKey.private_key,
+        ['https://www.googleapis.com/auth/spreadsheets.readonly']
+      );
+      
+      // Sheets API クライアントの初期化
+      const sheets = google.sheets({ version: 'v4', auth });
+      
+      // シート情報を取得
       const sheetName = sheet.title;
       const range = `${sheetName}!${cellRef}`;
-      console.log(`直接APIで値を取得: ${range}`);
+      console.log(`APIで値を取得: ${range}`);
       
-      // Google APIを直接呼び出してセル値を取得
-      const response = await doc.axios.get(`/values/${range}`);
+      // 値を取得
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: spreadsheetId,
+        range: range,
+      });
+      
       const values = response.data.values;
       
       if (!values || values.length === 0 || values[0].length === 0) {
