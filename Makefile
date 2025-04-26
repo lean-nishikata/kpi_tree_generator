@@ -12,7 +12,7 @@ sh:
 
 .PHONY: check-sheets
 check-sheets:
-	docker-compose run --rm kpi-generator node src/check-sheets.js $(id)
+	docker-compose run --rm --entrypoint node kpi-generator src/check-sheets.js $(id)
 
 .PHONY: debug
 debug:
