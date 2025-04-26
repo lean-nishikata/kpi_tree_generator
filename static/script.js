@@ -217,13 +217,43 @@ function loadTreeState() {
 
 // Get state from URL parameters
 function getStateFromUrl() {
+  // 1. 通常のURLSearchParamsを試す
   var urlParams = new URLSearchParams(window.location.search);
   var stateParam = urlParams.get('state');
   
+  // 2. 通常の方法で取得できない場合（GCSリダイレクトなど）、URLの文字列全体から探す
   if (!stateParam) {
-    console.log('No state parameter in URL');
+    console.log('Standard URL param not found, trying alternative method for GCS redirect URL');
     if (window._debugMode) {
-      logToDebugPanel('No state parameter in URL');
+      logToDebugPanel('Standard param not found, trying GCS redirect URL parsing');
+    }
+    
+    var fullUrl = window.location.href;
+    var stateIndex = fullUrl.indexOf('state=');
+    
+    if (stateIndex !== -1) {
+      // state=以降の部分を取得
+      var stateSubstring = fullUrl.substring(stateIndex + 6); // 'state='.length = 6
+      
+      // 次のパラメータがある場合は&までを取得、なければ最後まで
+      var nextParamIndex = stateSubstring.indexOf('&');
+      if (nextParamIndex !== -1) {
+        stateParam = stateSubstring.substring(0, nextParamIndex);
+      } else {
+        stateParam = stateSubstring;
+      }
+      
+      console.log('Found state parameter in redirect URL:', stateParam);
+      if (window._debugMode) {
+        logToDebugPanel('Found state in redirect URL: ' + stateParam.substring(0, 20) + '...');
+      }
+    }
+  }
+  
+  if (!stateParam) {
+    console.log('No state parameter found in URL using any method');
+    if (window._debugMode) {
+      logToDebugPanel('No state parameter found in URL using any method');
     }
     return {};
   }
