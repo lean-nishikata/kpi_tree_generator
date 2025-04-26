@@ -90,13 +90,17 @@ function copyToClipboard() {
   // 共有用URLを生成
   const url = shareUrl;
   
+  console.log('コピーするURL:', url);
+  
   // クリップボードAPIが使用可能な場合
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url)
       .then(function() {
-        showCopyMessage('URLをコピーしました: ' + url);
+        showCopyMessage('URLをコピーしました');
+        console.log('クリップボードにコピー成功:', url);
       })
       .catch(function(err) {
+        console.error('クリップボードへのコピーに失敗:', err);
         // フォールバック: textarea要素を使った古典的なコピー機能
         fallbackCopyToClipboard(url);
       });
@@ -181,25 +185,41 @@ function showCopySuccess() {
 
 // メッセージ表示
 function showCopyMessage(message) {
-  var messageElement = document.getElementById('copy-message');
-  if (!messageElement) {
-    messageElement = document.createElement('div');
-    messageElement.id = 'copy-message';
-    messageElement.style.position = 'fixed';
-    messageElement.style.bottom = '20px';
-    messageElement.style.left = '50%';
-    messageElement.style.transform = 'translateX(-50%)';
-    messageElement.style.padding = '10px 20px';
-    messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    messageElement.style.color = 'white';
-    messageElement.style.borderRadius = '4px';
-    messageElement.style.zIndex = '9999';
-    messageElement.style.transition = 'opacity 0.3s';
-    document.body.appendChild(messageElement);
+  // 既存のメッセージ要素を削除
+  var oldMessage = document.getElementById('copy-message');
+  if (oldMessage) {
+    oldMessage.parentNode.removeChild(oldMessage);
   }
-  messageElement.textContent = message;
+  
+  // 新しいメッセージ要素を作成
+  var messageElement = document.createElement('div');
+  messageElement.id = 'copy-message';
+  messageElement.style.position = 'fixed';
+  messageElement.style.bottom = '20px';
+  messageElement.style.left = '50%';
+  messageElement.style.transform = 'translateX(-50%)';
+  messageElement.style.padding = '10px 20px';
+  messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+  messageElement.style.color = 'white';
+  messageElement.style.borderRadius = '4px';
+  messageElement.style.zIndex = '9999';
   messageElement.style.opacity = '1';
-  setTimeout(function() { messageElement.style.opacity = '0'; }, 3000);
+  messageElement.style.transition = 'opacity 0.3s';
+  messageElement.textContent = message;
+  
+  // DOMに追加
+  document.body.appendChild(messageElement);
+  
+  // 数秒後に非表示
+  setTimeout(function() {
+    messageElement.style.opacity = '0';
+    // アニメーション後に要素を削除
+    setTimeout(function() {
+      if (messageElement.parentNode) {
+        messageElement.parentNode.removeChild(messageElement);
+      }
+    }, 300);
+  }, 3000);
 }
 
 // 代替コピー方法
