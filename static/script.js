@@ -6,16 +6,41 @@ function kpiTreeInit() {
   console.log('KPI Tree initializing at ' + initTime);
   console.log('URL:', window.location.href);
   
-  // デバッグモードを有効化（URLに debug=true が含まれている場合）
+  // デバッグモードを有効化
+  // 1. URLパラメータに debug=true が含まれるか
+  // 2. ローカルストレージに debug=true が保存されているか
   var urlParams = new URLSearchParams(window.location.search);
-  var debugMode = urlParams.has('debug');
+  var debugFromUrl = urlParams.has('debug');
+  var debugFromStorage = localStorage.getItem('kpiTreeDebugMode') === 'true';
+  var debugMode = debugFromUrl || debugFromStorage;
+  
+  // デバッグモード設定をローカルストレージに保存
+  if (debugFromUrl) {
+    localStorage.setItem('kpiTreeDebugMode', 'true');
+  }
+  
   window._debugMode = debugMode;
   
+  // デバッグモードが有効ならデバッグパネルを表示
   if (debugMode) {
-    createDebugPanel();
-    logToDebugPanel('KPI Tree initializing at ' + initTime);
-    logToDebugPanel('URL: ' + window.location.href);
-    logToDebugPanel('Search params: ' + window.location.search);
+    // DOMの読み込み完了後にデバッグパネルを初期化
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        createDebugPanel();
+        logToDebugPanel('KPI Tree initializing at ' + initTime);
+        logToDebugPanel('URL: ' + window.location.href);
+        logToDebugPanel('Search params: ' + window.location.search);
+        logToDebugPanel('Debug mode from URL: ' + debugFromUrl);
+        logToDebugPanel('Debug mode from storage: ' + debugFromStorage);
+      });
+    } else {
+      createDebugPanel();
+      logToDebugPanel('KPI Tree initializing at ' + initTime);
+      logToDebugPanel('URL: ' + window.location.href);
+      logToDebugPanel('Search params: ' + window.location.search);
+      logToDebugPanel('Debug mode from URL: ' + debugFromUrl);
+      logToDebugPanel('Debug mode from storage: ' + debugFromStorage);
+    }
   }
   
   // 公開URL情報があればグローバル変数に保存
@@ -253,9 +278,16 @@ function getStateFromUrl() {
       }
       
       // デバッグ用にローカルストレージにも保存
-      localStorage.setItem('kpiTreeStateDebug', JSON.stringify(parsedState));
-      if (window._debugMode) {
-        logToDebugPanel('State saved to local storage for debugging');
+      try {
+        localStorage.setItem('kpiTreeStateDebug', JSON.stringify(parsedState));
+        if (window._debugMode) {
+          logToDebugPanel('State saved to local storage for debugging');
+        }
+      } catch (e) {
+        console.warn('Could not save to localStorage (possibly due to security restrictions):', e);
+        if (window._debugMode) {
+          logToDebugPanel('WARNING: Could not save to localStorage: ' + e.message);
+        }
       }
     }
     
@@ -696,6 +728,12 @@ function applyTreeState(state) {
 
 // デバッグパネルを作成する関数
 function createDebugPanel() {
+  // 既存のデバッグパネルがあれば削除
+  var existingPanel = document.getElementById('debug-panel');
+  if (existingPanel) {
+    existingPanel.parentNode.removeChild(existingPanel);
+  }
+  
   var debugPanel = document.createElement('div');
   debugPanel.id = 'debug-panel';
   debugPanel.style.position = 'fixed';
@@ -725,16 +763,39 @@ function createDebugPanel() {
   
   // 共有状態を表示するボタン
   var showStateButton = document.createElement('button');
-  showStateButton.innerText = 'セッションストレージ確認';
+  showStateButton.innerText = 'ストレージ確認';
   showStateButton.style.margin = '5px';
   showStateButton.onclick = function() {
-    var state = sessionStorage.getItem('kpiTreeState');
-    logToDebugPanel('Session Storage State: ' + (state || 'none'));
-    
-    var debugState = localStorage.getItem('kpiTreeStateDebug');
-    logToDebugPanel('Local Storage Debug State: ' + (debugState || 'none'));
+    try {
+      var state = sessionStorage.getItem('kpiTreeState');
+      logToDebugPanel('Session Storage State: ' + (state || 'none'));
+      
+      var debugState = localStorage.getItem('kpiTreeStateDebug');
+      logToDebugPanel('Local Storage Debug State: ' + (debugState || 'none'));
+    } catch (e) {
+      logToDebugPanel('ERROR: Storage access error: ' + e.message);
+    }
   };
   debugPanel.appendChild(showStateButton);
+  
+  // デバッグモードオフボタン
+  var debugOffButton = document.createElement('button');
+  debugOffButton.innerText = 'デバッグオフ';
+  debugOffButton.style.margin = '5px';
+  debugOffButton.style.backgroundColor = '#a00';
+  debugOffButton.style.color = 'white';
+  debugOffButton.onclick = function() {
+    try {
+      localStorage.setItem('kpiTreeDebugMode', 'false');
+      logToDebugPanel('デバッグモードを無効化しました。ページを再読み込みしてください。');
+      setTimeout(function() {
+        window.location.reload();
+      }, 1500);
+    } catch (e) {
+      logToDebugPanel('ERROR: Failed to disable debug mode: ' + e.message);
+    }
+  };
+  debugPanel.appendChild(debugOffButton);
   
   // DOM構造を表示するボタン
   var showDomButton = document.createElement('button');
