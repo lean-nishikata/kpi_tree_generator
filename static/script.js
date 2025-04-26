@@ -22,29 +22,18 @@ function kpiTreeInit() {
   // Add share button for permanent link
   addShareButton();
   
-  // URLパラメータから状態を取得
-  var stateFromUrl = getStateFromUrl();
-  console.log('State from URL:', stateFromUrl);
+  // リダイレクト時のURLパラメータを処理（最初に処理）
+  var redirectStateApplied = handleRedirectParams();
   
-  // ノードの状態を復元
-  for (var nodeId in stateFromUrl) {
-    var element = document.getElementById(nodeId);
-    var state = stateFromUrl[nodeId];
-    if (element && state) {
-      if (state === 'collapsed') {
-        element.classList.add('collapsed');
-        
-        // 対応するボタンもトグル
-        var button = document.querySelector('[data-target="' + nodeId + '"]');
-        if (button) {
-          button.classList.add('collapsed');
-        }
-      }
-    }
+  // リダイレクト処理で状態が適用されなかった場合のみURLから復元
+  if (!redirectStateApplied) {
+    // URLパラメータから状態を取得
+    var stateFromUrl = getStateFromUrl();
+    console.log('State from URL:', stateFromUrl);
+    
+    // ノードの状態を復元（URLパラメータから）
+    applyTreeState(stateFromUrl);
   }
-  
-  // リダイレクト時のURLパラメータを処理
-  handleRedirectParams();
   
   // DOMContentLoadedイベントが発火した後にセットアップを行う
   if (document.readyState === 'loading') {
@@ -539,32 +528,77 @@ function handleRedirectParams() {
         if (window.history && window.history.replaceState) {
           window.history.replaceState({}, document.title, queryString);
           
-          // 状態を適用
-          for (var nodeId in savedState) {
-            var element = document.getElementById(nodeId);
-            var state = savedState[nodeId];
-            if (element && state) {
-              if (state === 'collapsed') {
-                element.classList.add('collapsed');
-                
-                // 対応するボタンもトグル
-                var button = document.querySelector('[data-target="' + nodeId + '"]');
-                if (button) {
-                  button.classList.add('collapsed');
-                }
-              }
-            }
+          // DOMContentLoadedを待ってから状態を適用
+          if (document.readyState === 'loading') {
+            console.log('DOM not yet ready, setting up listener for state application');
+            document.addEventListener('DOMContentLoaded', function() {
+              console.log('DOM now ready, applying session state');
+              applyTreeState(savedState);
+            });
+          } else {
+            // DOM既に読み込み済みの場合は直接適用
+            console.log('DOM already ready, applying session state now');
+            applyTreeState(savedState);
           }
           
           // 処理完了後、セッションストレージをクリア
           sessionStorage.removeItem('kpiTreeState');
           console.log('Session storage cleared after state restoration');
+          
+          return true; // 状態適用済みを返す
         }
       }
     } catch (e) {
       console.error('Error handling redirect params:', e);
     }
   }
+  
+  return false; // 状態未適用を返す
+}
+
+// ツリー状態を適用する関数
+function applyTreeState(state) {
+  // 状態が空でないか確認
+  if (!state || Object.keys(state).length === 0) {
+    console.log('No state to apply');
+    return;
+  }
+  
+  console.log('Applying tree state:', state);
+  
+  // 各ノードに状態を適用
+  for (var nodeId in state) {
+    var element = document.getElementById(nodeId);
+    var nodeState = state[nodeId];
+    
+    if (element && nodeState) {
+      console.log('Applying state to node:', nodeId, 'State:', nodeState);
+      
+      if (nodeState === 'collapsed') {
+        // collapsedクラスを追加
+        element.classList.add('collapsed');
+        
+        // 対応するボタンもトグル
+        var button = document.querySelector('[data-target="' + nodeId + '"]');
+        if (button) {
+          button.classList.add('collapsed');
+        }
+      } else if (nodeState === 'expanded') {
+        // expandedの場合は確実にcollapsedクラスを削除
+        element.classList.remove('collapsed');
+        
+        // 対応するボタンもトグル
+        var button = document.querySelector('[data-target="' + nodeId + '"]');
+        if (button) {
+          button.classList.remove('collapsed');
+        }
+      }
+    } else {
+      console.warn('Element not found for nodeId:', nodeId);
+    }
+  }
+  
+  console.log('Tree state applied successfully');
 }
 
 // 初期ロード完了フラグ
