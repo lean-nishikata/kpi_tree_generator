@@ -6,22 +6,20 @@
   <title>{{TITLE}}</title>
   <style>
     {{STYLE}}
-    /* カスタムスタイルのオーバーライド */
-    .direction-horizontal .kpi-tree li {
+    
+    /* 追加のカスタムスタイル - 水平レイアウト専用 */
+    .kpi-tree li {
       display: flex;
       flex-direction: row;
       align-items: flex-start !important;
       margin: 3px 0;
     }
-    .direction-vertical {
-      display: none;
-    }
   </style>
 </head>
-<body data-theme="{{THEME}}" data-direction="horizontal">
+<body data-theme="{{THEME}}">
   <div class="container">
     <h1>{{TITLE}}</h1>
-    <div class="kpi-tree-container theme-{{THEME}} direction-horizontal">
+    <div class="kpi-tree-container theme-{{THEME}}">
       <ul class="kpi-tree">
         {{TREE_HTML}}
       </ul>

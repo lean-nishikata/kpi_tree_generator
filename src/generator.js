@@ -90,8 +90,7 @@ async function generateKPITree() {
     // Replace placeholders in template
     const title = config.title || 'KPI Tree';
     const theme = config.theme || 'default';
-    // 常に水平方向に固定
-    const direction = 'horizontal';
+    // 方向指定は削除（水平レイアウトのみに最適化）
     
     // Get public URL if defined in YAML
     const publicUrl = config.public_url || '';
@@ -106,14 +105,9 @@ async function generateKPITree() {
       .replace(/\{\{STYLE\}\}/g, styleContent)
       .replace(/\{\{SCRIPT\}\}/g, scriptContent)
       .replace(/\{\{THEME\}\}/g, theme)
-      .replace(/\{\{DIRECTION\}\}/g, direction)
       .replace(/\{\{PUBLIC_URL_SCRIPT\}\}/g, publicUrlScript);
       
-    // 生成後のHTMLを強制的に水平レイアウトに修正
-    html = html.replace(/data-direction="vertical"/g, 'data-direction="horizontal"');
-    html = html.replace(/class="kpi-tree-container theme-(\w+) direction-vertical"/g, 'class="kpi-tree-container theme-$1 direction-horizontal"');
-    
-    // CSSのdisplay:noneは修正しない（.direction-verticalのまま残す）
+    // 方向変換ロジックを削除（対応するプレースホルダーもテンプレートから削除済み）
     
     // Determine output file path
     const outputFile = config.output;
