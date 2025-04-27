@@ -6,5 +6,5 @@ npm-debug.log
 .DS_Store
 
 # Google API credentials
-/keys/*.json
+/keys/**/*.json  # すべてのサブディレクトリを含む
 .env
