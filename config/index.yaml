@@ -14,6 +14,7 @@ root:
     value: 1000
     children:
     - text: 販売所収益
+      text_en: "marketplace"
       operator: "+"
       value: 1000
       url: "https://lookerstudio.google.com/u/0/reporting/4565e709-4733-42d8-955a-e56dbbe8c332/page/p_xsek8mmgrd"
