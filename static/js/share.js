@@ -8,6 +8,17 @@ function updateShareUrl() {
   // ツリーの現在の状態を取得
   var state = saveTreeState();
   
+  // 日次・月次の表示モードを状態に追加
+  if (!state) {
+    state = {};
+  }
+  
+  // トグルボタン状態を追加
+  if (window._viewMode) {
+    state._viewMode = window._viewMode; // 注目: アンダースコア付きのキー名で通常のノードIDと区別
+    console.log('共有URLに表示モードを含めました:', window._viewMode);
+  }
+  
   if (state && Object.keys(state).length > 0) {
     // 状態パラメータを生成
     var stateParam = generateStateParam(state);

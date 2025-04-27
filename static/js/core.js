@@ -85,6 +85,14 @@ function kpiTreeInit() {
   /**
    * ステップ5: 取得した状態に基づくツリーの初期設定
    */
+  // 日次・月次トグル状態の復元
+  if (state && state._viewMode) {
+    console.log('URLから表示モードを復元:', state._viewMode);
+    switchViewMode(state._viewMode);
+    // _viewModeはツリー状態ではないので実行後に削除
+    delete state._viewMode;
+  }
+  
   // 取得した状態をツリーに適用（開閉状態の復元）
   console.log('ツリー状態を適用します');
   applyTreeState(state);
