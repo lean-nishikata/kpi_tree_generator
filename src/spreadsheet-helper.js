@@ -313,8 +313,15 @@ function convertA1ToRowCol(a1Notation) {
 async function resolveSpreadsheetReferences(node) {
   if (!node) return node;
   
+  console.log('----------- スプレッドシート参照解決開始 -----------');
+  console.log('NODE:', JSON.stringify(node.title || '名称なし'));
+  
+  // process.stdoutに直接書き込み（Docker環境でのログ出力を確実に）
+  process.stdout.write('\nノードのスプレッドシート参照確認中...\n');
+  
   // valueフィールドのスプレッドシート参照を解決
   if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
+    process.stdout.write('スプレッドシート参照が見つかりました\n');
     const { id, range } = node.value.spreadsheet;
     console.log(`-----------------------------------`);
     console.log(`スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
