@@ -324,10 +324,24 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     nodeContent += `<div class="value">${displayValue}</div>`;
   }
   
+  // データ属性用の値を準備
+  let dataAttributes = '';
+  
+  // value, value_daily, value_monthlyの処理
+  if (node.value !== undefined) {
+    dataAttributes += ` data-value-default="${node.value}"`;
+  }
+  if (node.value_daily !== undefined) {
+    dataAttributes += ` data-value-daily="${node.value_daily}"`;
+  }
+  if (node.value_monthly !== undefined) {
+    dataAttributes += ` data-value-monthly="${node.value_monthly}"`;
+  }
+  
   // Start the node HTML
   let html = `
     <li>
-      <div class="node" id="${nodeId}">
+      <div class="node" id="${nodeId}"${dataAttributes}>
         ${nodeContent}
       </div>`;
   

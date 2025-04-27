@@ -229,8 +229,42 @@ function addShareButton() {
     copyToClipboard();
   };
   
+  // 日次/月次切り替えトグルを作成
+  var timePeriodControl = document.createElement('div');
+  timePeriodControl.className = 'time-period-control';
+  
+  var toggleSwitch = document.createElement('div');
+  toggleSwitch.className = 'toggle-switch';
+  
+  // 日次オプション
+  var dailyOption = document.createElement('div');
+  dailyOption.className = 'toggle-option daily active';
+  dailyOption.textContent = '日次';
+  dailyOption.onclick = function() {
+    switchViewMode('daily');
+  };
+  
+  // 月次オプション
+  var monthlyOption = document.createElement('div');
+  monthlyOption.className = 'toggle-option monthly';
+  monthlyOption.textContent = '月次';
+  monthlyOption.onclick = function() {
+    switchViewMode('monthly');
+  };
+  
+  // スライダー
+  var toggleSlider = document.createElement('div');
+  toggleSlider.className = 'toggle-slider';
+  
+  // トグル要素を組み立てる
+  toggleSwitch.appendChild(dailyOption);
+  toggleSwitch.appendChild(monthlyOption);
+  toggleSwitch.appendChild(toggleSlider);
+  timePeriodControl.appendChild(toggleSwitch);
+  
   // DOMに追加
   shareDiv.appendChild(shareButton);
+  shareDiv.appendChild(timePeriodControl);
   document.body.appendChild(shareDiv);
 }
 

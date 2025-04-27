@@ -12,6 +12,7 @@
 window._initialLoadComplete = false;  // 初期ロード完了フラグ
 window._shareUrl = null;            // 現在の共有URL
 window._publicBaseUrl = null;       // 公開ベースURL
+window._viewMode = 'daily';         // 表示モード（daily または monthly）
 
 /**
  * KPIツリーアプリケーションのメイン初期化処理
