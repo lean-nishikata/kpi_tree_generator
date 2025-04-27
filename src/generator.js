@@ -262,9 +262,20 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   const hasChildren = node.children && node.children.length > 0;
   
   // Create node content
-  let nodeContent = node.text || '';
+  let nodeContent = '';
+  let mainText = node.text || '';
+  
+  // URLがある場合、主テキストのみにリンクを適用
   if (node.url) {
-    nodeContent = `<a href="${node.url}" target="_blank">${nodeContent}</a>`;
+    mainText = `<a href="${node.url}" target="_blank">${mainText}</a>`;
+  }
+  
+  // 主テキストを追加
+  nodeContent += mainText;
+  
+  // text_enが存在する場合は小さなフォントで追加（リンクの外側に追加）
+  if (node.text_en) {
+    nodeContent += `<div class="text-en">${node.text_en}</div>`;
   }
   if (node.value !== undefined) {
     // オブジェクトや複雑な値の場合は適切に文字列化

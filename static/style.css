@@ -30,6 +30,14 @@ h1 {
   margin: 0;
 }
 
+/* 英語表記用スタイル */
+.text-en {
+  font-size: 0.7em;
+  color: #666;
+  margin-top: 2px;
+  font-style: italic;
+}
+
 
 
 /* Horizontal direction styles */
