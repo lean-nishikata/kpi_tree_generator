@@ -327,7 +327,7 @@ async function resolveSpreadsheetReferences(node) {
   
   // valueフィールドのスプレッドシート参照を解決
   if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
-    process.stdout.write('スプレッドシート参照が見つかりました\n');
+    process.stdout.write('スプレッドシート参照(value)が見つかりました\n');
     process.stdout.write(`スプレッドシート参照詳細: ${JSON.stringify(node.value.spreadsheet, null, 2)}\n`);
     const { id, range } = node.value.spreadsheet;
     console.log(`-----------------------------------`);
@@ -557,16 +557,122 @@ async function resolveSpreadsheetReferences(node) {
     }
   }
   
-  // 子ノードも再帰的に処理
-  if (node.children && Array.isArray(node.children)) {
-    const processedChildren = [];
-    for (const child of node.children) {
-      if (child) { // childがnullまたはundefinedでないことを確認
-        const processedChild = await resolveSpreadsheetReferences(child);
-        processedChildren.push(processedChild);
+  // value_dailyのスプレッドシート参照を解決
+  if (node.value_daily && typeof node.value_daily === 'object' && node.value_daily.spreadsheet) {
+    process.stdout.write('スプレッドシート参照(value_daily)が見つかりました\n');
+    process.stdout.write(`スプレッドシート参照詳細: ${JSON.stringify(node.value_daily.spreadsheet, null, 2)}\n`);
+    const { id, range } = node.value_daily.spreadsheet;
+    console.log(`-----------------------------------`);
+    console.log(`value_daily: スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
+    try {
+      console.log(`value_daily: スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
+      const cellValue = await getCellValue(id, range);
+      console.log(`value_daily: スプレッドシートから値を取得成功: (${range})`);
+      console.log(`→ 値:`, cellValue);
+      console.log(`→ 型:`, typeof cellValue);
+      
+      if (typeof cellValue === 'object' && cellValue !== null) {
+        console.log(`→ オブジェクト詳細:`, JSON.stringify(cellValue, null, 2));
       }
+      
+      // 値のタイプに応じた処理
+      if (cellValue === null || cellValue === undefined) {
+        console.log(`スプレッドシートセル ${range} の値が空のため0を使用`);
+        node.value_daily = 0;
+      } else if (typeof cellValue === 'number') {
+        // 数値はそのまま使用
+        node.value_daily = cellValue;
+      } else if (typeof cellValue === 'string') {
+        // 文字列が数値に変換可能か試みる
+        node.value_daily = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
+      } else if (typeof cellValue === 'object') {
+        // オブジェクトの場合は文字列化して試みる
+        try {
+          if (cellValue.data && cellValue.data.values && 
+              Array.isArray(cellValue.data.values) && 
+              cellValue.data.values.length > 0 && 
+              cellValue.data.values[0].length > 0) {
+            const rawValue = cellValue.data.values[0][0];
+            node.value_daily = rawValue;
+          } else {
+            node.value_daily = JSON.stringify(cellValue);
+          }
+        } catch (objErr) {
+          console.error('value_daily: オブジェクトの変換エラー', objErr);
+          node.value_daily = "ERROR";
+        }
+      } else {
+        // その他の型はそのまま使用
+        node.value_daily = cellValue;
+      }
+    } catch (error) {
+      console.error(`value_daily: スプレッドシート参照解決エラー:`, error.message);
+      node.value_daily = "ERROR";
     }
-    node.children = processedChildren;
+  }
+  
+  // value_monthlyのスプレッドシート参照を解決
+  if (node.value_monthly && typeof node.value_monthly === 'object' && node.value_monthly.spreadsheet) {
+    process.stdout.write('スプレッドシート参照(value_monthly)が見つかりました\n');
+    process.stdout.write(`スプレッドシート参照詳細: ${JSON.stringify(node.value_monthly.spreadsheet, null, 2)}\n`);
+    const { id, range } = node.value_monthly.spreadsheet;
+    console.log(`-----------------------------------`);
+    console.log(`value_monthly: スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
+    try {
+      console.log(`value_monthly: スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
+      const cellValue = await getCellValue(id, range);
+      console.log(`value_monthly: スプレッドシートから値を取得成功: (${range})`);
+      console.log(`→ 値:`, cellValue);
+      console.log(`→ 型:`, typeof cellValue);
+      
+      if (typeof cellValue === 'object' && cellValue !== null) {
+        console.log(`→ オブジェクト詳細:`, JSON.stringify(cellValue, null, 2));
+      }
+      
+      // 値のタイプに応じた処理
+      if (cellValue === null || cellValue === undefined) {
+        console.log(`スプレッドシートセル ${range} の値が空のため0を使用`);
+        node.value_monthly = 0;
+      } else if (typeof cellValue === 'number') {
+        // 数値はそのまま使用
+        node.value_monthly = cellValue;
+      } else if (typeof cellValue === 'string') {
+        // 文字列が数値に変換可能か試みる
+        node.value_monthly = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
+      } else if (typeof cellValue === 'object') {
+        // オブジェクトの場合は文字列化して試みる
+        try {
+          if (cellValue.data && cellValue.data.values && 
+              Array.isArray(cellValue.data.values) && 
+              cellValue.data.values.length > 0 && 
+              cellValue.data.values[0].length > 0) {
+            const rawValue = cellValue.data.values[0][0];
+            node.value_monthly = rawValue;
+          } else {
+            node.value_monthly = JSON.stringify(cellValue);
+          }
+        } catch (objErr) {
+          console.error('value_monthly: オブジェクトの変換エラー', objErr);
+          node.value_monthly = "ERROR";
+        }
+      } else {
+        // その他の型はそのまま使用
+        node.value_monthly = cellValue;
+      }
+    } catch (error) {
+      console.error(`value_monthly: スプレッドシート参照解決エラー:`, error.message);
+      node.value_monthly = "ERROR";
+    }
+  }
+  
+  // 子ノードの再帰処理
+  if (node.children && Array.isArray(node.children)) {
+    // null/undefinedのノードをフィルタリング
+    node.children = await Promise.all(
+      node.children
+        .filter(child => child !== null && child !== undefined)
+        .map(child => resolveSpreadsheetReferences(child))
+    );
   }
   
   return node;
