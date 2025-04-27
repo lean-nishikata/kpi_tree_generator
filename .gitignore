@@ -5,6 +5,12 @@ output/
 npm-debug.log
 .DS_Store
 
+# 環境設定ファイルと生成ファイル
+config/index.yaml
+config/index_prd.yaml
+# output/index_prd.html
+static/index.html
+
 # Google API credentials
 /keys/**/*.json  # すべてのサブディレクトリを含む
 .env

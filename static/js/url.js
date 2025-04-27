@@ -155,6 +155,39 @@ function getStateFromHash() {
 }
 
 /**
+ * ハッシュフラグメントから表示モード（日次/月次）を取得
+ * 
+ * @returns {string|null} 表示モード（'daily'または'monthly'）が見つかった場合はその値、見つからない場合はnull
+ */
+function getViewModeFromHash() {
+  var hash = window.location.hash;
+  if (!hash) return null;
+  
+  try {
+    // viewMode=xxxの形式を抽出
+    var viewModeMatch = hash.match(/viewMode=([^&#]+)/);
+    if (!viewModeMatch) {
+      console.log('ハッシュにviewModeパラメータが見つかりません:', hash);
+      return null;
+    }
+    
+    var viewMode = viewModeMatch[1];
+    
+    // 有効な表示モード値か確認
+    if (viewMode === 'daily' || viewMode === 'monthly') {
+      console.log('ハッシュから表示モードを取得成功:', viewMode);
+      return viewMode;
+    }
+    
+    console.warn('無効な表示モード値:', viewMode);
+    return null;
+  } catch (e) {
+    console.error('表示モード取得エラー:', e);
+    return null;
+  }
+}
+
+/**
  * 状態パラメータをデコードする共通関数
  * Base64エンコードされた状態文字列をデコードしてオブジェクトに変換
  * 

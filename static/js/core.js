@@ -62,6 +62,13 @@ function kpiTreeInit() {
   // 1. まずハッシュフラグメントから状態を取得試行
   var state = getStateFromHash();
   
+  // 1.5 ハッシュから表示モードを取得試行
+  var viewModeParam = getViewModeFromHash();
+  if (viewModeParam) {
+    console.log('ハッシュから表示モードを取得:', viewModeParam);
+    window._viewMode = viewModeParam;
+  }
+  
   // 2. ハッシュに状態がなければ、URLクエリパラメータから取得試行
   if (!state || Object.keys(state).length === 0) {
     state = getStateFromUrl();
@@ -208,6 +215,12 @@ function switchViewMode(mode) {
     return;
   }
   
+  // 同じモードなら何もしない
+  if (window._viewMode === mode) {
+    console.log('既に同じモードなので何もしません:', mode);
+    return;
+  }
+  
   // グローバル状態を更新
   console.log('表示モードを切り替え:', mode);
   window._viewMode = mode;
@@ -232,6 +245,41 @@ function switchViewMode(mode) {
     }
   } catch (e) {
     console.error('ボタン状態更新中にエラー:', e);
+  }
+
+  // 重要: URLを更新する処理
+  try {
+    // 現在のツリー状態を取得
+    var treeState = saveTreeState();
+    var viewModeParam = mode;
+    
+    // ハッシュフラグメントの生成
+    var hashFragment = '';
+    var stateParam = '';
+    
+    if (treeState && Object.keys(treeState).length > 0) {
+      stateParam = generateStateParam(treeState);
+    }
+    
+    // 表示モードを必ず含める
+    if (stateParam) {
+      hashFragment = '#state=' + stateParam + '&viewMode=' + viewModeParam;
+    } else {
+      hashFragment = '#viewMode=' + viewModeParam;
+    }
+    
+    console.log('生成されたURLハッシュ:', hashFragment);
+    
+    // ブラウザのURL更新
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, document.title, hashFragment);
+      console.log('URLを更新しました');
+    }
+    
+    // _shareUrlをリセットして新しいモードで再生成されるように
+    window._shareUrl = null;
+  } catch (urlError) {
+    console.error('URL更新中にエラー:', urlError);
   }
   
   // 全てのノードの値を更新

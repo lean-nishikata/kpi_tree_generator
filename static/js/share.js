@@ -20,11 +20,32 @@ function updateShareUrl() {
   }
   
   if (state && Object.keys(state).length > 0) {
+    // 状態をデバッグ出力
+    console.log('共有URL生成前の状態:', JSON.stringify(state));
+    console.log('現在の表示モード:', window._viewMode);
+    
+    // _viewModeプロパティを弾く（状態パラメータに含めない）
+    var viewMode = window._viewMode || 'daily';
+    if (state._viewMode) {
+      delete state._viewMode; // 状態から表示モードを削除
+    }
+    
     // 状態パラメータを生成
     var stateParam = generateStateParam(state);
     
-    // クエリパラメータではなくハッシュフラグメントを構築
-    var hashFragment = stateParam ? '#state=' + stateParam : '';
+    // 状態と表示モードを別々のパラメータとしてURLに含める
+    var viewModeParam = viewMode === 'daily' ? 'daily' : 'monthly';
+    
+    // ハッシュフラグメントを構築
+    // 注意: 先頭の#記号が重要
+    var hashFragment = '#viewMode=' + viewModeParam;
+    if (stateParam) {
+      hashFragment = '#state=' + stateParam + '&viewMode=' + viewModeParam;
+    }
+    
+    console.log('生成した最終URLハッシュ:', hashFragment);
+    
+    console.log('生成したハッシュ:', hashFragment, '表示モード:', viewModeParam);
     
     // 常にPUBLIC_URLを使うように設定
     if (window.PUBLIC_URL) {
@@ -106,14 +127,20 @@ function copyToClipboard() {
       
       // 現在の状態を表すハッシュパラメータを取得
       var currentState = saveTreeState();
+      var currentViewMode = window._viewMode || 'daily'; // 重要！現在の表示モードを取得
       var stateFragment = '';
       
       // ツリー状態があればパラメータを生成
       if (currentState && Object.keys(currentState).length > 0) {
         var stateParam = generateStateParam(currentState);
         if (stateParam) {
-          stateFragment = '#state=' + stateParam;
+          // 必ずviewModeパラメータを含める
+          stateFragment = '#state=' + stateParam + '&viewMode=' + currentViewMode;
+          console.log('修正後の状態フラグメント：', stateFragment);
         }
+      } else {
+        // 状態がなくても表示モードは含める
+        stateFragment = '#viewMode=' + currentViewMode;
       }
       
       // 強制的にクリップボードにコピーされるURLをYAML設定値に修正
@@ -383,28 +410,98 @@ function fallbackCopyToClipboard(text) {
 
 // URLをクリップボードにコピー
 function copyShareUrlToClipboard() {
-  var shareUrl = window._shareUrl;
-  if (!shareUrl) return;
+  // 完全に変更！GCS対策を含む新しいロジック
+  console.log('共有ボタンがクリックされました');
+
+  // 現在のブラウザURLと表示モードを取得
+  var currentUrl = window.location.href;
+  var currentViewMode = window._viewMode || 'daily';
+  console.log('現在のURL:', currentUrl);
+  console.log('現在の表示モード:', currentViewMode);
   
-  var fullUrl;
-  if (shareUrl.startsWith('http')) {
-    fullUrl = shareUrl;
-  } else if (shareUrl.startsWith('?') || shareUrl.startsWith('#')) {
-    fullUrl = window.location.origin + window.location.pathname + shareUrl;
-  } else {
-    var path = window.location.pathname.split('/');
-    path.pop();
-    fullUrl = window.location.origin + path.join('/') + '/' + shareUrl;
+  // storage.cloud.google.comの場合の特殊処理
+  var isGoogleStorage = currentUrl.includes('storage.cloud.google.com');
+  console.log('Google Storage URLかどうか:', isGoogleStorage);
+  
+  // ツリーの状態と基本URLを取得
+  var treeState = saveTreeState() || {};
+  var baseUrl = window._publicBaseUrl || window.location.origin + window.location.pathname;
+  
+  // URL生成のための状態保存
+  var stateParam = '';
+  if (Object.keys(treeState).length > 0) {
+    stateParam = generateStateParam(treeState);
+    console.log('生成された状態パラメータ:', stateParam);
   }
   
-  // クリップボードにコピー
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(fullUrl)
-      .then(showCopySuccess)
-      .catch(function() {
-        fallbackCopyToClipboard(fullUrl);
-      });
+  // 手動でURLを構築
+  var manuallyConstructedUrl = baseUrl;
+  
+  // ハッシュパラメータを追加
+  if (stateParam) {
+    manuallyConstructedUrl += '#state=' + stateParam;
+    manuallyConstructedUrl += '&viewMode=' + currentViewMode;
   } else {
-    fallbackCopyToClipboard(fullUrl);
+    manuallyConstructedUrl += '#viewMode=' + currentViewMode;
+  }
+  
+  console.log('手動で構築したURL:', manuallyConstructedUrl);
+  
+  // Google Cloud Storage URLの場合はさらに強制的に追加
+  if (isGoogleStorage) {
+    // クリップボード用に確実にパラメータを追加
+    // URLの形式が #state=abc の場合、#state=abc&viewMode=daily に変更
+    if (manuallyConstructedUrl.includes('#state=') && !manuallyConstructedUrl.includes('viewMode=')) {
+      manuallyConstructedUrl += '&viewMode=' + currentViewMode;
+    }
+    // URLの形式がハッシュなしの場合、#viewMode=daily を追加
+    else if (!manuallyConstructedUrl.includes('#')) {
+      manuallyConstructedUrl += '#viewMode=' + currentViewMode;
+    }
+    console.log('GCS対策後のURL:', manuallyConstructedUrl);
+  }
+  
+  // 最終確認！本当にviewModeが入っているか
+  if (!manuallyConstructedUrl.includes('viewMode=')) {
+    // 絶対に入れる
+    console.error('viewModeが追加されていません。線形的に追加します');
+    
+    // URLの形式に応じて適切に追加
+    if (manuallyConstructedUrl.includes('#')) {
+      if (manuallyConstructedUrl.includes('&')) {
+        manuallyConstructedUrl += '&viewMode=' + currentViewMode;
+      } else {
+        manuallyConstructedUrl += '&viewMode=' + currentViewMode;
+      }
+    } else {
+      manuallyConstructedUrl += '#viewMode=' + currentViewMode;
+    }
+  }
+  
+  // 確認用ログ
+  console.log('コピー直前の最終URL:', manuallyConstructedUrl);
+  console.log('viewModeパラメータあり:', manuallyConstructedUrl.includes('viewMode='));
+  
+  // 共有URLをグローバル変数に設定
+  window._shareUrl = manuallyConstructedUrl;
+  
+  // 共有URLをクリップボードにコピー
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(manuallyConstructedUrl)
+        .then(function() {
+          showCopyMessage('共有URLをコピーしました (' + currentViewMode + ')');
+          console.log('クリップボードにコピーしたURL:', manuallyConstructedUrl);
+        })
+        .catch(function(error) {
+          console.error('クリップボードAPIエラー:', error);
+          fallbackCopyToClipboard(manuallyConstructedUrl);
+        });
+    } else {
+      fallbackCopyToClipboard(manuallyConstructedUrl);
+    }
+  } catch(e) {
+    console.error('クリップボードコピー失敗:', e);
+    alert('クリップボードにコピーできませんでした\n' + manuallyConstructedUrl);
   }
 }
