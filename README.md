@@ -1,6 +1,6 @@
 # KPI ツリージェネレーター
 
-YAMLファイル形式の設定から、HTML形式のKPIツリーを生成するためのツールです。Dockerで実行するよう設計されています。
+YAMLファイル形式の設定から、HTML形式のKPIツリーを生成するためのツールです。ローカルやDocker環境、Google Cloud Storageなどで利用できます。
 
 ## 特徴
 
@@ -8,24 +8,39 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 - ノード間の演算記号（+, -, *, /）のサポート
 - ノード内のテキストとハイパーリンク
 - サブツリーの折りたたみ機能
-- 折りたたみ状態の保存と記憶
-- 縦向き・横向きレイアウトの切り替え
-- ツリーの状態をURLで共有可能
-ー 特定ノードへのリンクの生成と共有
+- **日次・月次切替機能で異なる単位の数値を表示**
+- **ツリーの折りたたみ状態と日次/月次表示を含む完全な状態をURLで共有可能**
+- 特定ノードへのリンクの生成と共有
 - スタンドアロンHTML形式によるCloud Storage等での簡単ホスティング
 - **Googleスプレッドシートから値を取得する機能**
 
-## Dockerでの使用方法
+## 使用方法
 
-### クイックスタート
+### ローカルでの使用
 
-1. YAMLファイルを `config` ディレクトリに配置します（`config/example.yaml` を参考にしてください）
-2. 次のコマンドを実行して特定の設定ファイルからHTMLを生成します：
+1. YAML設定ファイルを `config` ディレクトリに配置します（例: `config/index.yaml`）
+2. Node.jsを使用してHTMLを生成します：
    ```shell
-   docker-compose run kpi-generator example
+   node src/generator.js index
    ```
-   （この例では `config/example.yaml` を使用します）
-3. 生成されたHTMLファイルは `output/example.html` に保存されます
+   （この例では `config/index.yaml` から `output/index.html` を生成します）
+3. ローカルで確認する場合は、HTTPサーバーを起動してアクセスすることを推奨します：
+   ```shell
+   npx http-server output -p 8090
+   ```
+   その後、ブラウザで http://localhost:8090 にアクセスできます。
+
+4. 本番環境用にHTMLを生成する場合：
+   ```shell
+   node src/generator.js index_prd
+   ```
+   （`config/index_prd.yaml` から `output/index_prd.html` を生成）
+
+### Dockerでの使用
+
+```shell
+docker-compose run kpi-generator index
+```
 
 ### Googleスプレッドシートとの連携
 
