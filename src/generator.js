@@ -17,11 +17,42 @@ const JS_ANCHOR_PATH = path.join(__dirname, '..', 'static', 'js', 'anchor.js');
 
 // 全てのスクリプトを読み込んで結合する関数
 async function loadAllScripts() {
+  // キャッシュバスティングのためにタイムスタンプを追加
+  console.log('スクリプト読み込み開始...');
+  
+  // ファイル存在確認と最新バージョンのロード
+  const fileExists = async (path) => {
+    try {
+      await fs.access(path);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  
+  // 各ファイルの存在を確認
+  const files = [JS_CORE_PATH, JS_TREE_PATH, JS_URL_PATH, JS_SHARE_PATH, JS_ANCHOR_PATH];
+  for (const file of files) {
+    if (!await fileExists(file)) {
+      console.error(`ファイルが見つかりません: ${file}`);
+    }
+  }
+  
+  // キャッシュを避けるために強制的に再読み込み
   const coreJs = await fs.readFile(JS_CORE_PATH, 'utf8');
   const treeJs = await fs.readFile(JS_TREE_PATH, 'utf8');
   const urlJs = await fs.readFile(JS_URL_PATH, 'utf8');
   const shareJs = await fs.readFile(JS_SHARE_PATH, 'utf8');
   const anchorJs = await fs.readFile(JS_ANCHOR_PATH, 'utf8');
+  
+  console.log('スクリプト読み込み完了');
+  
+  // 各ファイルのサイズを確認してデバッグ情報を出力
+  console.log(`core.js: ${coreJs.length} バイト`);
+  console.log(`tree.js: ${treeJs.length} バイト`);
+  console.log(`url.js: ${urlJs.length} バイト`);
+  console.log(`share.js: ${shareJs.length} バイト`);
+  console.log(`anchor.js: ${anchorJs.length} バイト`);
   
   return `
 // KPIツリージェネレーター JavaScript 結合ファイル
@@ -277,11 +308,30 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   if (node.text_en) {
     nodeContent += `<div class="text-en">${node.text_en}</div>`;
   }
+  // 値表示用の変数初期化
+  let displayValue = null;
+  let valueAttributes = '';
+  
+  // 値の優先順位を設定
   if (node.value !== undefined) {
+    valueAttributes += ` data-value-default="${node.value}"`;
+    displayValue = node.value;
+  }
+  
+  // 日次の値があれば設定（日次がデフォルト表示なのでこちらを初期表示値にする）
+  if (node.value_daily !== undefined) {
+    valueAttributes += ` data-value-daily="${node.value_daily}"`;
+    displayValue = node.value_daily; // 日次をデフォルト表示に設定
+  }
+  
+  // 月次の値は属性として設定するが、初期表示には使わない
+  if (node.value_monthly !== undefined) {
+    valueAttributes += ` data-value-monthly="${node.value_monthly}"`;
+  }
+  
+  // 表示値がない場合はスキップ
+  if (displayValue !== null) {
     // オブジェクトや複雑な値の場合は適切に文字列化
-    let displayValue = node.value;
-    
-    // APIレスポンスオブジェクトの検出と適切な処理
     if (typeof displayValue === 'object' && displayValue !== null) {
       // APIレスポンス特有のプロパティを検出
       if (displayValue.context || displayValue.spreadsheetId || 
@@ -321,22 +371,12 @@ function generateTreeHtml(node, level = 0, path = 'root') {
       }
     }
     
-    nodeContent += `<div class="value">${displayValue}</div>`;
+    // value要素自体にデータ属性を直接設定
+    nodeContent += `<div class="value"${valueAttributes}>${displayValue}</div>`;
   }
   
-  // データ属性用の値を準備
+  // node要素にはデータ属性を設定しないようにする。すべての属性はvalue要素に移動済み
   let dataAttributes = '';
-  
-  // value, value_daily, value_monthlyの処理
-  if (node.value !== undefined) {
-    dataAttributes += ` data-value-default="${node.value}"`;
-  }
-  if (node.value_daily !== undefined) {
-    dataAttributes += ` data-value-daily="${node.value_daily}"`;
-  }
-  if (node.value_monthly !== undefined) {
-    dataAttributes += ` data-value-monthly="${node.value_monthly}"`;
-  }
   
   // Start the node HTML
   let html = `

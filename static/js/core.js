@@ -186,3 +186,122 @@ window.addEventListener('popstate', function(event) {
     applyTreeState(state);
   }
 });
+
+/**
+ * 表示モード（日次/月次）を切り替える関数
+ * @param {string} mode - 表示モード ('daily' または 'monthly')
+ */
+function switchViewMode(mode) {
+  // デバッグ情報を追加
+  console.log('■■■ switchViewModeが呼び出されました:', mode);
+  
+  if (mode !== 'daily' && mode !== 'monthly') {
+    console.error('無効な表示モード:', mode);
+    return;
+  }
+  
+  // グローバル状態を更新
+  console.log('表示モードを切り替え:', mode);
+  window._viewMode = mode;
+  
+  // まず全てのnode要素にデータ属性があるか確認
+  const allNodes = document.querySelectorAll('.node');
+  const nodesWithDailyValue = document.querySelectorAll('.node[data-value-daily]').length;
+  const nodesWithMonthlyValue = document.querySelectorAll('.node[data-value-monthly]').length;
+  console.log(`データ属性統計: 全ノード数=${allNodes.length}, daily属性あり=${nodesWithDailyValue}, monthly属性あり=${nodesWithMonthlyValue}`);
+  
+  // ボタンの状態を更新
+  try {
+    const dailyButton = document.querySelector('.toggle-option.daily');
+    const monthlyButton = document.querySelector('.toggle-option.monthly');
+    
+    if (dailyButton && monthlyButton) {
+      dailyButton.classList.toggle('active', mode === 'daily');
+      monthlyButton.classList.toggle('active', mode === 'monthly');
+      console.log('ボタンの状態を更新しました');
+    } else {
+      console.error('トグルボタン要素が見つかりません');
+    }
+  } catch (e) {
+    console.error('ボタン状態更新中にエラー:', e);
+  }
+  
+  // 全てのノードの値を更新
+  updateAllNodeValues();
+  
+  // コンソールで簡単に確認できるようにログを出力
+  console.log('■■■ switchViewMode処理完了');
+}
+
+/**
+ * 全てのノードの値を現在のモードに応じて更新
+ */
+function updateAllNodeValues() {
+  // 全ノードを取得
+  const allNodes = document.querySelectorAll('.node');
+  console.log('ノード値の更新 - モード:', window._viewMode, 'ノード数:', allNodes.length);
+  
+  // 値が変更されたノード数を記録
+  let changedNodes = 0;
+  let missingValueNodes = 0;
+  let unchangedFixedNodes = 0;
+  
+  allNodes.forEach((node, index) => {
+    // 値を表示する要素を取得
+    const valueElement = node.querySelector('.value');
+    if (!valueElement) {
+      // console.log(`ノード#${index}: .value要素が見つかりません`);
+      return;
+    }
+    
+    // 各モードの値を取得 - .value要素から直接取得するように修正
+    const dailyValue = valueElement.getAttribute('data-value-daily');
+    const monthlyValue = valueElement.getAttribute('data-value-monthly');
+    const defaultValue = valueElement.getAttribute('data-value-default');
+    
+    // デバッグ用に最初の数ノードの情報を表示
+    if (index < 3) {
+      console.log(`ノード#${index} ID:${node.id} 属性確認:`, {
+        現在表示値: valueElement.textContent,
+        daily属性: dailyValue,
+        monthly属性: monthlyValue,
+        default属性: defaultValue,
+        切替可能か: !!(dailyValue && monthlyValue)
+      });
+    }
+    
+    // 属性が設定されているか確認
+    if (!dailyValue && !monthlyValue && !defaultValue) {
+      missingValueNodes++;
+      // どの属性もない場合はスキップ
+      return;
+    }
+    
+    const oldValue = valueElement.textContent;
+    let newValue = oldValue; // デフォルトは現在の値を維持
+    
+    // dailyとmonthlyの両方が設定されている場合のみ切替えの対象にする
+    if (dailyValue && monthlyValue) {
+      // 現在のモードに応じて値を設定
+      if (window._viewMode === 'daily') {
+        newValue = dailyValue;
+      } else if (window._viewMode === 'monthly') {
+        newValue = monthlyValue;
+      }
+    } else {
+      // valueのみ設定されているノードは常にその値を表示
+      if (defaultValue) {
+        newValue = defaultValue;
+        unchangedFixedNodes++;
+      }
+    }
+    
+    // 値が変更された場合のみ更新
+    if (oldValue !== newValue) {
+      valueElement.textContent = newValue;
+      changedNodes++;
+    }
+  });
+  
+  console.log(`値の更新完了: ${changedNodes}個のノードを更新、${missingValueNodes}個のノードに属性なし、${unchangedFixedNodes}個は固定値`);
+}
