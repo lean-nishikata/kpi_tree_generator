@@ -342,8 +342,14 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   
   // 表示値がない場合はスキップ
   if (displayValue !== null) {
+    // HTML生成前に値の詳細をログ出力
+    console.log(`★★★ HTMLノード生成中 - ノード: ${node.text || '無名'} ★★★`);
+    console.log(`→ 元の値:`, displayValue);
+    console.log(`→ 型:`, typeof displayValue);
+    
     // オブジェクトや複雑な値の場合は適切に文字列化
     if (typeof displayValue === 'object' && displayValue !== null) {
+      console.log(`→ オブジェクト内容:`, JSON.stringify(displayValue, null, 2));
       try {
         // スプレッドシートAPIレスポンスを検出
         if (displayValue.context || displayValue.spreadsheetId || 
@@ -351,57 +357,105 @@ function generateTreeHtml(node, level = 0, path = 'root') {
             displayValue.jwtClient || displayValue._options || 
             (displayValue.data && displayValue.data.values)) {
           
+          console.log(`→ スプレッドシートAPI形式を検出`);
+          
           // APIレスポンスから実際のデータを抽出する
           if (displayValue.data && displayValue.data.values && 
               Array.isArray(displayValue.data.values) && 
               displayValue.data.values.length > 0 && 
               displayValue.data.values[0].length > 0) {
+            console.log(`→ values配列からデータ抽出`);
+            
             // データ最初の要素を取得
             const rawValue = displayValue.data.values[0][0];
+            console.log(`→ 抽出した値:`, rawValue, `型:`, typeof rawValue);
             
             // 取得した値がオブジェクトなら再帰的に処理
             if (typeof rawValue === 'object' && rawValue !== null) {
+              console.log(`→ 抽出値がオブジェクト、深層解析開始`);
+              console.log(`→ キー一覧:`, Object.keys(rawValue));
+              
+              // 各プロパティを確認
+              for (const key in rawValue) {
+                console.log(`→ プロパティ ${key}:`, rawValue[key]);
+              }
+              
               // プリミティブ値を探す
               if (rawValue.formattedValue) {
                 displayValue = rawValue.formattedValue;
+                console.log(`→ formattedValueを使用:`, displayValue);
               } else if (rawValue.value !== undefined) {
                 displayValue = rawValue.value;
+                console.log(`→ valueを使用:`, displayValue);
               } else {
                 // 最後の手段としてJSON変換
                 displayValue = JSON.stringify(rawValue);
+                console.log(`→ JSON変換結果:`, displayValue);
               }
             } else {
               // 数値や文字列などのプリミティブ値
               displayValue = rawValue;
+              console.log(`→ プリミティブ値をそのまま使用:`, displayValue);
             }
           } else if (displayValue.formattedValue) {
             // 別のAPIレスポンス形式
             displayValue = displayValue.formattedValue;
+            console.log(`→ トップレベルformattedValueを使用:`, displayValue);
           } else if (displayValue.userEnteredValue) {
             // 入力値から取得
             const userValue = displayValue.userEnteredValue;
+            console.log(`→ userEnteredValueを発見:`, userValue);
+            
             // 各種値タイプをチェック
-            if (userValue.stringValue) displayValue = userValue.stringValue;
-            else if (userValue.numberValue !== undefined) displayValue = userValue.numberValue;
-            else if (userValue.boolValue !== undefined) displayValue = userValue.boolValue ? 'TRUE' : 'FALSE';
-            else if (userValue.formulaValue) displayValue = userValue.formulaValue;
-            else displayValue = JSON.stringify(userValue);
+            if (userValue.stringValue) {
+              displayValue = userValue.stringValue;
+              console.log(`→ stringValueを使用:`, displayValue);
+            } else if (userValue.numberValue !== undefined) {
+              displayValue = userValue.numberValue;
+              console.log(`→ numberValueを使用:`, displayValue);
+            } else if (userValue.boolValue !== undefined) {
+              displayValue = userValue.boolValue ? 'TRUE' : 'FALSE';
+              console.log(`→ boolValueを使用:`, displayValue);
+            } else if (userValue.formulaValue) {
+              displayValue = userValue.formulaValue;
+              console.log(`→ formulaValueを使用:`, displayValue);
+            } else {
+              displayValue = JSON.stringify(userValue);
+              console.log(`→ userValueをJSON変換:`, displayValue);
+            }
           } else {
             // データが見つからない場合はエラーメッセージ
+            console.log(`→ 探している値が見つからないためデフォルトに設定`);
             displayValue = "0";
           }
         } else {
           // その他のオブジェクトの場合
+          console.log(`→ 一般オブジェクトの処理`);
+          
           // 重要なフィールドをチェック
           if (displayValue.value !== undefined) {
             displayValue = displayValue.value;
+            console.log(`→ valueプロパティを使用:`, displayValue);
           } else if (displayValue.text !== undefined) {
             displayValue = displayValue.text;
+            console.log(`→ textプロパティを使用:`, displayValue);
           } else if (displayValue["0"] !== undefined) {
             displayValue = displayValue["0"];
+            console.log(`→ "0"プロパティを使用:`, displayValue);
+          } else if (displayValue.spreadsheet) {
+            // スプレッドシート参照オブジェクトがそのまま残っている場合
+            console.log(`→ スプレッドシート参照オブジェクトがそのまま残っています:`, displayValue.spreadsheet);
+            displayValue = "API参照値";
           } else {
             // 最後の手段としてJSON変換
-            displayValue = JSON.stringify(displayValue);
+            const origValue = displayValue;
+            try {
+              displayValue = JSON.stringify(displayValue);
+              console.log(`→ JSON変換結果:`, displayValue);
+            } catch (jsonStringifyErr) {
+              console.error(`JSON変換エラー:`, jsonStringifyErr);
+              displayValue = '変換不能値';
+            }
           }
         }
       } catch (e) {
@@ -409,14 +463,27 @@ function generateTreeHtml(node, level = 0, path = 'root') {
         displayValue = "値取得エラー";
       }
       
-      // 最終的にオブジェクトが残っている場合は文字列化
+      // 最終的にオブジェクトが残っている場合は強制的に文字列化
       if (typeof displayValue === 'object' && displayValue !== null) {
+        console.log(`→ 最終チェック: オブジェクトが残っています:`, displayValue);
+        console.log(`→ 構造:`, JSON.stringify(displayValue, Object.getOwnPropertyNames(displayValue), 2));
+        
         try {
-          displayValue = JSON.stringify(displayValue);
+          if (displayValue.spreadsheet) {
+            // スプレッドシート参照がそのまま残っている場合は特別処理
+            displayValue = "参照値";
+          } else {
+            displayValue = JSON.stringify(displayValue);
+          }
+          console.log(`→ 最終変換結果:`, displayValue);
         } catch (jsonErr) {
+          console.error('最終JSON変換エラー:', jsonErr);
           displayValue = 'オブジェクト';  // 最悪の場合は決め打ち
         }
       }
+      
+      // 結果の確認
+      console.log(`→ 最終値:`, displayValue, `型:`, typeof displayValue);
     }
     
     // value要素自体にデータ属性を直接設定

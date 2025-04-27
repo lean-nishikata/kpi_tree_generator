@@ -314,7 +314,13 @@ async function resolveSpreadsheetReferences(node) {
   if (!node) return node;
   
   console.log('----------- スプレッドシート参照解決開始 -----------');
-  console.log('NODE:', JSON.stringify(node.title || '名称なし'));
+  console.log('NODE:', JSON.stringify({
+    title: node.title || '名称なし', 
+    text: node.text,
+    value: node.value,
+    value_daily: node.value_daily,
+    value_monthly: node.value_monthly
+  }, null, 2));
   
   // process.stdoutに直接書き込み（Docker環境でのログ出力を確実に）
   process.stdout.write('\nノードのスプレッドシート参照確認中...\n');
@@ -322,17 +328,31 @@ async function resolveSpreadsheetReferences(node) {
   // valueフィールドのスプレッドシート参照を解決
   if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
     process.stdout.write('スプレッドシート参照が見つかりました\n');
+    process.stdout.write(`スプレッドシート参照詳細: ${JSON.stringify(node.value.spreadsheet, null, 2)}\n`);
     const { id, range } = node.value.spreadsheet;
     console.log(`-----------------------------------`);
     console.log(`スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
     try {
+      console.log(`スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
       const cellValue = await getCellValue(id, range);
       console.log(`スプレッドシートから値を取得成功: (${range})`);
       console.log(`→ 値:`, cellValue);
       console.log(`→ 型:`, typeof cellValue);
+      console.log(`→ オブジェクトか: ${typeof cellValue === 'object' && cellValue !== null}`);
+      console.log(`→ 配列か: ${Array.isArray(cellValue)}`);
+      console.log(`→ トータルルートは: `, JSON.stringify(cellValue));
       
       if (typeof cellValue === 'object' && cellValue !== null) {
         console.log(`→ オブジェクト詳細:`, JSON.stringify(cellValue, null, 2));
+        console.log(`→ オブジェクトキー一覧:`, Object.keys(cellValue));
+        
+        // オブジェクトの各プロパティを比較的安全に一層深く調査
+        for (const key of Object.keys(cellValue)) {
+          const value = cellValue[key];
+          console.log(`→ プロパティ ${key}: 型=${typeof value}, 値=${
+            typeof value === 'object' ? JSON.stringify(value) : value
+          }`);
+        }
       }
       
       // 値のタイプに応じた処理
