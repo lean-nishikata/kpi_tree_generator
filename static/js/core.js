@@ -67,6 +67,12 @@ function kpiTreeInit() {
   if (viewModeParam) {
     console.log('ハッシュから表示モードを取得:', viewModeParam);
     window._viewMode = viewModeParam;
+    
+    // 重要: 表示モードを実際に適用する処理を追加
+    console.log('初期ロード時に表示モードを設定します:', viewModeParam);
+    
+    // 重要: 変数を定義してDOMContentLoaded完了後に確実にモードを適用できるようにする
+    window._initialViewMode = viewModeParam;
   }
   
   // 2. ハッシュに状態がなければ、URLクエリパラメータから取得試行
@@ -106,6 +112,27 @@ function kpiTreeInit() {
   
   // トグルボタンの機能を設定
   setupToggleButtons();
+  
+  // DOMレンダリング後にハッシュから取得したモードを確実に適用
+  setTimeout(function() {
+    if (window._initialViewMode) {
+      console.log('ハッシュから取得した表示モードを確実に適用します:', window._initialViewMode);
+      
+      // トグルボタンを該当モードに合わせて活性化
+      const dailyButton = document.querySelector('.toggle-option.daily');
+      const monthlyButton = document.querySelector('.toggle-option.monthly');
+      
+      if (dailyButton && monthlyButton) {
+        dailyButton.classList.toggle('active', window._initialViewMode === 'daily');
+        monthlyButton.classList.toggle('active', window._initialViewMode === 'monthly');
+      }
+      
+      // 入力値を特定モードに合わせて更新
+      updateAllNodeValues();
+      
+      console.log('表示モード初期化完了:', window._initialViewMode);
+    }
+  }, 300);
   
   /**
    * ステップ6: ノードアンカーとリンク機能の初期化
@@ -293,9 +320,13 @@ function switchViewMode(mode) {
  * 全てのノードの値を現在のモードに応じて更新
  */
 function updateAllNodeValues() {
+  // 現在の表示モードを確認
+  const currentMode = window._viewMode || 'daily'; // デフォルトは日次
+  console.log('現在の表示モード:', currentMode);
+  
   // 全ノードを取得
   const allNodes = document.querySelectorAll('.node');
-  console.log('ノード値の更新 - モード:', window._viewMode, 'ノード数:', allNodes.length);
+  console.log('ノード値の更新 - モード:', currentMode, 'ノード数:', allNodes.length);
   
   // 値が変更されたノード数を記録
   let changedNodes = 0;
