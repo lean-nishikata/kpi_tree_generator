@@ -137,6 +137,7 @@ async function getCellValue(spreadsheetId, range) {
       
       // 値を取得（実際のセルの値を返すように修正）
       const fullRange = `${sheetName}!${cellRef}`;
+      console.log(`APIにリクエスト: スプレッドシートID=${spreadsheetId}, 範囲=${fullRange}`);
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
         range: fullRange,
@@ -144,6 +145,7 @@ async function getCellValue(spreadsheetId, range) {
       
       // レスポンスの値を取得
       const values = response.data.values;
+      console.log(`APIレスポンス受信: `, response.data);
       
       if (!values || values.length === 0 || values[0].length === 0) {
         console.log(`セル ${cellRef} の値が空です（API経由）`);
@@ -152,6 +154,7 @@ async function getCellValue(spreadsheetId, range) {
       
       // API経由での値取得
       const cellValue = values[0][0];
+      console.log(`セル値取得成功: ${cellRef} = `, cellValue, ` (データ型: ${typeof cellValue})`);
       return cellValue;
       
     } catch (authError) {
@@ -170,6 +173,7 @@ async function getCellValue(spreadsheetId, range) {
         
         // 値を取得（実際のセルの値を返すように修正）
         const fullRange = `${sheetName}!${cellRef}`;
+        console.log(`フォールバックAPI呼び出し: スプレッドシートID=${spreadsheetId}, 範囲=${fullRange}`);
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: spreadsheetId,
           range: fullRange,
@@ -177,6 +181,7 @@ async function getCellValue(spreadsheetId, range) {
         
         // レスポンスの値を取得
         const values = response.data.values;
+        console.log(`フォールバックAPIレスポンス受信: `, response.data);
         
         if (!values || values.length === 0 || values[0].length === 0) {
           console.log(`セル ${cellRef} の値が空です（API経由）`);
@@ -185,6 +190,7 @@ async function getCellValue(spreadsheetId, range) {
         
         // API経由での値取得
         const cellValue = values[0][0];
+        console.log(`フォールバックセル値取得成功: ${cellRef} = `, cellValue, ` (データ型: ${typeof cellValue})`);
         return cellValue;
       } catch (error2) {
         throw new Error('Failed to access spreadsheet');
@@ -310,9 +316,17 @@ async function resolveSpreadsheetReferences(node) {
   // valueフィールドのスプレッドシート参照を解決
   if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
     const { id, range } = node.value.spreadsheet;
+    console.log(`-----------------------------------`);
+    console.log(`スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
     try {
       const cellValue = await getCellValue(id, range);
-      console.log(`スプレッドシートから値を取得 (${range}):`, cellValue, typeof cellValue);
+      console.log(`スプレッドシートから値を取得成功: (${range})`);
+      console.log(`→ 値:`, cellValue);
+      console.log(`→ 型:`, typeof cellValue);
+      
+      if (typeof cellValue === 'object' && cellValue !== null) {
+        console.log(`→ オブジェクト詳細:`, JSON.stringify(cellValue, null, 2));
+      }
       
       // 値のタイプに応じた処理
       if (cellValue === null || cellValue === undefined) {

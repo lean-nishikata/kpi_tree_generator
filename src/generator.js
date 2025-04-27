@@ -333,40 +333,77 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   if (displayValue !== null) {
     // オブジェクトや複雑な値の場合は適切に文字列化
     if (typeof displayValue === 'object' && displayValue !== null) {
-      // APIレスポンス特有のプロパティを検出
-      if (displayValue.context || displayValue.spreadsheetId || 
-          displayValue._rawSheets || displayValue.authMode || 
-          displayValue.jwtClient || displayValue._options) {
-        
-        // APIレスポンスから実際のデータを抽出する
-        if (displayValue.data && displayValue.data.values && 
-            Array.isArray(displayValue.data.values) && 
-            displayValue.data.values.length > 0 && 
-            displayValue.data.values[0].length > 0) {
-          // check-sheets-values.jsと同じ方法でデータにアクセス
-          displayValue = displayValue.data.values[0][0];
-        } else {
-          // データが見つからない場合はエラーメッセージ
-          displayValue = "API値取得エラー";
-        }
-      } else {
-        try {
-          // その他のオブジェクトはJSONとして文字列化
-          displayValue = JSON.stringify(displayValue);
+      try {
+        // スプレッドシートAPIレスポンスを検出
+        if (displayValue.context || displayValue.spreadsheetId || 
+            displayValue._rawSheets || displayValue.authMode || 
+            displayValue.jwtClient || displayValue._options || 
+            (displayValue.data && displayValue.data.values)) {
           
-          // 単純な値の場合は直接取り出す
-          if (displayValue.startsWith('{"0"')) {
-            try {
-              const parsed = JSON.parse(displayValue);
-              if (parsed["0"]) {
-                displayValue = parsed["0"];
+          // APIレスポンスから実際のデータを抽出する
+          if (displayValue.data && displayValue.data.values && 
+              Array.isArray(displayValue.data.values) && 
+              displayValue.data.values.length > 0 && 
+              displayValue.data.values[0].length > 0) {
+            // データ最初の要素を取得
+            const rawValue = displayValue.data.values[0][0];
+            
+            // 取得した値がオブジェクトなら再帰的に処理
+            if (typeof rawValue === 'object' && rawValue !== null) {
+              // プリミティブ値を探す
+              if (rawValue.formattedValue) {
+                displayValue = rawValue.formattedValue;
+              } else if (rawValue.value !== undefined) {
+                displayValue = rawValue.value;
+              } else {
+                // 最後の手段としてJSON変換
+                displayValue = JSON.stringify(rawValue);
               }
-            } catch (jsonErr) {
-              // パースエラーなら元の文字列表現を使用
+            } else {
+              // 数値や文字列などのプリミティブ値
+              displayValue = rawValue;
             }
+          } else if (displayValue.formattedValue) {
+            // 別のAPIレスポンス形式
+            displayValue = displayValue.formattedValue;
+          } else if (displayValue.userEnteredValue) {
+            // 入力値から取得
+            const userValue = displayValue.userEnteredValue;
+            // 各種値タイプをチェック
+            if (userValue.stringValue) displayValue = userValue.stringValue;
+            else if (userValue.numberValue !== undefined) displayValue = userValue.numberValue;
+            else if (userValue.boolValue !== undefined) displayValue = userValue.boolValue ? 'TRUE' : 'FALSE';
+            else if (userValue.formulaValue) displayValue = userValue.formulaValue;
+            else displayValue = JSON.stringify(userValue);
+          } else {
+            // データが見つからない場合はエラーメッセージ
+            displayValue = "0";
           }
-        } catch (e) {
-          displayValue = "オブジェクト変換エラー";
+        } else {
+          // その他のオブジェクトの場合
+          // 重要なフィールドをチェック
+          if (displayValue.value !== undefined) {
+            displayValue = displayValue.value;
+          } else if (displayValue.text !== undefined) {
+            displayValue = displayValue.text;
+          } else if (displayValue["0"] !== undefined) {
+            displayValue = displayValue["0"];
+          } else {
+            // 最後の手段としてJSON変換
+            displayValue = JSON.stringify(displayValue);
+          }
+        }
+      } catch (e) {
+        console.error('オブジェクト処理エラー:', e);
+        displayValue = "値取得エラー";
+      }
+      
+      // 最終的にオブジェクトが残っている場合は文字列化
+      if (typeof displayValue === 'object' && displayValue !== null) {
+        try {
+          displayValue = JSON.stringify(displayValue);
+        } catch (jsonErr) {
+          displayValue = 'オブジェクト';  // 最悪の場合は決め打ち
         }
       }
     }
