@@ -129,13 +129,24 @@ async function generateKPITree() {
     const configData = await fs.readFile(configFile, 'utf8');
     const config = YAML.parse(configData);
     
+    // Docker環境の検出
+    const isDocker = fs.existsSync('/.dockerenv') || process.env.RUNNING_IN_DOCKER === 'true';
+    console.log('-------------- KPIツリー生成処理スタート --------------');
+    console.log(`実行環境: ${isDocker ? 'Dockerコンテナ' : 'ローカル環境'}`);
+    console.log(`環境変数GOOGLE_SERVICE_ACCOUNT_KEY_PATH: ${process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH || '未設定'}`);
+    
     // Google Spreadsheetの参照を解決
     if (config.root) {
       try {
         // キーファイルの存在を確認
         const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
+        console.log(`サービスアカウントキーパス: ${keyPath}`);
+        console.log(`キーファイル存在確認: ${keyPath && fs.existsSync(keyPath) ? '存在します' : '存在しません'}`);
+        
         if (keyPath && fs.existsSync(keyPath)) {
+          console.log(`スプレッドシート参照の解決を開始します...`);
           config.root = await resolveSpreadsheetReferences(config.root);
+          console.log(`スプレッドシート参照の解決が完了しました`);
         } else {
           // スプレッドシート参照を持つノードのvalueを"ERROR"に置き換える関数
           const markSpreadsheetRefAsError = (node) => {
