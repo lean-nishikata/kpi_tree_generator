@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>利益KPIツリー</title>
+  <script>
+    // リダイレクト環境で動作するPUBLIC_URL設定 - GCS対応強化版
+    (function() {
+      // 強制的にYAMLで設定した公開URLを使用
+      var FIXED_PUBLIC_URL = "https://storage.cloud.google.com/cc-data-platform-kpi-tree-viewer-prod/index.html";
+      
+      // キャッシュバスティング用タイムスタンプ
+      var CACHE_BUSTER = new Date().getTime();
+      
+      // 常にグローバルに利用可能な形で公開URLを設定
+      window.PUBLIC_URL = FIXED_PUBLIC_URL;
+      window._publicBaseUrl = FIXED_PUBLIC_URL;
+      
+      console.log('キャッシュ対策タイムスタンプ:', CACHE_BUSTER);
+      console.log('強制的に設定した公開URL:', FIXED_PUBLIC_URL);
+      
+      // GCSリダイレクトを検出しても上書きしない
+      if (window.location.href.includes('googleusercontent.com')) {
+        console.log('リダイレクト先を検出しましたが、YAML設定の公開URLを優先します: ' + FIXED_PUBLIC_URL);
+      }
+    })();
+    </script>
+  <style>
+    /* 埋め込みCSS */
+    /* General styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+/* KPI Tree styles - Common */
+.kpi-tree-container {
+  overflow: auto;
+  padding: 20px;
+  margin: 0 auto;
+}
+
+.kpi-tree {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 英語表記用スタイル */
+.text-en {
+  font-size: 0.7em;
+  color: #666;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+
+
+/* Horizontal direction styles */
+.direction-horizontal .kpi-tree {
+  display: flex;
+  align-items: center;
+}
+
+.direction-horizontal .kpi-tree ul {
+  list-style-type: none;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.direction-horizontal .kpi-tree li {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
+}
+
+.direction-horizontal .kpi-tree ul::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-left: 2px solid #ccc;
+  height: 100%;
+}
+
+.direction-horizontal .children > li::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  border-top: 2px solid #ccc;
+  width: 20px;
+  transform: translateY(-50%);
+}
+
+.direction-horizontal .operator {
+  margin: 0 10px;
+}
+
+.direction-horizontal .toggle-btn {
+  margin: 0 10px;
+}
+
+/* Node styles */
+.node {
+  min-width: 120px;
+  min-height: 70px;
+  padding: 10px;
+  background-color: #fff;
+  border: 2px solid #666;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.node a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.node a:hover {
+  text-decoration: underline;
+}
+
+.node .value {
+  font-weight: bold;
+  margin-top: 5px;
+  color: #333;
+}
+
+/* Operator styles */
+.operator {
+  font-size: 32px; /* フォントサイズを大きく */
+  font-weight: bold;
+  color: #666; /* 元の色に戻す */
+  width: 45px; /* 幅を大きく */
+  height: 45px; /* 高さを大きく */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0; /* 元の背景色に戻す */
+  border-radius: 50%;
+  z-index: 10; /* 前面に表示 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
+  border: 2px solid #ddd; /* 境界線色を元に近い色に調整 */
+}
+
+/* Toggle button styles */
+.toggle-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #ddd;
+  border: 1px solid #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  font-size: 0;
+  z-index: 2;
+}
+
+.toggle-btn::before {
+  content: '−';
+  font-size: 16px;
+  line-height: 1;
+}
+
+.toggle-btn.collapsed::before {
+  content: '+';
+}
+
+/* Collapsed state */
+.children.collapsed {
+  display: none !important;
+}
+
+/* Theme colors */
+.theme-default .node {
+  border-color: #00796b;
+  background-color: #e0f2f1;
+}
+
+.theme-blue .node {
+  border-color: #1976d2;
+  background-color: #e3f2fd;
+}
+
+.theme-red .node {
+  border-color: #d32f2f;
+  background-color: #ffebee;
+}
+    
+    /* 追加のカスタムスタイル - 水平レイアウト専用 */
+    .kpi-tree li {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start !important;
+      margin: 3px 0;
+    }
+    /* 縦方向表示は非表示にし、水平方向表示は表示する */
+    .direction-vertical {
+      display: none;
+    }
+    .direction-horizontal {
+      display: block;
+    }
+  </style>
+</head>
+<body data-theme="default">
+  <div class="container">
+    <h1>利益KPIツリー</h1>
+    <div class="kpi-tree-container theme-default">
+      <ul class="kpi-tree">
+        
+    <li>
+      <div class="node" id="node-5wer2c">
+        <a href="https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd" target="_blank">利益</a><div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-5wer2c-children"></button>
+      <ul id="node-5wer2c-children" class="children">
+    <li>
+      <div class="node" id="node-m1bum">
+        売上<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-m1bum-children"></button>
+      <ul id="node-m1bum-children" class="children">
+    <li>
+      <div class="node" id="node-zddqkc">
+        <a href="https://lookerstudio.google.com/u/0/reporting/4565e709-4733-42d8-955a-e56dbbe8c332/page/p_xsek8mmgrd" target="_blank">販売所収益</a><div class="text-en">marketplace</div><div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-zddqkc-children"></button>
+      <ul id="node-zddqkc-children" class="children">
+    <li>
+      <div class="node" id="node-ssb9vk">
+        スプレッド<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-plplc8">
+        取引金額<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-plplc8-children"></button>
+      <ul id="node-plplc8-children" class="children">
+    <li>
+      <div class="node" id="node-rgc620">
+        取引単価<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-3gfczq">
+        取引ユーザー数<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-3gfczq-children"></button>
+      <ul id="node-3gfczq-children" class="children">
+    <li>
+      <div class="node" id="node-67disn">
+        既存顧客のうち取引ユーザー<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-67disn-children"></button>
+      <ul id="node-67disn-children" class="children">
+    <li>
+      <div class="node" id="node-kdopp3">
+        月末本人確認済既存口座数<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-e1f2qa">
+        既存ユーザー取引率<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-v3fqcf">
+        新規顧客のうち取引ユーザー<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-v3fqcf-children"></button>
+      <ul id="node-v3fqcf-children" class="children">
+    <li>
+      <div class="node" id="node-micj6l">
+        新規口座開設数<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-micj6l-children"></button>
+      <ul id="node-micj6l-children" class="children">
+    <li>
+      <div class="node" id="node-pag6y3">
+        広告宣伝費<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-lo2z1c">
+        Blended CPA<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-7syyqi">
+        新規ユーザー取引率<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-9k0dgy">
+        <a href="https://lookerstudio.google.com/u/0/reporting/f2d1fa3c-f6cc-47bd-832b-5935c4f206e9/page/p_xsek8mmgrd" target="_blank">販売所以外収益</a><div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-9k0dgy-children"></button>
+      <ul id="node-9k0dgy-children" class="children">
+    <li>
+      <div class="node" id="node-w0nv76">
+        <a href="https://lookerstudio.google.com/u/0/reporting/758085d1-c9d8-4e7e-898f-8a2d74904045/page/p_xsek8mmgrd" target="_blank">取引所</a><div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-w0nv76-children"></button>
+      <ul id="node-w0nv76-children" class="children">
+    <li>
+      <div class="node" id="node-fdmndp">
+        出来高<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-fdmndp-children"></button>
+      <ul id="node-fdmndp-children" class="children">
+    <li>
+      <div class="node" id="node-26y94x">
+        MTU<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-ze9hlc">
+        平均約定回数<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-gv6dgb">
+        平均約定金額<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-itkgyk">
+        手数料率<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-1giigg">
+        <a href="https://lookerstudio.google.com/u/0/reporting/e4ad8b3b-913a-4312-8ed1-3709a5b75956/page/p_9nnkwdngrd" target="_blank">つみたて</a><div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-1giigg-children"></button>
+      <ul id="node-1giigg-children" class="children">
+    <li>
+      <div class="node" id="node-r73lf7">
+        つみたて件数<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-r73lf7-children"></button>
+      <ul id="node-r73lf7-children" class="children">
+    <li>
+      <div class="node" id="node-6uxs6r">
+        新規UU<div class="value">1000</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-m9jd71">
+        再開UU<div class="value">1000</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-wzw3w7">
+        継続UU<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-xjtlpm">
+        ARPPU<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-xjtlpm-children"></button>
+      <ul id="node-xjtlpm-children" class="children">
+    <li>
+      <div class="node" id="node-5012wn">
+        一人当たりつみたて金額<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-jmmuye">
+        スプレッド<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-6wbhyf">
+        日本円入出金・暗号資産送金<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-6wbhyf-children"></button>
+      <ul id="node-6wbhyf-children" class="children">
+    <li>
+      <div class="node" id="node-bfx0i">
+        入金<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-bfx0i-children"></button>
+      <ul id="node-bfx0i-children" class="children">
+    <li>
+      <div class="node" id="node-avkhr1">
+        入金金額<div class="value">1000</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-plcutl">
+        手数料率<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-dayx7a">
+        出金<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-dayx7a-children"></button>
+      <ul id="node-dayx7a-children" class="children">
+    <li>
+      <div class="node" id="node-c6fa1j">
+        出金金額<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-plcvka">
+        手数料率<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-s1spds">
+        暗号資産送金<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-s1spds-children"></button>
+      <ul id="node-s1spds-children" class="children">
+    <li>
+      <div class="node" id="node-6v8s3n">
+        送金金額<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-6v8s3n-children"></button>
+      <ul id="node-6v8s3n-children" class="children">
+    <li>
+      <div class="node" id="node-bf2spi">
+        送金UU<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-l0nmmz">
+        平均送金金額<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-plcwaz">
+        手数料率<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-cl7p4b">
+        ステーキング<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-cl7p4b-children"></button>
+      <ul id="node-cl7p4b-children" class="children">
+    <li>
+      <div class="node" id="node-pb3a44">
+        ETH保有金額<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-pb3a44-children"></button>
+      <ul id="node-pb3a44-children" class="children">
+    <li>
+      <div class="node" id="node-bievha">
+        保有UU<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-tpimv1">
+        一人当たり保有金額<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-itkeqh">
+        手数料率<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-dejub7">
+        NFT<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-dejub7-children"></button>
+      <ul id="node-dejub7-children" class="children">
+    <li>
+      <div class="node" id="node-9o7uth">
+        CC出品<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-bvbdju">
+        CtoC<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-zhjq5l">
+        発行体<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-nahm9y">
+        出庫手数料<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-w1g4px">
+        IEO<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-w1g4px-children"></button>
+      <ul id="node-w1g4px-children" class="children">
+    <li>
+      <div class="node" id="node-cm2qlp">
+        PLT<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-jxs4oh">
+        FNCT<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-d2db7a">
+        BRIL<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-2i6x3w">
+        OnRamp<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-2i6x3w-children"></button>
+      <ul id="node-2i6x3w-children" class="children">
+    <li>
+      <div class="node" id="node-53oq3o">
+        MTU<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-53oq3o-children"></button>
+      <ul id="node-53oq3o-children" class="children">
+    <li>
+      <div class="node" id="node-royrhj">
+        MTUrate<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-3eyakb">
+        MAU<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-xjti05">
+        ARPPU<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-xjti05-children"></button>
+      <ul id="node-xjti05-children" class="children">
+    <li>
+      <div class="node" id="node-6mojup">
+        一人当たり売買金額<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-jjvvzl">
+        スプレッド<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-na1dm">
+        リワード<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-na1dm-children"></button>
+      <ul id="node-na1dm-children" class="children">
+    <li>
+      <div class="node" id="node-nh3gq8">
+        案件クリアUU<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-mommlt">
+        CCが受け取る広告費<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-bo6nzj">
+        実現損益<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-bo6nzj-children"></button>
+      <ul id="node-bo6nzj-children" class="children">
+    <li>
+      <div class="node" id="node-8ppp6i">
+        有料会員登録UU<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-xjtgir">
+        ARPPU<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-fhyq3h">
+        でんき・ガス<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-fhyq3h-children"></button>
+      <ul id="node-fhyq3h-children" class="children">
+    <li>
+      <div class="node" id="node-90cswc">
+        契約UU<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-xjtfs2">
+        ARPPU<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-fh2wlo">
+        Coincheck Prime<div class="value">1000</div>
+      </div>
+      <button class="toggle-btn" data-target="node-fh2wlo-children"></button>
+      <ul id="node-fh2wlo-children" class="children">
+    <li>
+      <div class="node" id="node-oipk5m">
+        アセットロック<div class="value">1000</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-emd3r0">
+        大口OTC<div class="value">1000</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- 結合されたJSがここに埋め込まれます -->
+  <script>
+
+// KPIツリージェネレーター JavaScript 結合ファイル
+// core.js
+/**
+ * KPIツリージェネレーター：コア機能
+ * 初期化、基本機能とメインインターフェースを提供します
+ * 
+ * このファイルはアプリケーションの入口点となり、他のモジュールを統合します。
+ * DOM読み込み後の初期化処理や、グローバルイベントハンドリングを担当します。
+ */
+
+/**
+ * グローバル状態管理変数
+ */
+window._initialLoadComplete = false;  // 初期ロード完了フラグ
+window._shareUrl = null;            // 現在の共有URL
+window._publicBaseUrl = null;       // 公開ベースURL
+
+/**
+ * KPIツリーアプリケーションのメイン初期化処理
+ * ページ読み込み後に実行され、全モジュールの調整と状態初期化を行う
+ * ツリーの表示、共有機能、URLパラメータの処理、初期状態の適用を実施
+ * 
+ * @returns {void}
+ */
+function kpiTreeInit() {
+  console.log('KPIツリー初期化開始');
+  
+  // グローバル状態変数のリセット
+  window._initialLoadComplete = false;
+  window._shareUrl = null;
+  
+  /**
+   * ステップ1: 共有URL設定の初期化
+   * YAML設定から公開用URLを取得
+   */
+  if (window.PUBLIC_URL) {
+    window._publicBaseUrl = window.PUBLIC_URL;
+    console.log('PUBLIC_URL設定検出:', window._publicBaseUrl);
+  }
+  
+  /**
+   * ステップ2: リダイレクト環境の処理
+   * GCSなどのリダイレクト環境でパラメータが消失しないよう対応
+   */
+  handleUrlRedirects();
+  
+  /**
+   * ステップ3: UI設定とレイアウトの初期化
+   */
+  // ツリーの向きを横方向に固定
+  setDirection('horizontal');
+  
+  // 共有ボタンの設置
+  addShareButton();
+  
+  // ノードハイライト用のスタイルをページに追加
+  addHighlightStyle();
+  
+  /**
+   * ステップ4: ツリー状態の取得と適用
+   * 優先順位: ハッシュパラメータ > URLクエリパラメータ > ローカルストレージ
+   */
+  // 1. まずハッシュフラグメントから状態を取得試行
+  var state = getStateFromHash();
+  
+  // 2. ハッシュに状態がなければ、URLクエリパラメータから取得試行
+  if (!state || Object.keys(state).length === 0) {
+    state = getStateFromUrl();
+    
+    // 3. URLパラメータにもなければローカルストレージを確認
+    if (!state || Object.keys(state).length === 0) {
+      try {
+        // ローカルストレージから過去の状態の復元試行
+        var savedStateParam = localStorage.getItem('kpiTreeStateParam');
+        if (savedStateParam) {
+          state = decodeStateParam(savedStateParam);
+          console.log('ローカル保存状態を復元しました');
+        }
+      } catch (storageError) {
+        console.error('ストレージからの状態読み込み失敗:', storageError);
+        // エラー発生時は空の状態で継続
+      }
+    }
+  }
+  
+  /**
+   * ステップ5: 取得した状態に基づくツリーの初期設定
+   */
+  // 取得した状態をツリーに適用（開閉状態の復元）
+  console.log('ツリー状態を適用します');
+  applyTreeState(state);
+  
+  // トグルボタンの機能を設定
+  setupToggleButtons();
+  
+  /**
+   * ステップ6: ノードアンカーとリンク機能の初期化
+   */
+  // 各ノードにリンクアイコンを追加
+  addNodeAnchors();
+  
+  // URLハッシュに指定されたノードがあればそこにスクロール
+  setTimeout(function() {
+    scrollToAnchorNode();
+    console.log('アンカーノードスクロール処理完了');
+  }, 500); // DOMが完全にレンダリングされるのを待つ
+  
+  /**
+   * ステップ7: URL更新と初期化完了
+   */
+  // URLを現在の状態で更新
+  setTimeout(function() {
+    updateShareUrl();
+    console.log('共有URLを更新しました');
+  }, 600);
+  
+  // 初期化完了フラグを設定
+  window._initialLoadComplete = true;
+  console.log('KPIツリー初期化完了');
+}
+
+/**
+ * ツリーの表示方向を設定
+ * @param {string} direction - 表示方向 ('horizontal' または 'vertical')
+ */
+function setDirection(direction) {
+  if (direction === 'horizontal') {
+    document.body.setAttribute('data-direction', 'horizontal');
+    document.querySelector('.kpi-tree-container').classList.add('direction-horizontal');
+    document.querySelector('.kpi-tree-container').classList.remove('direction-vertical');
+  } else {
+    document.body.setAttribute('data-direction', 'vertical');
+    document.querySelector('.kpi-tree-container').classList.add('direction-vertical');
+    document.querySelector('.kpi-tree-container').classList.remove('direction-horizontal');
+  }
+}
+
+/**
+ * ノードハイライト表示用のスタイルを動的に追加
+ * アンカーリンクを使用した場合の強調表示に使用されます
+ */
+function addHighlightStyle() {
+  // 既存のスタイル要素があれば追加しない
+  if (document.getElementById('kpi-tree-highlight-style')) return;
+  
+  var style = document.createElement('style');
+  style.id = 'kpi-tree-highlight-style';
+  style.textContent = `
+    .highlight-node {
+      animation: nodeHighlight 2s;
+    }
+    @keyframes nodeHighlight {
+      0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+/**
+ * アプリケーションのエントリーポイント
+ * DOM読み込み完了時に実行されるメイン処理
+ */
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM読み込み完了、KPIツリー初期化開始');
+  
+  // URL変更の監視を開始
+  monitorUrlChanges();
+  
+  // KPIツリーの初期化処理を実行
+  kpiTreeInit();
+  
+  console.log('KPIツリーの初期化完了');
+});
+
+/**
+ * ブラウザのナビゲーションイベントハンドラ（戻るボタンやURL変更時）
+ * URLハッシュ変更時にツリーの状態を自動更新します
+ */
+window.addEventListener('popstate', function(event) {
+  console.log('URL変更検出、URLから状態を再読み込み');
+  
+  // ページの再読み込みなしでハッシュから状態を取得し適用
+  var state = getStateFromHash();
+  if (Object.keys(state).length > 0) {
+    applyTreeState(state);
+  }
+});
+
+
+// tree.js
+/**
+ * KPIツリージェネレーター：ツリー操作機能
+ * ツリーノードの操作と状態管理を担当するモジュールです
+ * 
+ * ツリーの開閉状態の保存、読み込み、適用を管理します。
+ * トグルボタンの設定やイベントハンドラの登録も行います。
+ */
+
+/**
+ * トグルボタンの初期化とイベントハンドラの設定
+ * 各ノードの折りたたみ/展開ボタンにクリックイベントを登録します
+ */
+function setupToggleButtons() {
+  // すべてのトグルボタンを取得
+  var toggleButtons = document.querySelectorAll('.toggle-btn');
+  if (!toggleButtons.length) return;
+  
+  // 各ボタンにイベントハンドラを設定
+  toggleButtons.forEach(function(button) {
+    var targetId = button.getAttribute('data-target');
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    
+    // クリック時のイベントハンドラ
+    button.onclick = function() {
+      // トグル動作を実行
+      target.classList.toggle('collapsed');
+      button.classList.toggle('collapsed');
+      
+      // 状態を保存してURLを更新
+      saveTreeState();
+      updateShareUrl();
+    };
+  });
+}
+
+/**
+ * ツリーの現在の開閉状態を取得して保存
+ * 
+ * @returns {Object} 折りたたまれたノードIDとその状態を含むオブジェクト
+ */
+function saveTreeState() {
+  // すべての子ノードとその開閉状態を取得
+  var state = {};
+  document.querySelectorAll('.children').forEach(function(child) {
+    if (child.id) {
+      state[child.id] = child.classList.contains('collapsed') ? 'collapsed' : 'expanded';
+    }
+  });
+  
+  // 最小データ化: 折りたたまれたノードのみを抽出してURLパラメータを省サイズ化
+  var filteredState = {};
+  for (var nodeId in state) {
+    if (state[nodeId] === 'collapsed') {
+      filteredState[nodeId] = 'collapsed';
+    }
+  }
+  
+  // 完全な状態をローカルストレージに保存（通常の使用向け）
+  try {
+    localStorage.setItem('kpiTreeState', JSON.stringify(state));
+  } catch (e) {
+    console.warn('ローカルストレージへの状態保存失敗:', e);
+  }
+  
+  // 最小化された状態を返す（URLパラメータ用）
+  return Object.keys(filteredState).length > 0 ? filteredState : {};
+}
+
+/**
+ * ローカルストレージから保存されたツリー状態を読み込む
+ * 
+ * @returns {Object} 保存されていたツリー状態のオブジェクト。存在しない場合は空オブジェクト
+ */
+function loadTreeState() {
+  try {
+    var savedState = localStorage.getItem('kpiTreeState');
+    return savedState ? JSON.parse(savedState) : {};
+  } catch (e) {
+    console.error('ツリー状態の読み込みエラー:', e);
+    return {};
+  }
+}
+
+/**
+ * 全ノードを展開状態にリセット
+ * ツリー全体を展開状態に戻します
+ */
+function resetAllNodes() {
+  // すべての子ノードを展開状態に設定
+  document.querySelectorAll('.children').forEach(function(child) {
+    child.classList.remove('collapsed');
+  });
+  
+  // すべてのトグルボタンを非折りたたみ状態に設定
+  document.querySelectorAll('.toggle-btn').forEach(function(button) {
+    button.classList.remove('collapsed');
+  });
+}
+
+/**
+ * ツリー状態をDOMに適用
+ * URLハッシュなどから取得した状態をツリー表示に反映させます
+ * 
+ * @param {Object} state - 適用するツリー状態のオブジェクト 
+ */
+function applyTreeState(state) {
+  // 状態が空の場合は何もしない
+  if (!state || Object.keys(state).length === 0) return;
+  
+  // 先にすべて展開状態にリセット
+  resetAllNodes();
+  
+  // 指定された状態を適用
+  for (var nodeId in state) {
+    var nodeState = state[nodeId];
+    var node = document.getElementById(nodeId);
+    var button = null;
+    
+    // 対応するトグルボタンを探す
+    document.querySelectorAll('.toggle-btn').forEach(function(btn) {
+      if (btn.getAttribute('data-target') === nodeId) {
+        button = btn;
+      }
+    });
+    
+    // ノードとボタンが見つかった場合は状態を設定
+    if (node && button) {
+      if (nodeState === 'collapsed') {
+        node.classList.add('collapsed');
+        button.classList.add('collapsed');
+      } else if (nodeState === 'expanded') {
+        node.classList.remove('collapsed');
+        button.classList.remove('collapsed');
+      }
+    }
+  }
+  
+  // 状態をストレージに保存し、初期化完了フラグを設定
+  saveTreeState();
+  window._initialLoadComplete = true;
+}
+
+
+// url.js
+/**
+ * KPIツリージェネレーター：URL処理モジュール
+ * 
+ * URLハッシュとクエリパラメータを利用したツリー状態の保存と復元を担当します。
+ * Google Cloud Storageなどのリダイレクト環境にも対応し、共有可能なリンクを生成します。
+ */
+
+/**
+ * リダイレクト環境でのパラメータ保持を処理
+ * GCSなどのリダイレクト環境で状態パラメータが消失する問題に対応します
+ * 
+ * @returns {boolean} リダイレクト処理が行われた場合はtrue、それ以外は通常処理のことを示すfalse
+ */
+function handleUrlRedirects() {
+  /**
+   * URLパラメータをセッションストレージに保存する内部関数
+   * @returns {boolean} 保存が成功した場合はtrue
+   */
+  function saveStateParamToStorage() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var stateParam = urlParams.get('state');
+    
+    if (stateParam) {
+      try {
+        // 状態パラメータをセッションストレージに一時保存
+        sessionStorage.setItem('originalStateParam', stateParam);
+        return true;
+      } catch (e) {
+        console.error('パラメータの保存に失敗:', e);
+      }
+    }
+    return false;
+  }
+  
+  // GCSリダイレクトの検出（googleusercontent.comドメインとリファラー情報から判定）
+  var isGcsRedirect = window.location.href.includes('googleusercontent.com') && 
+                     (!document.referrer || document.referrer.includes('storage.cloud.google.com'));
+  
+  if (!isGcsRedirect) {
+    // 通常アクセス時：状態パラメータをセッションストレージに保存
+    return saveStateParamToStorage();
+  } else {
+    // リダイレクト後：先ほど保存した状態パラメータをURLに復元
+    var savedState = sessionStorage.getItem('originalStateParam');
+    if (savedState) {
+      var currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('state', savedState);
+      window.history.replaceState({}, document.title, currentUrl.toString());
+      console.log('リダイレクト後に状態パラメータを復元:', savedState);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * URLクエリパラメータからツリー状態を取得
+ * 
+ * @returns {Object} デコードされたツリー状態オブジェクト
+ */
+function getStateFromUrl() {
+  // URLクエリパラメータからstateを取得
+  var urlParams = new URLSearchParams(window.location.search);
+  var stateParam = urlParams.get('state');
+  
+  if (!stateParam) {
+    // URLパラメータにない場合はセッションストレージから取得試行
+    try {
+      var savedStateParam = sessionStorage.getItem('originalStateParam');
+      if (savedStateParam) {
+        stateParam = savedStateParam;
+        console.log('セッションストレージから状態を取得:', stateParam);
+      } else {
+        return {}; // 状態が見つからない場合は空オブジェクト
+      }
+    } catch (storageError) {
+      console.warn('セッションストレージアクセスエラー:', storageError);
+      return {}; 
+    }
+  } else {
+    // パラメータがあればセッションに保存（リダイレクト対策）
+    try {
+      sessionStorage.setItem('originalStateParam', stateParam);
+    } catch (e) {
+      console.warn('セッションストレージ保存エラー:', e);
+      // 保存エラーでも続行可能
+    }
+  }
+  
+  try {
+    // ハッシュ部分とデータ部分を分離
+    var parts = stateParam.split('.');
+    var encodedData = parts[0]; // データ部分
+    
+    // データ部分をデコード
+    var decodedState = decodeURIComponent(encodedData);
+    // URL-safe base64を標準base64に変換してデコード
+    decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
+    // JSONにパース
+    var parsedState = JSON.parse(decodedState);
+    
+    return parsedState;
+  } catch (e) {
+    console.error('State decoding error:', e);
+    
+    // 旧形式のパラメータの場合は直接デコードを試みる
+    try {
+      var directDecodedState = decodeURIComponent(stateParam);
+      directDecodedState = atob(directDecodedState.replace(/-/g, '+').replace(/_/g, '/'));
+      var directParsedState = JSON.parse(directDecodedState);
+      return directParsedState;
+    } catch (directError) {
+      return {}; // エラー時は空オブジェクトを返す
+    }
+  }
+}
+
+/**
+ * ハッシュフラグメントからツリー状態を取得
+ * URLハッシュからstate=パラメータを抽出し、デコードして状態オブジェクトを返す
+ * 
+ * @returns {Object} デコードされたツリー状態オブジェクト
+ */
+function getStateFromHash() {
+  var hash = window.location.hash;
+  if (!hash || !hash.includes('state=')) {
+    // ハッシュに状態がない場合、ローカルストレージから回復を試みる
+    try {
+      var savedStateParam = localStorage.getItem('kpiTreeStateParam');
+      if (savedStateParam) {
+        console.log('ローカルストレージから状態を回復しました');
+        return decodeStateParam(savedStateParam);
+      }
+    } catch (e) {
+      console.error('ローカルストレージアクセスエラー:', e);
+    }
+    return {};
+  }
+  
+  try {
+    // ハッシュから状態パラメータを抽出 (state=xxxxx の形式)
+    var stateMatch = hash.match(/state=([^&]+)/);
+    if (!stateMatch) return {};
+    
+    var stateParam = stateMatch[1];
+    console.log('ハッシュから状態パラメータを検出:', stateParam.substring(0, 20) + '...');
+    
+    // パラメータをデコード
+    return decodeStateParam(stateParam);
+  } catch (e) {
+    console.error('ハッシュ状態解析エラー:', e);
+    return {};
+  }
+}
+
+/**
+ * 状態パラメータをデコードする共通関数
+ * Base64エンコードされた状態文字列をデコードしてオブジェクトに変換
+ * 
+ * @param {string} stateParam - デコードするBase64エンコード状態文字列
+ * @returns {Object} デコードされた状態オブジェクト
+ */
+function decodeStateParam(stateParam) {
+  try {
+    // チェックサムとデータ部分を分離 (データ.チェックサム の形式)
+    var parts = stateParam.split('.');
+    var encodedData = parts[0]; // データ部分
+    
+    // URLセーフBase64から標準Base64に変換してデコード
+    var decodedState = decodeURIComponent(encodedData);
+    decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
+    
+    // JSONパースして状態オブジェクトに変換
+    var parsedState = JSON.parse(decodedState);
+    return parsedState;
+  } catch (e) {
+    console.error('状態パラメータデコードエラー:', e);
+    
+    // 互換性対応: 旧形式のパラメータをデコード試行
+    try {
+      var directDecodedState = decodeURIComponent(stateParam);
+      directDecodedState = atob(directDecodedState.replace(/-/g, '+').replace(/_/g, '/'));
+      var directParsedState = JSON.parse(directDecodedState);
+      console.log('旧形式パラメータを正常にデコードしました');
+      return directParsedState;
+    } catch (directError) {
+      console.error('互換性デコードにも失敗:', directError);
+      return {}; // 両方のデコード方法が失敗した場合は空オブジェクト
+    }
+  }
+}
+
+/**
+ * ツリー状態をURLハッシュパラメータ用にエンコード
+ * 状態をURLセーフなBase64に変換し、チェックサムを付与して一意性を保証
+ * 
+ * @param {Object} state - エンコードするツリー状態オブジェクト
+ * @returns {string} エンコードされた状態パラメータ文字列
+ */
+function generateStateParam(state) {
+  // 状態が空の場合は空文字列を返す
+  if (!state || Object.keys(state).length === 0) {
+    return '';
+  }
+  
+  // 再現性と一意性のためキーをソート
+  var nodeIds = Object.keys(state).sort();
+  var normalizedState = {};
+  for (var i = 0; i < nodeIds.length; i++) {
+    normalizedState[nodeIds[i]] = state[nodeIds[i]];
+  }
+  
+  // 状態まとめ用フィンガープリントの生成
+  var fingerprint = nodeIds.map(function(id) {
+    return id.substring(0, 3) + state[id].substring(0, 1);
+  }).join('');
+  
+  // 簡易チェックサム生成
+  var checksum = 0;
+  for (var k = 0; k < fingerprint.length; k++) {
+    checksum += fingerprint.charCodeAt(k);
+  }
+  checksum = checksum % 1000;
+  
+  // JSON化してBase64エンコード、URLセーフ文字列に置換
+  var jsonString = JSON.stringify(normalizedState);
+  var encoded = btoa(jsonString)
+    .replace(/\+/g, '-')  // URLセーフな文字に置換
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');   // 末尾のパディング=を削除
+  
+  // 状態識別用ユニークハッシュを生成
+  var uniqueHash = 's' + checksum + '-n' + nodeIds.length;
+  
+  // データとチェックサムを結合した最終パラメータを返す
+  return encodeURIComponent(encoded) + '.' + uniqueHash;
+}
+
+/**
+ * URL変更を監視して状態の整合性を保証する
+ * 特にGoogle Cloud Storageリダイレクトなど、URLの自動変更をトラッキングして状態を維持
+ */
+function monitorUrlChanges() {
+  var lastUrl = window.location.href;
+  var checkInterval = 500; // 確認間隔(ミリ秒)
+  
+  setInterval(function() {
+    // URLが変更された場合の処理
+    if (lastUrl !== window.location.href) {
+      console.log('URL変更を検出:', lastUrl, ' -> ', window.location.href);
+      lastUrl = window.location.href;
+      
+      // GCSリダイレクトを検出した場合
+      if (window.location.href.includes('googleusercontent.com')) {
+        console.log('Google Cloud Storageリダイレクトを検出');
+        
+        // セッションから保存してある状態を取得
+        var savedState = sessionStorage.getItem('originalStateParam');
+        if (savedState) {
+          console.log('保存された状態を復元します');
+          
+          // URLクエリパラメータから状態を取得して適用
+          var state = getStateFromUrl();
+          
+          // 状態が存在する場合はツリーに適用
+          if (state && Object.keys(state).length > 0) {
+            if (typeof applyTreeState === 'function') {
+              applyTreeState(state);
+              console.log('リダイレクト後にツリー状態を復元しました');
+            }
+          }
+        }
+      }
+      
+      // URLハッシュ変更を検出した場合
+      if (window.location.hash && window.location.hash.includes('state=')) {
+        console.log('ハッシュパラメータ変更を検出');
+        
+        // ハッシュから状態を取得して適用
+        var hashState = getStateFromHash();
+        if (hashState && Object.keys(hashState).length > 0) {
+          if (typeof applyTreeState === 'function') {
+            applyTreeState(hashState);
+            console.log('ハッシュ変更によりツリー状態を更新しました');
+          }
+        }
+      }
+    }
+  }, checkInterval);
+}
+
+/**
+ * ブラウザのURLを更新
+ * History APIを使って現在のページURLを更新し、状態を保存
+ * 
+ * @param {string} queryString - 設定する新しいURLハッシュまたはクエリ文字列
+ */
+function updateBrowserUrl(queryString) {
+  // History APIの存在確認
+  if (window.history && window.history.replaceState) {
+    try {
+      // URLを更新（ページの再読み込みは行わない）
+      window.history.replaceState({}, document.title, queryString);
+      console.log('ブラウザURL更新:', queryString);
+      
+      // セッションストレージにも状態を保存（再読み込み時用）
+      var state = saveTreeState();
+      if (Object.keys(state).length > 0) {
+        sessionStorage.setItem('kpiTreeState', JSON.stringify(state));
+      }
+    } catch (e) {
+      console.error('URL更新エラー:', e);
+    }
+  }
+}
+
+
+// share.js
+/**
+ * KPIツリージェネレーター：共有機能
+ * URLの生成とクリップボードコピー機能を提供します
+ */
+
+// ツリー状態が変更されたときにURLを更新
+function updateShareUrl() {
+  // ツリーの現在の状態を取得
+  var state = saveTreeState();
+  
+  if (state && Object.keys(state).length > 0) {
+    // 状態パラメータを生成
+    var stateParam = generateStateParam(state);
+    
+    // クエリパラメータではなくハッシュフラグメントを構築
+    var hashFragment = stateParam ? '#state=' + stateParam : '';
+    
+    // 常にPUBLIC_URLを使うように設定
+    if (window.PUBLIC_URL) {
+      window._publicBaseUrl = window.PUBLIC_URL;
+    }
+    
+    // 共有URL（ファイル名＋ハッシュフラグメント）を設定
+    if (window._publicBaseUrl) {
+      window._shareUrl = window._publicBaseUrl + hashFragment;
+    } else {
+      var fileName = window.location.pathname.split('/').pop() || 'index.html';
+      window._shareUrl = fileName + hashFragment;
+    }
+    
+    // ローカルストレージに現在のパラメータを保存
+    if (stateParam) {
+      try {
+        localStorage.setItem('kpiTreeStateParam', stateParam);
+      } catch (e) {
+        console.error('パラメータ保存エラー:', e);
+      }
+    }
+    
+    // ブラウザのURLをハッシュで更新（ページはリロードされない）
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, document.title, hashFragment);
+    }
+  } else {
+    // すべて展開状態の場合
+    if (window.PUBLIC_URL) {
+      window._publicBaseUrl = window.PUBLIC_URL;
+    }
+    
+    if (window._publicBaseUrl) {
+      window._shareUrl = window._publicBaseUrl;
+    } else {
+      var fileName = window.location.pathname.split('/').pop() || 'index.html';
+      window._shareUrl = fileName;
+    }
+    
+    // ブラウザのURLをハッシュなしに更新
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, document.title, window.location.pathname);
+    }
+  }
+  
+  // コンソールに現在の共有URLを表示
+  console.log('Share URL updated with hash:', window._shareUrl);
+}
+
+/**
+ * 共有ボタンクリック時の処理、現在のツリー状態をURL化しクリップボードにコピー
+ * 現在のKPIツリー状態を取得し、共有可能なURLを生成してクリップボードにコピーする
+ * 環境により最適なクリップボード操作を行う
+ * 
+ * @returns {void}
+ */
+function copyToClipboard() {
+  try {
+    // 共有URLの生成と更新
+    updateShareUrl();
+    
+    // すべての共有元で共通の共有URLを使用
+    var shareUrl = window._shareUrl;
+    
+    // ローカルストレージから状態パラメータを取得
+    var stateParam = '';
+    try {
+      stateParam = localStorage.getItem('kpiTreeStateParam') || '';
+    } catch (storageError) {
+      console.error('ストレージからパラメータ取得エラー:', storageError);
+      // ストレージエラーがあっても処理を継続
+    }
+    
+    // 公開URL設定を強制的に使用（GCSなどの環境向け）
+    if (window.PUBLIC_URL) {
+      console.log('共有URL生成前のPUBLIC_URL:', window.PUBLIC_URL);
+      console.log('現在の共有URL候補:', shareUrl);
+      
+      // 現在の状態を表すハッシュパラメータを取得
+      var currentState = saveTreeState();
+      var stateFragment = '';
+      
+      // ツリー状態があればパラメータを生成
+      if (currentState && Object.keys(currentState).length > 0) {
+        var stateParam = generateStateParam(currentState);
+        if (stateParam) {
+          stateFragment = '#state=' + stateParam;
+        }
+      }
+      
+      // 強制的にクリップボードにコピーされるURLをYAML設定値に修正
+      var yamlPublicUrl = window.PUBLIC_URL;
+      
+      // URLの末尾のスラッシュを削除（あれば）
+      if (yamlPublicUrl.endsWith('/')) {
+        yamlPublicUrl = yamlPublicUrl.slice(0, -1);
+      }
+      
+      // YAMLで指定された公開URLに現在の状態パラメータを結合
+      shareUrl = yamlPublicUrl + stateFragment;
+      console.log('公開URLを強制使用した共有URL:', shareUrl);
+    }
+    
+    // 最終的な共有URLの生成
+    const finalUrl = shareUrl;
+    
+    console.log('クリップボードコピー準備:', finalUrl);
+    
+    // クリップボード操作時のブラウザ対応処理
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // モダンブラウザのAPIを使用
+      navigator.clipboard.writeText(finalUrl)
+        .then(function() {
+          // コピー成功時のユーザー通知
+          showCopyMessage('URLをコピーしました');
+          console.log('クリップボードコピー成功');
+        })
+        .catch(function(clipboardError) {
+          // APIエラー時は代替方法でコピー試行
+          console.warn('クリップボードAPIエラー、代替方法で試行:', clipboardError);
+          fallbackCopyToClipboard(finalUrl);
+        });
+    } else {
+      // 旧ブラウザや制限された環境向けの代替処理
+      console.log('従来型クリップボード方式を使用');
+      fallbackCopyToClipboard(finalUrl);
+    }
+  } catch (error) {
+    // 予期せぬエラーへの対策
+    console.error('共有URL生成・コピー処理エラー:', error);
+    alert('共有URLの生成中にエラーが発生しました');
+  }
+}
+
+// 共有ボタンを追加する関数
+/**
+ * KPIツリーの状態を共有するためのボタンを画面に追加
+ * 画面右下に固定表示される共有ボタンを作成し、DOMに挿入する
+ */
+function addShareButton() {
+  // 既存ボタンがあれば再追加しない
+  if (document.getElementById('shareButton')) {
+    return;
+  }
+  
+  // ボタンコンテナ要素の作成
+  var shareDiv = document.createElement('div');
+  shareDiv.className = 'share-control';
+  shareDiv.style.position = 'fixed';
+  shareDiv.style.top = '20px';
+  shareDiv.style.right = '20px';
+  shareDiv.style.zIndex = '1000';
+  
+  // 共有ボタン要素の作成とスタイル設定
+  var shareButton = document.createElement('button');
+  shareButton.id = 'shareButton';
+  shareButton.textContent = '共有URLをコピー';
+  
+  // ボタンスタイルの設定
+  Object.assign(shareButton.style, {
+    padding: '8px 15px',
+    backgroundColor: '#4285F4',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+    position: 'relative'
+  });
+  
+  // ホバー効果
+  shareButton.onmouseover = function() {
+    this.style.backgroundColor = '#3367D6'; // 濃い青
+  };
+  shareButton.onmouseout = function() {
+    this.style.backgroundColor = '#4285F4'; // 元の青
+  };
+  
+  // ツールチップ要素の作成
+  var tooltip = document.createElement('div');
+  tooltip.id = 'shareTooltip';
+  tooltip.textContent = '現在のURLをコピーしました';
+  
+  // ツールチップスタイル設定
+  Object.assign(tooltip.style, {
+    position: 'absolute',
+    top: '100%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    backgroundColor: '#333',
+    color: 'white',
+    padding: '5px 10px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    whiteSpace: 'nowrap',
+    opacity: '0',
+    transition: 'opacity 0.3s',
+    pointerEvents: 'none',
+    zIndex: '1001'
+  });
+  
+  // ツールチップをボタンに追加
+  shareButton.appendChild(tooltip);
+  
+  /**
+   * 共有ボタンクリック時のハンドラ
+   * 現在のKPIツリー状態をURL化し、クリップボードにコピーする
+   */
+  shareButton.onclick = function() {
+    copyToClipboard();
+  };
+  
+  // DOMに追加
+  shareDiv.appendChild(shareButton);
+  document.body.appendChild(shareDiv);
+}
+
+// コピー成功表示
+function showCopySuccess() {
+  showCopyMessage('URLをコピーしました');
+}
+
+/**
+ * コピー成功時に一時的な通知メッセージを表示
+ * 画面下部にトーストメッセージを表示し、3秒後に消える
+ * 
+ * @param {string} message - 表示するメッセージ文字列
+ * @returns {void}
+ */
+function showCopyMessage(message) {
+  // 既存のメッセージ要素があれば削除（複数回クリック対応）
+  var oldMessage = document.getElementById('copy-message');
+  if (oldMessage && oldMessage.parentNode) {
+    oldMessage.parentNode.removeChild(oldMessage);
+  }
+  
+  // 新しいメッセージ要素の作成
+  var messageElement = document.createElement('div');
+  messageElement.id = 'copy-message';
+  
+  // メッセージのスタイルを設定
+  Object.assign(messageElement.style, {
+    position: 'fixed',
+    bottom: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    padding: '10px 20px',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: 'white',
+    borderRadius: '4px',
+    zIndex: '9999',
+    opacity: '1',
+    transition: 'opacity 0.3s',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+    fontSize: '14px'
+  });
+  
+  // 表示メッセージを設定
+  messageElement.textContent = message;
+  
+  // DOMに追加
+  document.body.appendChild(messageElement);
+  
+  // 3秒後にフェードアウトして消す
+  setTimeout(function() {
+    // フェードアウトアニメーション
+    messageElement.style.opacity = '0';
+    
+    // アニメーション完了後に要素を削除（メモリリーク防止）
+    setTimeout(function() {
+      if (messageElement.parentNode) {
+        messageElement.parentNode.removeChild(messageElement);
+      }
+    }, 300); // トランジションの時間と同じか少し長め
+  }, 3000); // 3秒間表示
+}
+
+/**
+ * クリップボードAPIが利用できない環境用の代替コピー機能
+ * document.execCommand('copy')を使用した従来型のクリップボード操作
+ * 
+ * @param {string} text - クリップボードにコピーするテキスト
+ * @returns {void}
+ */
+function fallbackCopyToClipboard(text) {
+  try {
+    // 一時的な非表示入力フィールドを作成
+    var tempInput = document.createElement('input');
+    tempInput.style.position = 'absolute';
+    tempInput.style.left = '-9999px'; // 画面外に配置
+    tempInput.setAttribute('readonly', ''); // 読み取り専用に設定
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    
+    // テキストを選択状態にする
+    tempInput.select();
+    tempInput.setSelectionRange(0, 99999); // モバイルデバイス対応
+    
+    // クリップボードにコピーを実行
+    var copySuccess = document.execCommand('copy');
+    
+    // 一時要素を削除
+    document.body.removeChild(tempInput);
+    
+    // 結果に応じたメッセージを表示
+    if (copySuccess) {
+      console.log('フォールバックコピー成功');
+      showCopyMessage('URLをコピーしました');
+    } else {
+      console.warn('フォールバックコピー失敗');
+      showCopyMessage('コピーに失敗しました。URL: ' + text);
+    }
+  } catch (error) {
+    // どの方法でもコピーが失敗した場合のバックアップ
+    console.error('クリップボード操作全般エラー:', error);
+    alert('クリップボードへのコピーができませんでした\n' + text);
+  }
+}
+
+// URLをクリップボードにコピー
+function copyShareUrlToClipboard() {
+  var shareUrl = window._shareUrl;
+  if (!shareUrl) return;
+  
+  var fullUrl;
+  if (shareUrl.startsWith('http')) {
+    fullUrl = shareUrl;
+  } else if (shareUrl.startsWith('?') || shareUrl.startsWith('#')) {
+    fullUrl = window.location.origin + window.location.pathname + shareUrl;
+  } else {
+    var path = window.location.pathname.split('/');
+    path.pop();
+    fullUrl = window.location.origin + path.join('/') + '/' + shareUrl;
+  }
+  
+  // クリップボードにコピー
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(fullUrl)
+      .then(showCopySuccess)
+      .catch(function() {
+        fallbackCopyToClipboard(fullUrl);
+      });
+  } else {
+    fallbackCopyToClipboard(fullUrl);
+  }
+}
+
+
+// anchor.js
+/**
+ * KPIツリージェネレーター：アンカー機能モジュール
+ * 
+ * ノードにパーマリンク機能を提供し、特定ノードへの直接リンクを可能にします。
+ * 各ノードにリンクアイコンを追加し、クリップボードコピー機能、スクロール機能を提供します。
+ */
+
+/**
+ * 各ノードにアンカーアイコンを追加
+ * クリックすると、そのノードを指すURLの生成とコピーを行います
+ */
+function addNodeAnchors() {
+  document.querySelectorAll('.node').forEach(function(node) {
+    if (node.id) {
+      // すでにアンカーが設定されている場合はスキップ
+      if (node.querySelector('.node-anchor')) return;
+      
+      var anchorIcon = document.createElement('a');
+      anchorIcon.className = 'node-anchor';
+      anchorIcon.innerHTML = '🔗'; // リンクアイコン
+      anchorIcon.title = 'このノードへのリンクをコピー';
+      anchorIcon.style.position = 'absolute';
+      anchorIcon.style.top = '5px';
+      anchorIcon.style.right = '5px';
+      anchorIcon.style.fontSize = '14px';
+      anchorIcon.style.cursor = 'pointer';
+      anchorIcon.style.textDecoration = 'none';
+      anchorIcon.style.opacity = '0.6';
+      anchorIcon.style.transition = 'opacity 0.2s';
+      
+      anchorIcon.onmouseover = function() {
+        this.style.opacity = '1';
+      };
+      
+      anchorIcon.onmouseout = function() {
+        this.style.opacity = '0.6';
+      };
+      
+      /**
+       * ノードアンカーアイコンのクリックハンドラ
+       * 現在のツリー状態とノードIDを含むURLをクリップボードにコピー
+       */
+      anchorIcon.onclick = function(event) {
+        // イベントの伸幅を防止（親要素へのバブリング防止）
+        event.stopPropagation();
+        
+        // 現在のツリー状態を保存し、パラメータ化
+        var state = saveTreeState();
+        var stateParam = '';
+        if (state && Object.keys(state).length > 0) {
+          stateParam = generateStateParam(state);
+        }
+        
+        // ノードIDを含むURLハッシュフラグメントを生成
+        var nodeId = node.id;
+        var hashFragment = '#';
+        
+        // 状態パラメータがあれば追加
+        if (stateParam) {
+          hashFragment += 'state=' + stateParam + '&'; // ノードIDと結合するため&で終わる
+        }
+        
+        // ノードIDパラメータを追加
+        hashFragment += 'node=' + nodeId;
+        
+        // 共有に使用するベースURLの取得（設定された公開URLまたは現在のパス）
+        var baseUrl = window.PUBLIC_URL || window.location.pathname;
+        var fullUrl = baseUrl + hashFragment;
+        
+        console.log('ノードリンク生成:', fullUrl);
+        
+        // クリップボードAPIの対応確認とURLコピー
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          // 新しいClipboard APIを使用
+          navigator.clipboard.writeText(fullUrl)
+            .then(function() {
+              showCopyMessage('ノードへのリンクをコピーしました');
+            })
+            .catch(function(err) {
+              console.error('クリップボードAPIエラー:', err);
+              // フォールバック方式でコピー試行
+              fallbackCopyToClipboard(fullUrl);
+            });
+        } else {
+          // 旧環境対応のフォールバックコピー処理
+          fallbackCopyToClipboard(fullUrl);
+        }
+      };
+      
+      // ノードのポジショニング確認（アイコンの位置決めに必要）
+      if (getComputedStyle(node).position === 'static') {
+        node.style.position = 'relative'; // 絶対配置アイコンの基準点にするために必要
+      }
+      
+      // アンカーアイコンをノードにDOM挿入
+      node.appendChild(anchorIcon);
+      console.log('アンカーアイコンを追加:', node.id);
+    }
+  });
+  
+  // アンカーノード用のスタイルを追加
+  addHighlightStyle();
+}
+
+/**
+ * URLハッシュのノードパラメータから指定ノードにスクロールしてハイライト表示する
+ * URLハッシュに node=<ノードID> パラメータが含まれている場合、そのノードに自動スクロールする
+ */
+function scrollToAnchorNode() {
+  var hash = window.location.hash;
+  // ノードパラメータがなければ何もしない
+  if (!hash || !hash.includes('node=')) return;
+  
+  try {
+    // ハッシュからノードIDを正規表現で抽出 (node=xxx の形式)
+    var nodeMatch = hash.match(/node=([^&]+)/);
+    if (!nodeMatch) return;
+    
+    var nodeId = nodeMatch[1];
+    console.log('アンカーノード検出:', nodeId);
+    var targetNode = document.getElementById(nodeId);
+    
+    if (targetNode) {
+      // DOMが完全にレンダリングされるまで少し待つ
+      setTimeout(function() {
+        // 指定ノードにスムーズにスクロール
+        targetNode.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+        
+        // 視認性向上のためハイライトアニメーション
+        targetNode.classList.add('highlight-node');
+        console.log('ノードをハイライト表示しました:', nodeId);
+        
+        // 一定時間後にハイライトを解除
+        setTimeout(function() {
+          targetNode.classList.remove('highlight-node');
+        }, 2000); // 2秒間ハイライト
+      }, 500); // DOMレンダリング完了まで500ms待機
+    } else {
+      console.warn('指定されたノードIDが見つかりません:', nodeId);
+    }
+  } catch (e) {
+    console.error('アンカーノードスクロール処理エラー:', e);
+  }
+}
+
+/**
+ * ノードハイライト用のスタイルを動的に追加
+ * ノードがハイライトされたときのパルスアニメーション用CSSを挿入
+ */
+function addHighlightStyle() {
+  // 既にスタイルが存在する場合は再挿入しない
+  if (document.getElementById('kpi-tree-highlight-style')) return;
+  
+  // スタイル要素を作成
+  var style = document.createElement('style');
+  style.id = 'kpi-tree-highlight-style';
+  
+  // ハイライトのパルスアニメーションを定義
+  style.textContent = `
+    .highlight-node {
+      animation: nodeHighlight 2s;
+    }
+    @keyframes nodeHighlight {
+      0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
+    }
+  `;
+  
+  // スタイルを文書にDOM挿入
+  document.head.appendChild(style);
+  console.log('ノードハイライトスタイルを追加しました');
+}
+
+
+</script>
+
+</body>
+</html>
