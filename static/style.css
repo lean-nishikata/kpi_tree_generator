@@ -37,12 +37,13 @@ h1 {
   margin-top: 2px;
 }
 
-/* 日次/月次切り替えトグルスイッチ */
+/* 日次/月次切り替えトグルスイッチ - 改善版 */
 .time-period-control {
   display: inline-flex;
   align-items: center;
   margin-left: 10px;
   vertical-align: middle;
+  height: 30px;
 }
 
 .toggle-switch {
@@ -51,23 +52,29 @@ h1 {
   height: 30px;
   border-radius: 15px;
   background: #e0e0e0;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  min-width: 150px; /* 幅を固定 */
 }
 
 .toggle-option {
-  width: 60px;
+  width: 75px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 0 5px;
+  padding: 0;
+  margin: 0;
   color: #666;
   z-index: 1;
   transition: color 0.3s ease;
+  overflow: visible;
+  white-space: nowrap;
+  min-width: 50%;
+  text-align: center;
 }
 
 .toggle-option.active {
@@ -79,15 +86,21 @@ h1 {
   top: 2px;
   left: 2px;
   height: 26px;
-  width: 60px;
+  width: 50%;
   border-radius: 13px;
   background: #4285F4;
   transition: transform 0.3s ease;
 }
 
 .toggle-option.monthly.active ~ .toggle-slider {
-  transform: translateX(60px);
+  transform: translateX(100%);
 }
+
+/* 月次テキストの位置調整 */
+.toggle-option.monthly {
+  left: 0;
+}
+
 
 
 
