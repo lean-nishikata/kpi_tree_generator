@@ -307,18 +307,41 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   let nodeContent = '';
   let mainText = node.text || '';
   
-  // URLがある場合、主テキストのみにリンクを適用
-  if (node.url) {
-    mainText = `<a href="${node.url}" target="_blank">${mainText}</a>`;
+  // テキスト属性の設定
+  let textAttributes = '';
+  
+  // デフォルトのテキストを設定
+  if (node.text) {
+    textAttributes += ` data-text-default="${node.text}"`;
   }
   
+  // 日次テキストがあれば設定
+  if (node.text_daily !== undefined) {
+    textAttributes += ` data-text-daily="${node.text_daily}"`;
+    mainText = node.text_daily; // 日次をデフォルト表示に設定
+  }
+  
+  // 月次テキストがあれば属性として追加
+  if (node.text_monthly !== undefined) {
+    textAttributes += ` data-text-monthly="${node.text_monthly}"`;
+  }
+  
+  // URLがある場合、主テキストのみにリンクを適用
+  let textContent = '';
+  if (node.url) {
+    textContent = `<a href="${node.url}" target="_blank" class="node-text"${textAttributes}>${mainText}</a>`;
+  } else {
+    textContent = `<span class="node-text"${textAttributes}>${mainText}</span>`;
+  }
+
   // 主テキストを追加
-  nodeContent += mainText;
+  nodeContent += textContent;
   
   // text_enが存在する場合は小さなフォントで追加（リンクの外側に追加）
   if (node.text_en) {
     nodeContent += `<div class="text-en">${node.text_en}</div>`;
   }
+  
   // 値表示用の変数初期化
   let displayValue = null;
   let valueAttributes = '';
