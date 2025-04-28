@@ -327,19 +327,21 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   }
   
   // URLがある場合、主テキストのみにリンクを適用
+  // テキストが省略される可能性があるため、title属性を追加してマウスホバー時に全文を表示
   let textContent = '';
   if (node.url) {
-    textContent = `<a href="${node.url}" target="_blank" class="node-text"${textAttributes}>${mainText}</a>`;
+    textContent = `<a href="${node.url}" target="_blank" class="node-text" title="${mainText}"${textAttributes}>${mainText}</a>`;
   } else {
-    textContent = `<span class="node-text"${textAttributes}>${mainText}</span>`;
+    textContent = `<span class="node-text" title="${mainText}"${textAttributes}>${mainText}</span>`;
   }
 
   // 主テキストを追加
   nodeContent += textContent;
   
   // text_enが存在する場合は小さなフォントで追加（リンクの外側に追加）
+  // 英語表記にもtitle属性を追加
   if (node.text_en) {
-    nodeContent += `<div class="text-en">${node.text_en}</div>`;
+    nodeContent += `<div class="text-en" title="${node.text_en}">${node.text_en}</div>`;
   }
   
   // 値表示用の変数初期化
@@ -510,7 +512,7 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     }
     
     // value要素自体にデータ属性を直接設定
-    nodeContent += `<div class="value"${valueAttributes}>${displayValue}</div>`;
+    nodeContent += `<div class="value" title="${displayValue}"${valueAttributes}>${displayValue}</div>`;
   }
   
   // node要素にはデータ属性を設定しないようにする。すべての属性はvalue要素に移動済み
