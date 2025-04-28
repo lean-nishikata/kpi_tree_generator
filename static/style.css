@@ -35,6 +35,11 @@ h1 {
   font-size: 0.7em;
   color: #666;
   margin-top: 2px;
+  white-space: nowrap; /* 改行しない */
+  overflow: hidden; /* はみ出した部分を非表示 */
+  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
+  display: block; /* ブロック要素にする */
+  max-width: 100%; /* 親要素の幅を超えないようにする */
 }
 
 /* 日次/月次切り替えトグルスイッチ - 改善版 */
@@ -154,8 +159,8 @@ h1 {
 
 /* Node styles */
 .node {
-  min-width: 120px;
-  min-height: 70px;
+  width: 180px; /* 横幅を固定 */
+  height: 80px; /* 縦幅を固定 */
   padding: 10px;
   background-color: #fff;
   border: 2px solid #666;
@@ -166,11 +171,17 @@ h1 {
   flex-direction: column;
   justify-content: center;
   position: relative;
+  overflow: hidden; /* はみ出した部分を非表示 */
 }
 
 .node a {
   color: #0066cc;
   text-decoration: none;
+  white-space: nowrap; /* 改行しない */
+  overflow: hidden; /* はみ出した部分を非表示 */
+  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
+  display: block; /* ブロック要素にする */
+  max-width: 100%; /* 親要素の幅を超えないようにする */
 }
 
 .node a:hover {
@@ -181,6 +192,20 @@ h1 {
   font-weight: bold;
   margin-top: 5px;
   color: #333;
+  white-space: nowrap; /* 改行しない */
+  overflow: hidden; /* はみ出した部分を非表示 */
+  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
+  display: block; /* ブロック要素にする */
+  max-width: 100%; /* 親要素の幅を超えないようにする */
+}
+
+/* ノード内のテキスト要素用スタイル */
+.node-text {
+  white-space: nowrap; /* 改行しない */
+  overflow: hidden; /* はみ出した部分を非表示 */
+  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
+  display: block; /* ブロック要素にする */
+  max-width: 100%; /* 親要素の幅を超えないようにする */
 }
 
 /* Operator styles */
