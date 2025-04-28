@@ -213,6 +213,9 @@ async function generateKPITree() {
     // Get public URL if defined in YAML
     const publicUrl = config.public_url || '';
     
+    // faviconのURLを取得
+    const faviconUrl = config.favicon || '';
+    
     // PUBLIC_URL変数を設定するスクリプトを生成
     // リダイレクト先で決定論的に動作するよう改善
     const publicUrlScript = publicUrl ? `<script>
@@ -238,12 +241,16 @@ async function generateKPITree() {
     })();
     </script>` : '';
     
+    // faviconリンクタグを生成
+    const faviconLink = faviconUrl ? `<link rel="icon" href="${faviconUrl}" type="image/x-icon">` : '';
+    
     let html = template
       .replace(/\{\{TITLE\}\}/g, title)
       .replace(/\{\{TREE_HTML\}\}/g, treeHtml)
       .replace(/\{\{STYLE\}\}/g, styleContent)
       .replace(/\{\{THEME\}\}/g, theme)
-      .replace(/\{\{PUBLIC_URL_SCRIPT\}\}/g, publicUrlScript);
+      .replace(/\{\{PUBLIC_URL_SCRIPT\}\}/g, publicUrlScript)
+      .replace(/\{\{FAVICON_LINK\}\}/g, faviconLink);
       
     // 方向変換ロジックを削除（対応するプレースホルダーもテンプレートから削除済み）
     
