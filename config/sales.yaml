@@ -4,6 +4,9 @@ theme: "blue"
 # 公開時のURL設定（GCSなどでホスティングする場合に使用）
 public_url: "https://storage.googleapis.com/your-bucket/sales.html"
 
+# faviconの設定
+favicon: "https://example.com/favicon.ico"
+
 root:
   text: "Total Sales (¥M)"
   value: 1200
