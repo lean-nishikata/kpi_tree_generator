@@ -40,6 +40,35 @@ const apiState = {
   requestingSheets: new Set()
 };
 
+// グローバルスプレッドシートID
+let globalSpreadsheetId = null;
+
+/**
+ * グローバルスプレッドシートIDを設定する
+ * @param {string} id - スプレッドシートID
+ */
+function setGlobalSpreadsheetId(id) {
+  if (id && typeof id === 'string') {
+    console.log(`グローバルスプレッドシートIDを設定: ${id}`);
+    globalSpreadsheetId = id;
+  }
+}
+
+/**
+ * 有効なスプレッドシートIDを取得（ローカルIDまたはグローバルID）
+ * @param {string|null} localId - ローカルで指定されたID
+ * @returns {string|null} 有効なスプレッドシートID
+ */
+function getEffectiveSpreadsheetId(localId) {
+  // ローカルIDがあればそれを優先
+  if (localId && typeof localId === 'string') {
+    return localId;
+  }
+  
+  // なければグローバルIDを返す
+  return globalSpreadsheetId;
+}
+
 /**
  * 一時停止するためのユーティリティ関数
  * @param {number} ms - 待機するミリ秒
@@ -617,6 +646,13 @@ async function getCellValueWithRetry(spreadsheetId, range, retries = 5, initialD
  */
 async function getCellValue(spreadsheetId, range) {
   try {
+    // 有効なスプレッドシートIDを取得
+    const effectiveId = getEffectiveSpreadsheetId(spreadsheetId);
+    if (!effectiveId) {
+      console.error(`有効なスプレッドシートIDが見つかりませんでした`);
+      return null;
+    }
+    
     // シート名とセル参照を分割
     const { sheetName, cellRef } = splitSheetAndCell(range);
     if (!sheetName || !cellRef) {
@@ -624,8 +660,10 @@ async function getCellValue(spreadsheetId, range) {
       return null;
     }
     
+    console.log(`スプレッドシート値取得開始: ID=${effectiveId}, シート=${sheetName}, セル=${cellRef}`);
+    
     // キャッシュキーを生成
-    const cacheKey = `${spreadsheetId}:${range}`;
+    const cacheKey = `${effectiveId}:${range}`;
     
     // 個別セルのキャッシュをまず確認
     if (cache.has(cacheKey)) {
@@ -634,7 +672,7 @@ async function getCellValue(spreadsheetId, range) {
     }
     
     // シート単位のキャッシュを確認または取得
-    const sheetData = await fetchAndCacheEntireSheet(spreadsheetId, sheetName);
+    const sheetData = await fetchAndCacheEntireSheet(effectiveId, sheetName);
     if (sheetData) {
       // キャッシュされたシートからセル値を取得
       const value = getCellFromCachedSheet(sheetData, cellRef);
@@ -870,61 +908,95 @@ async function resolveSpreadsheetReferences(node) {
     global.kpiTreeConfig = {};
   }
   
-  // グローバルスプレッドシートIDを取得（YAMLに設定されているか確認）
-  const getGlobalSpreadsheetId = () => {
-    try {
-      // ルートノードの場合、ルートレベルの設定を保存
-      if (node.spreadsheet && node.spreadsheet.id) {
-        if (!global.kpiTreeConfig.spreadsheet) {
-          global.kpiTreeConfig.spreadsheet = {};
-        }
-        global.kpiTreeConfig.spreadsheet.id = node.spreadsheet.id;
-        console.log(`ルートレベルのスプレッドシートIDをグローバル設定に保存: ${node.spreadsheet.id}`);
-        return node.spreadsheet.id;
-      }
-      
-      // node.configやnode._configなどからグローバル設定を探す
-      if (node.config && node.config.spreadsheet && node.config.spreadsheet.id) {
-        if (!global.kpiTreeConfig.spreadsheet) {
-          global.kpiTreeConfig.spreadsheet = {};
-        }
-        global.kpiTreeConfig.spreadsheet.id = node.config.spreadsheet.id;
-        return node.config.spreadsheet.id;
-      }
-      if (node._config && node._config.spreadsheet && node._config.spreadsheet.id) {
-        if (!global.kpiTreeConfig.spreadsheet) {
-          global.kpiTreeConfig.spreadsheet = {};
-        }
-        global.kpiTreeConfig.spreadsheet.id = node._config.spreadsheet.id;
-        return node._config.spreadsheet.id;
-      }
-      
-      // すでにグローバル設定があればそれを使用
-      if (global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
-        return global.kpiTreeConfig.spreadsheet.id;
-      }
-      
-      // 最終手段として環境変数から取得
-      if (process.env.KPI_TREE_SPREADSHEET_ID) {
-        if (!global.kpiTreeConfig.spreadsheet) {
-          global.kpiTreeConfig.spreadsheet = {};
-        }
-        global.kpiTreeConfig.spreadsheet.id = process.env.KPI_TREE_SPREADSHEET_ID;
-        return process.env.KPI_TREE_SPREADSHEET_ID;
-      }
-      
-      console.log('スプレッドシートIDが見つかりません。index.yamlに正しく設定されているか確認してください。');
-      return null;
-    } catch (error) {
-      console.error('グローバルスプレッドシートID取得エラー:', error.message);
-      return null;
-    }
-  };
+  // グローバルスプレッドシートIDを取得して設定する
+  let spreadsheetIdToUse = null;
   
-  // 設定をログ出力
-  const globalId = getGlobalSpreadsheetId();
-  if (globalId) {
-    console.log(`グローバルスプレッドシートID: ${globalId}`);
+  try {
+    // ノードに直接指定されたスプレッドシートIDを確認
+    if (node.spreadsheet && node.spreadsheet.id) {
+      spreadsheetIdToUse = node.spreadsheet.id;
+      console.log(`ルートレベルのスプレッドシートIDをグローバル設定に保存: ${spreadsheetIdToUse}`);
+      
+      // global.kpiTreeConfigを更新
+      if (!global.kpiTreeConfig.spreadsheet) {
+        global.kpiTreeConfig.spreadsheet = {};
+      }
+      global.kpiTreeConfig.spreadsheet.id = spreadsheetIdToUse;
+      
+      // モジュール内部のグローバル変数にも設定
+      setGlobalSpreadsheetId(spreadsheetIdToUse);
+    } 
+    // global.kpiTreeConfigからグローバルIDを取得
+    else if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheetId) {
+      spreadsheetIdToUse = global.kpiTreeConfig.spreadsheetId;
+      console.log(`global.kpiTreeConfigからスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
+      
+      // モジュール内部のグローバル変数に設定
+      setGlobalSpreadsheetId(spreadsheetIdToUse);
+    }
+    // global.kpiTreeConfig.spreadsheetからグローバルIDを取得
+    else if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
+      spreadsheetIdToUse = global.kpiTreeConfig.spreadsheet.id;
+      console.log(`global.kpiTreeConfig.spreadsheetからスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
+      
+      // モジュール内部のグローバル変数に設定
+      setGlobalSpreadsheetId(spreadsheetIdToUse);
+      
+      // 形式を統一するためにglobal.kpiTreeConfig.spreadsheetIdにも設定
+      global.kpiTreeConfig.spreadsheetId = spreadsheetIdToUse;
+    } 
+    // モジュール内グローバル変数から取得
+    else if (globalSpreadsheetId) {
+      spreadsheetIdToUse = globalSpreadsheetId;
+      console.log(`モジュール内グローバル変数からスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
+    }
+    
+    // node.configやnode._configなどからグローバル設定を探す追加処理
+    if (!spreadsheetIdToUse) {
+      if (node.config && node.config.spreadsheet && node.config.spreadsheet.id) {
+        spreadsheetIdToUse = node.config.spreadsheet.id;
+        console.log(`node.configからスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
+        setGlobalSpreadsheetId(spreadsheetIdToUse);
+      } else if (node._config && node._config.spreadsheet && node._config.spreadsheet.id) {
+        spreadsheetIdToUse = node._config.spreadsheet.id;
+        console.log(`node._configからスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
+        setGlobalSpreadsheetId(spreadsheetIdToUse);
+      }
+    }
+  } catch (error) {
+    console.error(`スプレッドシートID取得時のエラー: ${error.message}`);
+  }
+  
+  // 環境変数からも取得を試みる
+  if (!spreadsheetIdToUse && process.env.KPI_TREE_SPREADSHEET_ID) {
+    spreadsheetIdToUse = process.env.KPI_TREE_SPREADSHEET_ID;
+    console.log(`環境変数からスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
+    setGlobalSpreadsheetId(spreadsheetIdToUse);
+    
+    if (!global.kpiTreeConfig.spreadsheet) {
+      global.kpiTreeConfig.spreadsheet = {};
+    }
+    global.kpiTreeConfig.spreadsheet.id = spreadsheetIdToUse;
+  }
+  
+  // 最終確認
+  if (!spreadsheetIdToUse) {
+    console.log('スプレッドシートIDが見つかりません。index.yamlに正しく設定されているか確認してください。');
+  } else {
+    console.log(`最終的に使用するスプレッドシートID: ${spreadsheetIdToUse}`);
+  }
+  
+  // 環境変数からも取得して設定する
+  if (process.env.KPI_TREE_SPREADSHEET_ID && !spreadsheetIdToUse) {
+    spreadsheetIdToUse = process.env.KPI_TREE_SPREADSHEET_ID;
+    console.log(`環境変数からスプレッドシートIDを取得しました: ${spreadsheetIdToUse}`);
+    setGlobalSpreadsheetId(spreadsheetIdToUse);
+  }
+  
+  if (spreadsheetIdToUse) {
+    console.log(`最終的に使用するグローバルスプレッドシートID: ${spreadsheetIdToUse}`);
+  } else {
+    console.log('スプレッドシートIDが見つかりません。YAMLファイルに正しく設定されているか確認してください。');
   }
 
   // valueフィールドのスプレッドシート参照を解決
@@ -1421,5 +1493,8 @@ module.exports = {
   resolveSpreadsheetReferences,
   getCellValue,
   getCellValueWithRetry,
+  clearCache,
+  setGlobalSpreadsheetId,
+  getEffectiveSpreadsheetId,
   delay // 外部からも利用できるように公開
 };
