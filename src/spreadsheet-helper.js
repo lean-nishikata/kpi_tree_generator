@@ -109,12 +109,18 @@ function loadServiceAccountKey() {
  * @param {number} initialDelay - 初回再試行までの待機時間(ms)
  * @returns {Promise<any>} セルの値
  */
-async function getCellValueWithRetry(spreadsheetId, range, retries = 4, initialDelay = 500) {
-  // リトライ回数を3から4に増加、初期遅延を200msから500msに増加
+async function getCellValueWithRetry(spreadsheetId, range, retries = 5, initialDelay = 1000) {
+  // リトライ回数を4から5に増加、初期遅延を500msから1000msに増加
   let currentDelay = initialDelay;
   
   // ノードの深さに応じて初期遅延を調整
-  currentDelay = Math.floor(initialDelay * (1 + (apiStats.currentDepth * 0.3)));
+  currentDelay = Math.floor(initialDelay * (1 + (apiStats.currentDepth * 0.5)));
+  
+  // monthly関連のリクエストはさらに遅延を増やす
+  if (range.toLowerCase().includes('monthly') || range.toLowerCase().includes('month')) {
+    console.log(`月次データ関連のリクエストと判断: ${range}`);
+    currentDelay = Math.floor(currentDelay * 2);
+  }
   
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -159,9 +165,15 @@ async function getCellValue(spreadsheetId, range) {
     // 前回のリクエストから最低空ける時間（ノードの深さに応じて増加）
     const now = Date.now();
     const timeSinceLastRequest = now - apiStats.lastRequestTime;
-    const baseDelay = 200; // 基本待機時間を100msから200msに増加
-    const depthFactor = Math.max(1, apiStats.currentDepth / 3); // 深さによる倍率
-    const requiredWait = Math.floor(baseDelay * depthFactor);
+    const baseDelay = 500; // 基本待機時間を200msから500msに増加
+    const depthFactor = Math.max(1, apiStats.currentDepth / 2); // 深さによる倍率を強化
+    
+    // monthlyのAPIリクエストの場合は待機時間を2倍に
+    let requiredWait = Math.floor(baseDelay * depthFactor);
+    if (range.toLowerCase().includes('monthly') || range.toLowerCase().includes('month')) {
+      console.log(`月次データ関連のAPI呼び出しと判断: ${range}`);
+      requiredWait = requiredWait * 2;
+    }
 
     if (timeSinceLastRequest < requiredWait) {
       const waitTime = requiredWait - timeSinceLastRequest;
@@ -169,9 +181,9 @@ async function getCellValue(spreadsheetId, range) {
       await delay(waitTime);
     }
 
-    // 同時実行数を制限（最大2つまで）- 3から2に削減
-    while (apiStats.activeCalls >= 2) {
-      const waitTime = 100 + (50 * apiStats.currentDepth); // 深さに応じた待機時間
+    // 同時実行数を制限（最大1つまで）- さらに厳しく制限
+    while (apiStats.activeCalls >= 1) {
+      const waitTime = 300 + (150 * apiStats.currentDepth); // 深さに応じた待機時間を大幅増加
       console.log(`同時API呼び出し数が多いため${waitTime}ms待機 (現在: ${apiStats.activeCalls})`);
       await delay(waitTime);
     }
@@ -637,12 +649,23 @@ async function resolveSpreadsheetReferences(node) {
     }
   }
   
-  // 月次データ取得前に長めの待機
+  // 月次データ取得前に極めて長めの待機
   if (node.value_monthly && typeof node.value_monthly === 'object' && node.value_monthly.spreadsheet) {
-    // 月次データは特にエラーが出やすいため、長めの待機を入れる
-    const monthlyPauseTime = 300 + (200 * apiStats.currentDepth);
-    console.log(`月次データ取得前の待機: ${monthlyPauseTime}ms (深さ: ${apiStats.currentDepth})`);
+    // 月次データは特にエラーが出やすいため、非常に長めの待機を入れる
+    const monthlyPauseTime = 1500 + (500 * apiStats.currentDepth);
+    console.log(`月次データ取得前の特別待機: ${monthlyPauseTime}ms (深さ: ${apiStats.currentDepth})`);
     await delay(monthlyPauseTime);
+    
+    // さらに実行中のリクエストがすべて完了するまで待機
+    if (apiStats.activeCalls > 0) {
+      console.log(`月次データ取得前に実行中の${apiStats.activeCalls}個のリクエストが完了するまで待機`);
+      let totalWaitTime = 0;
+      while (apiStats.activeCalls > 0 && totalWaitTime < 10000) { // 最大10秒まで待機
+        await delay(500);
+        totalWaitTime += 500;
+        console.log(`待機中... 経過: ${totalWaitTime}ms, 残りリクエスト: ${apiStats.activeCalls}`);
+      }
+    }
     process.stdout.write('スプレッドシート参照(value_monthly)が見つかりました\n');
     process.stdout.write(`スプレッドシート参照詳細: ${JSON.stringify(node.value_monthly.spreadsheet, null, 2)}\n`);
     const { id, range } = node.value_monthly.spreadsheet;
@@ -714,8 +737,15 @@ async function resolveSpreadsheetReferences(node) {
     apiStats.currentDepth++;
     
     // 子ノードの数が多い場合はバッチ処理
-    const batchSize = Math.max(1, Math.ceil(10 / apiStats.currentDepth)); // 深さに応じてバッチサイズを調整
+    const batchSize = Math.max(1, Math.ceil(5 / apiStats.currentDepth)); // より小さいバッチサイズに調整
     const batches = [];
+    
+    // 月次データ関連が含まれる場合は特に慎重に
+    if (node.title && typeof node.title === 'string' && 
+        (node.title.toLowerCase().includes('monthly') || node.title.toLowerCase().includes('月次'))) {
+      console.log(`月次データ関連の子ノード処理ではバッチサイズを最小化`);
+      batchSize = 1; // 完全に逐次処理に
+    }
     
     // 子ノードを複数のバッチに分割
     for (let i = 0; i < node.children.length; i += batchSize) {
@@ -734,9 +764,16 @@ async function resolveSpreadsheetReferences(node) {
       
       // バッチ間の待機時間（特に深いノードの場合）
       if (batchIndex > 0) {
-        const batchWaitTime = 200 * apiStats.currentDepth;
-        console.log(`バッチ間の待機: ${batchWaitTime}ms`);
+        const batchWaitTime = 500 * apiStats.currentDepth;
+        console.log(`バッチ間の待機: ${batchWaitTime}ms (深さ: ${apiStats.currentDepth})`);
         await delay(batchWaitTime);
+        
+        // 5バッチごとに追加の長い待機を入れる（API制限回避）
+        if (batchIndex % 5 === 0) {
+          const extraWaitTime = 2000;
+          console.log(`5バッチ処理完了による追加待機: ${extraWaitTime}ms`);
+          await delay(extraWaitTime);
+        }
       }
       
       // バッチ内の各ノードを並列処理
@@ -744,8 +781,18 @@ async function resolveSpreadsheetReferences(node) {
       for (const child of batch) {
         if (child) {
           // 親ノードの処理完了後、深さに応じた間隔を空けてから子ノードを処理
-          const childWaitTime = 100 + (50 * apiStats.currentDepth);
+          const childWaitTime = 300 + (150 * apiStats.currentDepth);
+          console.log(`子ノード処理前の待機: ${childWaitTime}ms (深さ: ${apiStats.currentDepth})`);
           await delay(childWaitTime);
+          
+          // 子ノードにmonthlyや月次の文字列が含まれる場合は追加待機
+          if (child.title && typeof child.title === 'string' && 
+              (child.title.toLowerCase().includes('monthly') || child.title.toLowerCase().includes('月次'))) {
+            const extraMonthlyWait = 1000;
+            console.log(`月次関連の子ノード処理前に追加待機: ${extraMonthlyWait}ms`);
+            await delay(extraMonthlyWait);
+          }
+          
           batchPromises.push(resolveSpreadsheetReferences(child));
         }
       }
