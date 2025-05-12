@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   kpi-generator:
     build:
@@ -12,7 +10,7 @@ services:
       - ./keys:/app/keys
     environment:
       - NODE_ENV=production
-      # 環境変数はDockerfile内で設定済み、必要に応じてここで上書き可能
-      # - GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
+      - GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
+      - KPI_TREE_SPREADSHEET_ID=1kCEQwecJyjJztEaTCLfJwkDfi1rsxcGEhBdLZb6F2Z0
     # コマンドライン引数を渡すことができます（例：docker-compose run kpi-generator sales）
     # デフォルトはconfig.yaml

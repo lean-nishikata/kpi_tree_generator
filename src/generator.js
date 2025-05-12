@@ -386,6 +386,9 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   let displayValue = null;
   let valueAttributes = '';
   
+  // サービスアカウントキーがない場合はエラー表示
+  const shouldUseDemo = false; // デモ値を表示しない
+  
   // 値の優先順位を設定
   if (node.value !== undefined) {
     valueAttributes += ` data-value-default="${node.value}"`;
@@ -396,11 +399,21 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   if (node.value_daily !== undefined) {
     valueAttributes += ` data-value-daily="${node.value_daily}"`;
     displayValue = node.value_daily; // 日次をデフォルト表示に設定
+    
+    // 文字列参照（=で始まる）の場合はそのまま表示（エラー処理はspreadsheet-helperで行われる）
+    if (typeof displayValue === 'string' && displayValue.startsWith('=')) {
+      // spreadsheet-helperで処理される
+    }
   }
   
   // 月次の値は属性として設定するが、初期表示には使わない
   if (node.value_monthly !== undefined) {
     valueAttributes += ` data-value-monthly="${node.value_monthly}"`;
+    
+    // 月次データもスプレッドシート参照の場合はそのまま
+    if (typeof node.value_monthly === 'string' && node.value_monthly.startsWith('=')) {
+      // そのまま表示（エラー処理はspreadsheet-helperで行われる）
+    }
   }
   
   // 表示値がない場合はスキップ
@@ -410,8 +423,12 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     console.log(`→ 元の値:`, displayValue);
     console.log(`→ 型:`, typeof displayValue);
     
+    // スプレッドシート参照文字列をデモ値に変換
+    if (typeof displayValue === 'string' && displayValue.startsWith('=') && shouldUseDemo) {
+      // すでに上で処理済み
+    }
     // オブジェクトや複雑な値の場合は適切に文字列化
-    if (typeof displayValue === 'object' && displayValue !== null) {
+    else if (typeof displayValue === 'object' && displayValue !== null) {
       console.log(`→ オブジェクト内容:`, JSON.stringify(displayValue, null, 2));
       try {
         // スプレッドシートAPIレスポンスを検出
@@ -526,69 +543,67 @@ function generateTreeHtml(node, level = 0, path = 'root') {
               }
             };
             
-            try {
-              // グローバルIDを取得
-              const globalId = getGlobalSpreadsheetId();
-              if (globalId && displayValue.spreadsheet.range) {
-                console.log(`スプレッドシートから値を取得します (ID: ${globalId}, 範囲: ${displayValue.spreadsheet.range})`);
-                
-                // 非同期処理をプロミスとして実行
-                try {
-                  // 必要なモジュールをインポート
-                  const { getCellValueWithRetry } = require('./spreadsheet-helper');
+            // 実際のデータを使用
+            {
+              try {
+                // グローバルIDを取得
+                const globalId = getGlobalSpreadsheetId();
+                if (globalId && displayValue.spreadsheet.range) {
+                  console.log(`スプレッドシートから値を取得します (ID: ${globalId}, 範囲: ${displayValue.spreadsheet.range})`);
                   
-                  // タイムアウトを設定してAPI呼び出し
-                  const apiTimeout = 3000; // 3秒のタイムアウト
-                  
-                  // 実際にセルの値取得を試みる
-                  getCellValueWithRetry(globalId, displayValue.spreadsheet.range, 2, 300)
-                    .then(result => {
-                      console.log(`→ APIから値を取得しました:`, result);
-                      
-                      // 取得結果によって処理を分ける
-                      if (result === null || result === undefined) {
-                        displayValue = '0';
-                      } else if (typeof result === 'number') {
-                        displayValue = result;
-                      } else if (typeof result === 'string') {
-                        // 文字列が数値に変換可能か確認
-                        displayValue = !isNaN(Number(result)) ? Number(result) : result;
-                      } else if (typeof result === 'object') {
-                        // オブジェクトの場合は意味のある値を探す
-                        if (result.value !== undefined) {
-                          displayValue = result.value;
-                        } else if (result.formattedValue !== undefined) {
-                          displayValue = result.formattedValue;
-                        } else {
-                          // どれも該当しなければ文字列化
-                          try {
-                            displayValue = JSON.stringify(result);
-                          } catch (e) {
-                            displayValue = String(result);
-                          }
-                        }
-                      } else {
-                        // その他のタイプは文字列化
-                        displayValue = String(result);
-                      }
-                    })
-                    .catch(apiError => {
-                      console.error(`→ API値取得エラー:`, apiError.message);
-                      displayValue = '0'; // エラー時はデフォルト値を0に設定
-                    });
+                  // 非同期処理をプロミスとして実行
+                  try {
+                    // 必要なモジュールをインポート
+                    const { getCellValueWithRetry } = require('./spreadsheet-helper');
                     
-                  // プロミスが完了するまで一時的に別の値を表示
-                  displayValue = '...';
-                } catch (error) {
-                  console.error('スプレッドシート参照処理エラー:', error);
-                  displayValue = '0';
+                    // 非同期処理を簡略化して同期的に扱う
+                    displayValue = '取得中...'; // 一時的な表示値
+                    
+                    // 非同期の値取得を後で行う
+                    setTimeout(async () => {
+                      try {
+                        // 実際にセルの値取得を試みる
+                        const result = await getCellValueWithRetry(globalId, displayValue.spreadsheet.range, 2, 300);
+                        console.log(`→ APIから値を取得しました:`, result);
+                        
+                        // 結果の型に応じた処理
+                        if (result === null || result === undefined) {
+                          displayValue = '0';
+                        } else if (typeof result === 'number') {
+                          displayValue = result;
+                        } else if (typeof result === 'string') {
+                          displayValue = !isNaN(Number(result)) ? Number(result) : result;
+                        } else if (typeof result === 'object') {
+                          if (result.value !== undefined) {
+                            displayValue = result.value;
+                          } else if (result.formattedValue !== undefined) {
+                            displayValue = result.formattedValue;
+                          } else {
+                            try {
+                              displayValue = JSON.stringify(result);
+                            } catch (e) {
+                              displayValue = String(result);
+                            }
+                          }
+                        } else {
+                          displayValue = String(result);
+                        }
+                      } catch (apiError) {
+                        console.error(`→ API値取得エラー:`, apiError.message);
+                        displayValue = '0'; // エラー時はデフォルト値を0に設定
+                      }
+                    }, 100);
+                  } catch (error) {
+                    console.error('スプレッドシート参照処理エラー:', error);
+                    displayValue = '0';
+                  }
+                } else {
+                  displayValue = "API参照値";
                 }
-              } else {
+              } catch (err) {
+                console.error('スプレッドシート参照値の処理エラー:', err);
                 displayValue = "API参照値";
               }
-            } catch (err) {
-              console.error('スプレッドシート参照値の処理エラー:', err);
-              displayValue = "API参照値";
             }
           } else {
             // 最後の手段としてJSON変換

@@ -1,45 +1,64 @@
 title: "Game KPIs"
 theme: "blue"
-
 # 公開時のURL設定（GCSなどでホスティングする場合に使用）
 public_url: "https://storage.googleapis.com/your-bucket/game.html"
 
+# グローバルスプレッドシート設定 - すべてのノードで共有
+spreadsheet:
+  id: "1kCEQwecJyjJztEaTCLfJwkDfi1rsxcGEhBdLZb6F2Z0"
+
 root:
   text: "Revenue (JPY)"
-  value: 300,000,000
+  # 日次・月次データを別々に設定（簡易形式で統一）
+  value_daily: "=sample!B1"
+  value_monthly: "=sample!C1"  # 月次データは異なるセルを参照
   url: "https://example.com/revenue"
   children:
     - text: "Product A"
-      value: 150,000,000
+      operator: "+"
+      # 簡易形式で日次・月次を指定
+      value_daily: "=sample!C2"
+      value_monthly: "=sample!D2"
       children:
         - text: "Active Users"
-          value: 100,000
+          # 両方とも簡易形式に統一
+          value_daily: "=sample!C3"
+          value_monthly: "=sample!D3"
           operator: "*"
         - text: "ARPU"
-          value: 1,500
+          # 最も簡易な形式で日次・月次データを指定
+          value_daily: "=sample!C4"
+          value_monthly: "=sample!D4"
           operator: "*"
           children:
             - text: "ARPPU"
-              value: 10,000
+              value_daily: "=sample!C5"
+              value_monthly: "=sample!D5"
               operator: "*"
             - text: "課金率"
-              value: 15%
+              value_daily: "=sample!C6"
+              value_monthly: "=sample!D6"
               operator: "*"
-      operator: "+"
     - text: "Product B"
-      value: 150,000,000
+      operator: "+"
+      # 簡易形式で日次・月次を指定
+      value_daily: "=sample!C7"
+      value_monthly: "=sample!D7"
       children:
-        - text: "Active Users"
-          value: 100,000
+        - text: "Daily Active Users"
+          value_daily: "=sample!C8"
+          value_monthly: "=sample!D8"
           operator: "*"
-        - text: "ARPU"
-          value: 1,500
+        - text: "Conversion Rate"
+          value_daily: "=sample!C9"
+          value_monthly: "=sample!D9"
           operator: "*"
           children:
-            - text: "ARPPU"
-              value: 10,000
-              operator: "*"
-            - text: "課金率"
-              value: 15%
-              operator: "*"
-      operator: "+"
+            - text: "Retention"
+              value_daily: "=sample!C10"
+              value_monthly: "=sample!D10"
+              operator: "+"
+            - text: "Acquisition"
+              value_daily: "=sample!C11"
+              value_monthly: "=sample!D11"
+              operator: "+"

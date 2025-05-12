@@ -14,3 +14,4 @@ static/index.html
 # Google API credentials
 /keys/**/*.json  # すべてのサブディレクトリを含む
 .env
+**/.claude/settings.local.json
