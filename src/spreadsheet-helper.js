@@ -13,6 +13,9 @@ require('dotenv').config();
 // リクエスト結果をキャッシュするためのマップ
 const cache = new Map();
 
+// シート単位で全体をキャッシュするためのマップ
+const sheetCache = new Map();
+
 // グローバルなAPI呼び出し状態
 const apiState = {
   // 同時実行制御
@@ -32,7 +35,9 @@ const apiState = {
   // エラー数
   errorCount: 0,
   // 処理中のノードの深さ
-  currentDepth: 0
+  currentDepth: 0,
+  // リクエスト中のシート一覧
+  requestingSheets: new Set()
 };
 
 /**
@@ -41,6 +46,34 @@ const apiState = {
  * @returns {Promise<void>}
  */
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * A1表記からシート名とセル参照部分を分割する
+ * @param {string} range - A1表記のレンジ（例: 'Sheet1!A1'）
+ * @returns {Object} {sheetName, cellRef}
+ */
+function splitSheetAndCell(range) {
+  if (!range) return { sheetName: null, cellRef: null };
+  
+  // シート名とセル参照を分割
+  const parts = range.split('!');
+  if (parts.length < 2) {
+    // シート名が指定されていない場合
+    return { sheetName: null, cellRef: range };
+  }
+  return { sheetName: parts[0], cellRef: parts[1] };
+}
+
+/**
+ * シート単位でキャッシュが存在するか確認
+ * @param {string} spreadsheetId - スプレッドシートID
+ * @param {string} sheetName - シート名
+ * @returns {boolean} キャッシュが存在するか
+ */
+function isSheetCached(spreadsheetId, sheetName) {
+  const sheetKey = `${spreadsheetId}:${sheetName}`;
+  return sheetCache.has(sheetKey);
+}
 
 /**
  * 環境変数からサービスアカウントのキーパスを取得
@@ -247,6 +280,111 @@ function updateApiState(updates) {
  */
 function clearCache() {
   cache.clear();
+  sheetCache.clear();
+}
+
+/**
+ * シート全体を一括で取得してキャッシュする
+ * @param {string} spreadsheetId - スプレッドシートID
+ * @param {string} sheetName - シート名
+ * @returns {Promise<Object>} シートデータ
+ */
+async function fetchAndCacheEntireSheet(spreadsheetId, sheetName) {
+  // 既にキャッシュがあればそれを使用
+  const sheetKey = `${spreadsheetId}:${sheetName}`;
+  if (sheetCache.has(sheetKey)) {
+    console.log(`シートキャッシュから全体データを取得: ${sheetKey}`);
+    return sheetCache.get(sheetKey);
+  }
+  
+  // 他のリクエストがこのシートを取得中なら待機
+  if (apiState.requestingSheets.has(sheetKey)) {
+    console.log(`別のリクエストが既にシートを取得中: ${sheetKey}`);
+    let waitTime = 0;
+    const maxWaitTime = 10000; // 最大待機時間 (10秒)
+    const checkInterval = 500; // 確認間隔 (500ms)
+    
+    // キャッシュが完了するまで待機
+    while (!sheetCache.has(sheetKey) && waitTime < maxWaitTime) {
+      await delay(checkInterval);
+      waitTime += checkInterval;
+      console.log(`シートキャッシュ完了を待機中... ${waitTime}ms経過`);
+    }
+    
+    // キャッシュが完了したか確認
+    if (sheetCache.has(sheetKey)) {
+      console.log(`待機後にシートキャッシュを取得: ${sheetKey}`);
+      return sheetCache.get(sheetKey);
+    } else {
+      console.warn(`シートキャッシュ待機がタイムアウト: ${sheetKey}`);
+    }
+  }
+  
+  // リクエスト中に設定
+  apiState.requestingSheets.add(sheetKey);
+  
+  try {
+    // API呼び出しの準備
+    const keyPath = getServiceAccountKeyPath();
+    if (!keyPath) {
+      console.error('サービスアカウントキーが見つかりません');
+      return null;
+    }
+    
+    // レート制限を適用
+    console.log(`シート全体を取得するためのリクエスト開始: ${sheetKey}`);
+    await enforceRateLimit(`シート全体取得: ${sheetName}`, apiState.currentDepth);
+    
+    // 認証クライアントの初期化
+    const authClient = new JWT({
+      email: loadServiceAccountKey().client_email,
+      key: loadServiceAccountKey().private_key,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
+    });
+    
+    // ドキュメントを初期化
+    const doc = new GoogleSpreadsheet(spreadsheetId, authClient);
+    
+    try {
+      // ドキュメントの読み込み
+      await doc.loadInfo();
+      
+      // シートを取得
+      const sheet = doc.sheetsByTitle[sheetName] || doc.sheetsByIndex[0];
+      if (!sheet) {
+        console.error(`シートが見つかりません: ${sheetName}`);
+        return null;
+      }
+      
+      // 全セルを読み込み
+      await sheet.loadCells();
+      
+      // API成功カウントを更新
+      apiState.successRequests++;
+      
+      // シートデータを整形してキャッシュ
+      const sheetData = {
+        sheet,
+        title: sheet.title,
+        rowCount: sheet.rowCount,
+        columnCount: sheet.columnCount,
+        timestamp: Date.now()
+      };
+      
+      // キャッシュに保存
+      sheetCache.set(sheetKey, sheetData);
+      console.log(`シート全体をキャッシュしました: ${sheetKey} (行数: ${sheetData.rowCount}, 列数: ${sheetData.columnCount})`);
+      
+      return sheetData;
+    } catch (error) {
+      console.error(`シート全体の読み込みエラー: ${error.message}`);
+      await handleApiError(error, `シート全体: ${sheetName}`);
+      return null;
+    }
+  } finally {
+    // リクエスト中フラグを解除
+    apiState.requestingSheets.delete(sheetKey);
+  }
 }
 
 /**
@@ -479,48 +617,44 @@ async function getCellValueWithRetry(spreadsheetId, range, retries = 5, initialD
  */
 async function getCellValue(spreadsheetId, range) {
   try {
-    // 前回のリクエストから最低空ける時間（ノードの深さに応じて増加）
-    const now = Date.now();
-    const timeSinceLastRequest = now - apiState.lastRequestTime;
-    const baseDelay = 500; // 基本待機時間を200msから500msに増加
-    const depthFactor = Math.max(1, apiState.currentDepth / 2); // 深さによる倍率を強化
+    // シート名とセル参照を分割
+    const { sheetName, cellRef } = splitSheetAndCell(range);
+    if (!sheetName || !cellRef) {
+      console.error(`無効なレンジ形式: ${range}`);
+      return null;
+    }
     
-    // monthlyのAPIリクエストの場合は待機時間を2倍に
-    let requiredWait = Math.floor(baseDelay * depthFactor);
-    if (range.toLowerCase().includes('monthly') || range.toLowerCase().includes('month')) {
-      console.log(`月次データ関連のAPI呼び出しと判断: ${range}`);
-      requiredWait = requiredWait * 2;
+    // キャッシュキーを生成
+    const cacheKey = `${spreadsheetId}:${range}`;
+    
+    // 個別セルのキャッシュをまず確認
+    if (cache.has(cacheKey)) {
+      console.log(`キャッシュからセル値を取得: ${cacheKey}`);
+      return cache.get(cacheKey);
     }
-
-    if (timeSinceLastRequest < requiredWait) {
-      const waitTime = requiredWait - timeSinceLastRequest;
-      console.log(`APIレート制限回避のため${waitTime}ms待機 (深さ倍率: ${depthFactor.toFixed(1)})`);
-      await delay(waitTime);
+    
+    // シート単位のキャッシュを確認または取得
+    const sheetData = await fetchAndCacheEntireSheet(spreadsheetId, sheetName);
+    if (sheetData) {
+      // キャッシュされたシートからセル値を取得
+      const value = getCellFromCachedSheet(sheetData, cellRef);
+      
+      // 結果を個別セルのキャッシュにも保存
+      if (value !== null) {
+        cache.set(cacheKey, value);
+        return value;
+      }
     }
-
-    // 同時実行数を制限（最大1つまで）- さらに厳しく制限
-    while (apiState.activeCalls >= 1) {
-      const waitTime = 300 + (150 * apiState.currentDepth); // 深さに応じた待機時間を大幅増加
-      console.log(`同時API呼び出し数が多いため${waitTime}ms待機 (現在: ${apiState.activeCalls})`);
-      await delay(waitTime);
-    }
-
-    // 深いノードでエラーが多い場合は追加の待機
-    if (apiState.deepNodeErrors > 3 && apiState.currentDepth > 2) {
-      const cooldownTime = 500 * apiState.currentDepth;
-      console.log(`深いノードでエラーが多発しているため${cooldownTime}ms追加待機`);
-      await delay(cooldownTime);
-      apiState.deepNodeErrors = Math.max(0, apiState.deepNodeErrors - 1); // エラーカウントを減らす
-    }
-
+    
+    // シートキャッシュから取得できなかった場合は、従来のAPI呼び出しにフォールバック
+    console.log(`シートキャッシュから取得できないため、従来のAPI呼び出しにフォールバック: ${range}`);
+    
+    // レート制限を適用
+    await enforceRateLimit(range, apiState.currentDepth);
+    
     apiState.activeCalls++;
     apiState.lastRequestTime = Date.now();
     apiState.totalRequests++;
-    
-    // シート名とセル参照を分離
-    const [sheetName, cellRef] = range.split('!');
-    
-    console.log(`スプレッドシート値を取得: ID=${spreadsheetId}, シート=${sheetName}, セル=${cellRef}`);
     
     // サービスアカウントキーの読み込み
     const serviceAccountKey = loadServiceAccountKey();
@@ -674,6 +808,41 @@ function convertA1ToRowCol(a1Notation) {
   colIndex -= 1; // 0-indexedに調整
   
   return { rowIndex, colIndex };
+}
+
+/**
+ * キャッシュされたシートからセル値を取得
+ * @param {Object} sheetData - キャッシュされたシートデータ
+ * @param {string} cellRef - セル参照 (A1形式)
+ * @returns {any} セルの値
+ */
+function getCellFromCachedSheet(sheetData, cellRef) {
+  if (!sheetData || !sheetData.sheet) {
+    console.error('キャッシュされたシートデータが無効です');
+    return null;
+  }
+  
+  try {
+    // A1表記を行と列のインデックスに変換
+    const { rowIndex, colIndex } = convertA1ToRowCol(cellRef);
+    
+    // 有効範囲を確認
+    if (rowIndex < 0 || rowIndex >= sheetData.rowCount || 
+        colIndex < 0 || colIndex >= sheetData.columnCount) {
+      console.warn(`範囲外のセルを参照: ${cellRef} (行: ${rowIndex}, 列: ${colIndex})`);
+      return null;
+    }
+    
+    // セルオブジェクトを取得
+    const cell = sheetData.sheet.getCell(rowIndex, colIndex);
+    const value = cell.value;
+    
+    console.log(`キャッシュからセル値を取得: ${cellRef} = `, value);
+    return value;
+  } catch (error) {
+    console.error(`キャッシュからのセル取得エラー: ${error.message}`);
+    return null;
+  }
 }
 
 /**
