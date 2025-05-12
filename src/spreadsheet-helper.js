@@ -696,13 +696,56 @@ async function resolveSpreadsheetReferences(node) {
   // process.stdoutに直接書き込み（Docker環境でのログ出力を確実に）
   process.stdout.write('\nノードのスプレッドシート参照確認中...\n');
   
+  // グローバルスプレッドシートIDを取得（YAMLに設定されているか確認）
+  const getGlobalSpreadsheetId = () => {
+    try {
+      // node.configやnode._configなどからグローバル設定を探す
+      if (node.config && node.config.spreadsheet && node.config.spreadsheet.id) {
+        return node.config.spreadsheet.id;
+      }
+      if (node._config && node._config.spreadsheet && node._config.spreadsheet.id) {
+        return node._config.spreadsheet.id;
+      }
+      // globalConfigが設定されている場合（ルートノードなど）
+      if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
+        return global.kpiTreeConfig.spreadsheet.id;
+      }
+      // 最終手段として環境変数から取得
+      if (process.env.KPI_TREE_SPREADSHEET_ID) {
+        return process.env.KPI_TREE_SPREADSHEET_ID;
+      }
+      return null;
+    } catch (error) {
+      console.error('グローバルスプレッドシートID取得エラー:', error.message);
+      return null;
+    }
+  };
+
   // valueフィールドのスプレッドシート参照を解決
   if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
     process.stdout.write('スプレッドシート参照(value)が見つかりました\n');
     process.stdout.write(`スプレッドシート参照詳細: ${JSON.stringify(node.value.spreadsheet, null, 2)}\n`);
-    const { id, range } = node.value.spreadsheet;
+    
+    // スプレッドシートの参照情報を取得
+    let id = node.value.spreadsheet.id;
+    const range = node.value.spreadsheet.range;
+    
+    // idが指定されていない場合はグローバル設定から取得
+    if (!id) {
+      const globalId = getGlobalSpreadsheetId();
+      if (globalId) {
+        id = globalId;
+        console.log(`グローバル設定からスプレッドシートIDを使用: ${id}`);
+      } else {
+        console.error('スプレッドシートIDが見つかりません。ノードとグローバル設定の両方にIDがありません。');
+        node.value = `ERROR: スプレッドシートIDが未設定`;
+        return node;
+      }
+    }
+    
     console.log(`-----------------------------------`);
     console.log(`スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
+    
     try {
       console.log(`スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
       
