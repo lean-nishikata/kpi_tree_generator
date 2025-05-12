@@ -2,6 +2,7 @@
  * KPIツリージェネレーター: Googleスプレッドシートヘルパー
  * 
  * Googleスプレッドシートからデータを取得するヘルパー関数群
+ * キャッシュとシーケンシャル処理によるAPI安定化機能を含む
  */
 const fs = require('fs');
 const path = require('path');
@@ -9,30 +10,37 @@ const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
 require('dotenv').config();
 
-/**
- * 遅延関数 - 指定したミリ秒だけ待機する
- * @param {number} ms - 待機ミリ秒
- * @returns {Promise<void>} 待機後に解決するPromise
- */
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+// リクエスト結果をキャッシュするためのマップ
+const cache = new Map();
+
+// グローバルなAPI呼び出し状態
+const apiState = {
+  // 同時実行制御
+  activeCalls: 0,
+  // 最後のリクエスト時間
+  lastRequestTime: 0,
+  // 合計リクエスト数
+  totalRequests: 0,
+  // 合計成功数
+  successRequests: 0,
+  // 合計失敗数
+  failedRequests: 0,
+  // クールダウン状態
+  inCooldown: false,
+  // 最後のエラー時間
+  lastErrorTime: 0,
+  // エラー数
+  errorCount: 0,
+  // 処理中のノードの深さ
+  currentDepth: 0
+};
 
 /**
- * API呼び出しの状態を追跡するためのシンプルなカウンター
+ * 一時停止するためのユーティリティ関数
+ * @param {number} ms - 待機するミリ秒
+ * @returns {Promise<void>}
  */
-const apiStats = {
-  totalRequests: 0,
-  successRequests: 0,
-  failedRequests: 0,
-  lastRequestTime: 0,
-  // 同時実行数を制限するためのセマフォ
-  activeCalls: 0,
-  // ノードの深さを追跡
-  currentDepth: 0,
-  // 処理キュー
-  pendingRequests: [],
-  // 深いノードのエラー数
-  deepNodeErrors: 0
-};
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * 環境変数からサービスアカウントのキーパスを取得
@@ -102,7 +110,303 @@ function loadServiceAccountKey() {
 }
 
 /**
- * GoogleスプレッドシートのセルからA1表記の値を取得（リトライ機能付き）
+ * スプレッドシートの値をキャッシュから取得または新規取得
+ * @param {string} spreadsheetId - スプレッドシートID
+ * @param {string} range - A1表記の範囲
+ * @param {function} fetchFunction - 値を取得する関数
+ * @returns {Promise<any>} 取得した値
+ */
+async function getCachedValue(spreadsheetId, range, fetchFunction) {
+  // キャッシュキーを生成
+  const cacheKey = `${spreadsheetId}:${range}`;
+  
+  // キャッシュにあればそれを返す
+  if (cache.has(cacheKey)) {
+    console.log(`キャッシュから値を取得: ${cacheKey}`);
+    return cache.get(cacheKey);
+  }
+  
+  try {
+    // 存在しない場合は取得関数を呼び出す
+    const value = await fetchFunction();
+    
+    // 結果をキャッシュに保存
+    cache.set(cacheKey, value);
+    return value;
+  } catch (error) {
+    // エラーをハンドリング
+    await handleApiError(error, range);
+    throw error;
+  }
+}
+
+/**
+ * APIエラーを処理し、必要に応じてクールダウンを実行
+ * @param {Error} error - 発生したエラー
+ * @param {string} range - 処理していたレンジ
+ * @returns {Promise<void>}
+ */
+async function handleApiError(error, range) {
+  apiState.failedRequests++;
+  apiState.errorCount++;
+  apiState.lastErrorTime = Date.now();
+  
+  console.error(`APIエラー発生 (${range}): ${error.message}`);
+  
+  // 短時間に複数のエラーが発生した場合、グローバルクールダウンを実行
+  const shortTimeErrors = (Date.now() - apiState.lastErrorTime) < 30000 && apiState.errorCount > 3;
+  
+  if (shortTimeErrors && !apiState.inCooldown) {
+    apiState.inCooldown = true;
+    
+    // 長めのクールダウンを実行
+    const cooldownTime = 30000; // 30秒
+    console.log(`多数のAPIエラーが発生したため${cooldownTime/1000}秒のグローバルクールダウンを開始`);
+    await delay(cooldownTime);
+    
+    apiState.inCooldown = false;
+    apiState.errorCount = 0;
+    console.log('グローバルクールダウン完了、処理を再開します');
+  } else {
+    // 個別のエラーの場合は短めの待機
+    const waitTime = Math.min(5000, Math.pow(2, apiState.errorCount) * 1000);
+    console.log(`エラー発生後の待機: ${waitTime}ms`);
+    await delay(waitTime);
+  }
+}
+
+/**
+ * API呼び出しのレート制限を適用
+ * @param {string} range - 処理するレンジ
+ * @param {number} depth - 現在のノードの深さ
+ * @returns {Promise<void>}
+ */
+async function enforceRateLimit(range, depth) {
+  apiState.activeCalls++;
+  apiState.totalRequests++;
+  
+  // 深さに応じた基本待機時間
+  const baseWaitTime = 1000 + (depth * 500);
+  
+  // 月次データの場合は待機時間を増加
+  const isMonthly = range.toLowerCase().includes('monthly') || range.toLowerCase().includes('month');
+  const waitTime = isMonthly ? baseWaitTime * 2 : baseWaitTime;
+  
+  // API呼び出し間の最小間隔を確保
+  const timeSinceLastRequest = Date.now() - apiState.lastRequestTime;
+  if (timeSinceLastRequest < waitTime) {
+    const additionalWait = waitTime - timeSinceLastRequest;
+    console.log(`レート制限適用: ${additionalWait}ms待機 (深さ: ${depth})`);
+    await delay(additionalWait);
+  }
+  
+  // API状態を更新
+  apiState.lastRequestTime = Date.now();
+  
+  // クールダウン中の場合は待機
+  if (apiState.inCooldown) {
+    console.log(`グローバルクールダウン中のため3秒待機`);
+    await delay(3000);
+  }
+  
+  // エラー頻度に応じた追加待機
+  const errorRatio = apiState.failedRequests / Math.max(1, apiState.totalRequests);
+  if (errorRatio > 0.1 && apiState.totalRequests > 10) {
+    const errorPenalty = Math.min(5000, errorRatio * 10000);
+    console.log(`エラー率が高いため${errorPenalty}ms追加待機 (エラー率: ${(errorRatio * 100).toFixed(1)}%)`);
+    await delay(errorPenalty);
+  }
+}
+
+/**
+ * API呼び出し完了時の処理
+ */
+function finishApiCall() {
+  apiState.activeCalls--;
+  apiState.successRequests++;
+}
+
+/**
+ * APIステートの取得
+ * @returns {Object} 現在のAPI状態
+ */
+function getApiState() {
+  return apiState;
+}
+
+/**
+ * APIステートの更新
+ * @param {Object} updates - 更新内容
+ */
+function updateApiState(updates) {
+  Object.assign(apiState, updates);
+}
+
+/**
+ * キャッシュのクリア
+ */
+function clearCache() {
+  cache.clear();
+}
+
+/**
+ * ノードの子を順次処理する（並列処理ではなく完全に直列に）
+ * @param {Object} node - 処理するノード
+ * @param {Function} processorFn - 各子ノードに適用する処理関数
+ * @returns {Promise<Array>} 処理された子ノードの配列
+ */
+async function processChildrenSequentially(node, processorFn) {
+  if (!node.children || !Array.isArray(node.children) || node.children.length === 0) {
+    return node.children || [];
+  }
+  
+  // 現在の深さを保存
+  const previousDepth = apiState.currentDepth;
+  
+  // 深さを1レベル増加
+  updateApiState({ currentDepth: previousDepth + 1 });
+  
+  console.log(`${node.children.length}個の子ノードを順次処理 (深さ: ${apiState.currentDepth})`);
+  
+  // 月次データを含むノードを後回しにするようソート
+  const sortedChildren = [...node.children].sort((a, b) => {
+    // 月次データ関連のノードを識別
+    const aHasMonthly = a && (
+      (a.title && typeof a.title === 'string' && 
+       (a.title.toLowerCase().includes('monthly') || a.title.toLowerCase().includes('月次'))) ||
+      a.value_monthly
+    );
+    
+    const bHasMonthly = b && (
+      (b.title && typeof b.title === 'string' && 
+       (b.title.toLowerCase().includes('monthly') || b.title.toLowerCase().includes('月次'))) ||
+      b.value_monthly
+    );
+    
+    // 月次データを後回しに
+    if (aHasMonthly && !bHasMonthly) return 1;
+    if (!aHasMonthly && bHasMonthly) return -1;
+    
+    return 0;
+  });
+  
+  // 結果を格納する配列
+  const processedChildren = [];
+  
+  // 各子ノードを順番に処理
+  for (let i = 0; i < sortedChildren.length; i++) {
+    const child = sortedChildren[i];
+    if (!child) continue;
+    
+    try {
+      console.log(`子ノード ${i+1}/${sortedChildren.length} 処理開始 (ノード: ${child.title || '名称なし'})`);
+      
+      // 月次データ関連のノードかどうか確認
+      const isMonthlyNode = child.title && typeof child.title === 'string' && 
+                         (child.title.toLowerCase().includes('monthly') || 
+                          child.title.toLowerCase().includes('月次')) ||
+                         child.value_monthly;
+      
+      // ノード間の待機時間（月次ノードはより長く待機）
+      const waitTime = isMonthlyNode 
+        ? 2000 + (1000 * apiState.currentDepth)
+        : 800 + (400 * apiState.currentDepth);
+      
+      console.log(`ノード処理前の待機: ${waitTime}ms (${isMonthlyNode ? '月次関連' : '通常'}ノード)`);
+      await delay(waitTime);
+      
+      // 子ノードを処理
+      const processedChild = await processorFn(child);
+      processedChildren.push(processedChild);
+      
+      // ノード処理後の小休止
+      const cooldownTime = Math.min(3000, 300 * apiState.currentDepth);
+      console.log(`ノード処理後のクールダウン: ${cooldownTime}ms`);
+      await delay(cooldownTime);
+      
+      // 特定の間隔でより長いクールダウンを入れる
+      if ((i + 1) % 5 === 0) {
+        const batchCooldown = 3000;
+        console.log(`5ノード処理完了による追加クールダウン: ${batchCooldown}ms`);
+        await delay(batchCooldown);
+      }
+    } catch (error) {
+      console.error(`子ノード ${i+1}/${sortedChildren.length} 処理中にエラー: ${error.message}`);
+      // エラーハンドリングを改善（スキップして続行）
+      processedChildren.push(child); // エラー時は元のノードを保持
+    }
+  }
+  
+  // 深さを戻す
+  updateApiState({ currentDepth: previousDepth });
+  
+  return processedChildren;
+}
+
+/**
+ * スプレッドシート参照を持つフィールドを順次処理する
+ * @param {Object} node - 処理するノード
+ * @param {string} fieldName - 処理するフィールド名
+ * @param {Function} processorFn - フィールドの処理関数
+ * @returns {Promise<void>}
+ */
+async function processFieldSequentially(node, fieldName, processorFn) {
+  if (!node || !node[fieldName]) return;
+  
+  const fieldValue = node[fieldName];
+  
+  // 単一の値の場合
+  if (typeof fieldValue === 'string' || typeof fieldValue === 'number') {
+    try {
+      node[fieldName] = await processorFn(fieldValue);
+    } catch (error) {
+      console.error(`フィールド '${fieldName}' の処理中にエラー: ${error.message}`);
+      // エラー時は元の値を保持
+    }
+    return;
+  }
+  
+  // 配列の場合は順次処理
+  if (Array.isArray(fieldValue)) {
+    const processedValues = [];
+    
+    for (let i = 0; i < fieldValue.length; i++) {
+      const value = fieldValue[i];
+      try {
+        // 処理間のクールダウン
+        await delay(500);
+        
+        const processedValue = await processorFn(value);
+        processedValues.push(processedValue);
+      } catch (error) {
+        console.error(`配列フィールド '${fieldName}[${i}]' の処理中にエラー: ${error.message}`);
+        // エラー時は元の値を保持
+        processedValues.push(value);
+      }
+    }
+    
+    node[fieldName] = processedValues;
+    return;
+  }
+  
+  // オブジェクトの場合は各プロパティを処理
+  if (typeof fieldValue === 'object' && fieldValue !== null) {
+    for (const [key, value] of Object.entries(fieldValue)) {
+      try {
+        // 処理間のクールダウン
+        await delay(300);
+        
+        fieldValue[key] = await processorFn(value);
+      } catch (error) {
+        console.error(`オブジェクトフィールド '${fieldName}.${key}' の処理中にエラー: ${error.message}`);
+        // エラー時は元の値を保持
+      }
+    }
+  }
+}
+
+/**
+ * GoogleSpreadsheetのセルからA1表記の値を取得（キャッシュとリトライ機能付き）
  * @param {string} spreadsheetId - スプレッドシートID
  * @param {string} range - A1表記の範囲（例: 'Sheet1!A1'）
  * @param {number} retries - 最大再試行回数
@@ -110,52 +414,65 @@ function loadServiceAccountKey() {
  * @returns {Promise<any>} セルの値
  */
 async function getCellValueWithRetry(spreadsheetId, range, retries = 5, initialDelay = 1000) {
-  // リトライ回数を4から5に増加、初期遅延を500msから1000msに増加
-  let currentDelay = initialDelay;
-  
-  // ノードの深さに応じて初期遅延を調整
-  currentDelay = Math.floor(initialDelay * (1 + (apiStats.currentDepth * 0.5)));
-  
-  // monthly関連のリクエストはさらに遅延を増やす
-  if (range.toLowerCase().includes('monthly') || range.toLowerCase().includes('month')) {
-    console.log(`月次データ関連のリクエストと判断: ${range}`);
-    currentDelay = Math.floor(currentDelay * 2);
-  }
-  
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      if (attempt > 0) {
-        console.log(`${range}の取得リトライ (#${attempt}), ${currentDelay}ms待機後 (深さ: ${apiStats.currentDepth})`);
-        await delay(currentDelay);
-        currentDelay *= 2; // 指数バックオフ
-        
-        // 深いノードで失敗が続く場合は追加のクールダウン
-        if (attempt > 1 && apiStats.currentDepth > 2) {
-          const cooldown = 300 * apiStats.currentDepth;
-          console.log(`深いノードでの連続失敗のため追加クールダウン: ${cooldown}ms`);
-          await delay(cooldown);
-        }
-      }
-      
-      return await getCellValue(spreadsheetId, range);
-    } catch (error) {
-      apiStats.failedRequests++;
-      // 深いノードのエラーを記録
-      if (apiStats.currentDepth > 2) {
-        apiStats.deepNodeErrors++;
-      }
-      
-      if (attempt === retries) {
-        console.error(`${range}の最終リトライも失敗: ${error.message}`);
-        throw error;
-      }
-      console.warn(`${range}の取得に失敗、リトライします: ${error.message}`);
+  // キャッシュから値を取得するラッパー関数
+  return await getCachedValue(spreadsheetId, range, async () => {
+    let currentDelay = initialDelay;
+    const apiState = getApiState();
+    
+    // ノードの深さに応じて初期遅延を調整
+    currentDelay = Math.floor(initialDelay * (1 + (apiState.currentDepth * 0.5)));
+    
+    // monthly関連のリクエストはさらに遅延を増やす
+    if (range.toLowerCase().includes('monthly') || range.toLowerCase().includes('month')) {
+      console.log(`月次データ関連のリクエストと判断: ${range}`);
+      currentDelay = Math.floor(currentDelay * 2);
     }
-  }
+  
+    // リトライロジック
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(`${range}の取得リトライ (#${attempt}), ${currentDelay}ms待機後 (深さ: ${apiState.currentDepth})`);
+          await delay(currentDelay);
+          currentDelay *= 2; // 指数バックオフ
+          
+          // 深いノードで失敗が続く場合は追加のクールダウン
+          if (attempt > 1 && apiState.currentDepth > 2) {
+            const cooldown = 300 * apiState.currentDepth;
+            console.log(`深いノードでの連続失敗のため追加クールダウン: ${cooldown}ms`);
+            await delay(cooldown);
+          }
+        }
+        
+        // API呼び出しの制限を控除
+        await enforceRateLimit(range, apiState.currentDepth);
+        
+        // 実際の値取得
+        const value = await getCellValue(spreadsheetId, range);
+        return value;
+      } catch (error) {
+        // 深いノードのエラーを記録
+        updateApiState({ failedRequests: getApiState().failedRequests + 1 });
+        
+        if (apiState.currentDepth > 2) {
+          updateApiState({ deepNodeErrors: getApiState().deepNodeErrors + 1 });
+        }
+        
+        if (attempt === retries) {
+          console.error(`${range}の最終リトライも失敗: ${error.message}`);
+          throw error;
+        }
+        console.warn(`${range}の取得に失敗、リトライします: ${error.message}`);
+      }
+    }
+    
+    // ここには到達しないはず
+    throw new Error(`リトライ後も値を取得できませんでした: ${range}`);
+  });
 }
 
 /**
- * GoogleスプレッドシートのセルからA1表記の値を取得
+ * GoogleSpreadsheetのセルからA1表記の値を取得 (実際のAPI呼び出し部分)
  * @param {string} spreadsheetId - スプレッドシートID
  * @param {string} range - A1表記の範囲（例: 'Sheet1!A1'）
  * @returns {Promise<any>} セルの値
