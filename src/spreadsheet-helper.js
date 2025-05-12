@@ -1,1639 +1,250 @@
 /**
- * KPIツリージェネレーター: Googleスプレッドシートヘルパー
+ * KPIツリージェネレーター: Googleスプレッドシートヘルパー (簡易版)
  * 
  * Googleスプレッドシートからデータを取得するヘルパー関数群
- * キャッシュとシーケンシャル処理によるAPI安定化機能を含む
+ * シンプルなキャッシュ機構によるAPI呼び出し最適化機能を含む
  */
 const fs = require('fs');
 const path = require('path');
-const { GoogleSpreadsheet } = require('google-spreadsheet');
+const { google } = require('googleapis');
 const { JWT } = require('google-auth-library');
 require('dotenv').config();
 
-// リクエスト結果をキャッシュするためのマップ
-const cache = new Map();
-
-// シート単位で全体をキャッシュするためのマップ
+// シート単位でキャッシュするためのマップ
 const sheetCache = new Map();
 
-// グローバルなAPI呼び出し状態
-const apiState = {
-  // 同時実行制御
-  activeCalls: 0,
-  // 最後のリクエスト時間
-  lastRequestTime: 0,
-  // 合計リクエスト数
-  totalRequests: 0,
-  // 合計成功数
-  successRequests: 0,
-  // 合計失敗数
-  failedRequests: 0,
-  // クールダウン状態
-  inCooldown: false,
-  // 最後のエラー時間
-  lastErrorTime: 0,
-  // エラー数
-  errorCount: 0,
-  // 処理中のノードの深さ
-  currentDepth: 0,
-  // リクエスト中のシート一覧
-  requestingSheets: new Set()
-};
-
-// グローバルスプレッドシートID
-let globalSpreadsheetId = null;
-
 /**
- * グローバルスプレッドシートIDを設定する
- * @param {string} id - スプレッドシートID
- */
-function setGlobalSpreadsheetId(id) {
-  if (id && typeof id === 'string') {
-    console.log(`グローバルスプレッドシートIDを設定: ${id}`);
-    globalSpreadsheetId = id;
-  }
-}
-
-/**
- * 有効なスプレッドシートIDを取得（ローカルIDまたはグローバルID）
- * @param {string|null} localId - ローカルで指定されたID
- * @returns {string|null} 有効なスプレッドシートID
- */
-function getEffectiveSpreadsheetId(localId) {
-  // ローカルIDがあればそれを優先
-  if (localId && typeof localId === 'string') {
-    return localId;
-  }
-  
-  // なければグローバルIDを返す
-  return globalSpreadsheetId;
-}
-
-/**
- * 一時停止するためのユーティリティ関数
- * @param {number} ms - 待機するミリ秒
- * @returns {Promise<void>}
- */
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * A1表記からシート名とセル参照部分を分割する
- * @param {string} range - A1表記のレンジ（例: 'Sheet1!A1'）
- * @returns {Object} {sheetName, cellRef}
- */
-function splitSheetAndCell(range) {
-  if (!range) return { sheetName: null, cellRef: null };
-  
-  // シート名とセル参照を分割
-  const parts = range.split('!');
-  if (parts.length < 2) {
-    // シート名が指定されていない場合
-    return { sheetName: null, cellRef: range };
-  }
-  return { sheetName: parts[0], cellRef: parts[1] };
-}
-
-/**
- * シート単位でキャッシュが存在するか確認
- * @param {string} spreadsheetId - スプレッドシートID
- * @param {string} sheetName - シート名
- * @returns {boolean} キャッシュが存在するか
- */
-function isSheetCached(spreadsheetId, sheetName) {
-  const sheetKey = `${spreadsheetId}:${sheetName}`;
-  return sheetCache.has(sheetKey);
-}
-
-/**
- * 環境変数からサービスアカウントのキーパスを取得
- * @returns {string} キーファイルのパス
- */
-function getServiceAccountKeyPath() {
-  // 環境変数からキーパスを取得
-  const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
-  
-  if (!keyPath) {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY_PATH 環境変数が設定されていません。');
-  }
-  
-  // パスが存在するか確認
-  if (!fs.existsSync(keyPath)) {
-    console.warn(`警告: サービスアカウントキーファイルが見つかりません: ${keyPath}`);
-    console.warn('スプレッドシート参照はスキップされます');
-    return null; // nullを返すことで、呼び出し元でエラー処理をスキップできる
-  }
-  
-  return keyPath;
-}
-
-/**
- * サービスアカウントキーの読み込み
- * @returns {Object} サービスアカウントキーのJSONオブジェクト
- */
-function loadServiceAccountKey() {
-  const keyPath = getServiceAccountKeyPath();
-  
-  console.log(`サービスアカウントキーの読み込み開始: ${keyPath}`);
-  
-  // キーパスがnullの場合（ファイルが見つからない場合）
-  if (!keyPath) {
-    console.error('キーパスが指定されていません');
-    return null;
-  }
-  
-  try {
-    // ファイルの存在確認
-    if (!fs.existsSync(keyPath)) {
-      console.error(`キーファイルが存在しません: ${keyPath}`);
-      return null;
-    }
-    
-    // ファイルサイズを確認（空ファイルやダミーファイルでないことを確認）
-    const stats = fs.statSync(keyPath);
-    console.log(`キーファイルサイズ: ${stats.size} バイト`);
-    
-    if (stats.size < 100) {
-      console.error(`キーファイルが小さすぎます: ${stats.size} バイト`);
-      return null;
-    }
-    
-    // ファイル内容を読み込み
-    const keyFileContent = fs.readFileSync(keyPath, 'utf8');
-    console.log(`キーファイル内容読み込み成功（長さ: ${keyFileContent.length} 文字）`);
-    
-    // ファイルの中身が空かチェック
-    if (!keyFileContent || keyFileContent.trim() === '') {
-      console.error('キーファイル内容が空です');
-      return null;
-    }
-    
-    // JSONとして解析
-    try {
-      const parsed = JSON.parse(keyFileContent);
-      
-      // 最低限必要な項目があるか確認
-      if (!parsed.client_email) {
-        console.error('client_emailが見つかりません');
-        return null;
-      }
-      
-      if (!parsed.private_key) {
-        console.error('private_keyが見つかりません');
-        return null;
-      }
-      
-      console.log(`サービスアカウント認証情報読み込み成功: ${parsed.client_email}`);
-      return parsed;
-    } catch (jsonError) {
-      console.error(`JSON解析エラー: ${jsonError.message}`);
-      return null;
-    }
-  } catch (error) {
-    console.error(`キーファイル読み込みエラー: ${error.message}`);
-    return null;
-  }
-}
-
-/**
- * スプレッドシートの値をキャッシュから取得または新規取得
- * @param {string} spreadsheetId - スプレッドシートID
- * @param {string} range - A1表記の範囲
- * @param {function} fetchFunction - 値を取得する関数
- * @returns {Promise<any>} 取得した値
- */
-async function getCachedValue(spreadsheetId, range, fetchFunction) {
-  // キャッシュキーを生成
-  const cacheKey = `${spreadsheetId}:${range}`;
-  
-  // キャッシュにあればそれを返す
-  if (cache.has(cacheKey)) {
-    console.log(`キャッシュから値を取得: ${cacheKey}`);
-    return cache.get(cacheKey);
-  }
-  
-  try {
-    // 存在しない場合は取得関数を呼び出す
-    const value = await fetchFunction();
-    
-    // 結果をキャッシュに保存
-    cache.set(cacheKey, value);
-    return value;
-  } catch (error) {
-    // エラーをハンドリング
-    await handleApiError(error, range);
-    throw error;
-  }
-}
-
-/**
- * APIエラーを処理する
- * @param {Error} error - 発生したエラー
- * @param {string} range - 処理していたレンジ
- * @returns {Promise<void>}
- */
-async function handleApiError(error, range) {
-  apiState.failedRequests++;
-  apiState.errorCount++;
-  apiState.lastErrorTime = Date.now();
-  
-  console.error(`APIエラー発生 (${range}): ${error.message}`);
-  console.warn('APIエラーが発生しましたが、処理を継続します。');
-  
-  // クールダウン期間を設定
-  apiState.inCooldown = true;
-  await delay(2000); // 2秒間のクールダウン
-  apiState.inCooldown = false;
-}
-
-/**
- * API呼び出しのレート制限を適用
- * @param {string} range - 処理するレンジ
- * @param {number} depth - 現在のノードの深さ
- * @returns {Promise<void>}
- */
-async function enforceRateLimit(range, depth) {
-  apiState.activeCalls++;
-  apiState.totalRequests++;
-  
-  // 深さに応じた基本待機時間
-  const baseWaitTime = 1000 + (depth * 500);
-  
-  // 月次データの場合は待機時間を増加
-  const isMonthly = range.toLowerCase().includes('monthly') || range.toLowerCase().includes('month');
-  const waitTime = isMonthly ? baseWaitTime * 2 : baseWaitTime;
-  
-  // API呼び出し間の最小間隔を確保
-  const timeSinceLastRequest = Date.now() - apiState.lastRequestTime;
-  if (timeSinceLastRequest < waitTime) {
-    const additionalWait = waitTime - timeSinceLastRequest;
-    console.log(`レート制限適用: ${additionalWait}ms待機 (深さ: ${depth})`);
-    await delay(additionalWait);
-  }
-  
-  // API状態を更新
-  apiState.lastRequestTime = Date.now();
-  
-  // クールダウン中の場合は待機
-  if (apiState.inCooldown) {
-    console.log(`グローバルクールダウン中のため3秒待機`);
-    await delay(3000);
-  }
-  
-  // エラー頻度に応じた追加待機
-  const errorRatio = apiState.failedRequests / Math.max(1, apiState.totalRequests);
-  if (errorRatio > 0.1 && apiState.totalRequests > 10) {
-    const errorPenalty = Math.min(5000, errorRatio * 10000);
-    console.log(`エラー率が高いため${errorPenalty}ms追加待機 (エラー率: ${(errorRatio * 100).toFixed(1)}%)`);
-    await delay(errorPenalty);
-  }
-}
-
-/**
- * API呼び出し完了時の処理
- */
-function finishApiCall() {
-  apiState.activeCalls--;
-  apiState.successRequests++;
-}
-
-/**
- * APIステートの取得
- * @returns {Object} 現在のAPI状態
- */
-function getApiState() {
-  return apiState;
-}
-
-/**
- * APIステートの更新
- * @param {Object} updates - 更新内容
- */
-function updateApiState(updates) {
-  Object.assign(apiState, updates);
-}
-
-/**
- * キャッシュのクリア
- */
-function clearCache() {
-  cache.clear();
-  sheetCache.clear();
-}
-
-/**
- * シート全体を一括で取得してキャッシュする
+ * スプレッドシートの1シートをすべて取得してキャッシュ
  * @param {string} spreadsheetId - スプレッドシートID
  * @param {string} sheetName - シート名
  * @returns {Promise<Object>} シートデータ
  */
-async function fetchAndCacheEntireSheet(spreadsheetId, sheetName) {
-  // 既にキャッシュがあればそれを使用
-  const sheetKey = `${spreadsheetId}:${sheetName}`;
-  if (sheetCache.has(sheetKey)) {
-    console.log(`シートキャッシュから全体データを取得: ${sheetKey}`);
-    return sheetCache.get(sheetKey);
+async function fetchAndCacheSheet(spreadsheetId, sheetName) {
+  // キャッシュキーを生成
+  const cacheKey = `${spreadsheetId}:${sheetName}`;
+  
+  // すでにキャッシュがあれば、それを返す
+  if (sheetCache.has(cacheKey)) {
+    console.log(`キャッシュから ${sheetName} シートのデータを取得`);
+    return sheetCache.get(cacheKey);
   }
   
-  // 他のリクエストがこのシートを取得中なら待機
-  if (apiState.requestingSheets.has(sheetKey)) {
-    console.log(`別のリクエストが既にシートを取得中: ${sheetKey}`);
-    let waitTime = 0;
-    const maxWaitTime = 10000; // 最大待機時間 (10秒)
-    const checkInterval = 500; // 確認間隔 (500ms)
-    
-    // キャッシュが完了するまで待機
-    while (!sheetCache.has(sheetKey) && waitTime < maxWaitTime) {
-      await delay(checkInterval);
-      waitTime += checkInterval;
-      console.log(`シートキャッシュ完了を待機中... ${waitTime}ms経過`);
-    }
-    
-    // キャッシュが完了したか確認
-    if (sheetCache.has(sheetKey)) {
-      console.log(`待機後にシートキャッシュを取得: ${sheetKey}`);
-      return sheetCache.get(sheetKey);
-    } else {
-      console.warn(`シートキャッシュ待機がタイムアウト: ${sheetKey}`);
-    }
-  }
-  
-  // リクエスト中に設定
-  apiState.requestingSheets.add(sheetKey);
+  console.log(`シート全体を読み込み中: ${sheetName}`);
+  const sheets = initSheetsClient();
   
   try {
-    // API呼び出しの準備
-    const keyPath = getServiceAccountKeyPath();
-    if (!keyPath) {
-      console.error('サービスアカウントキーが見つかりません');
-      return null;
-    }
-    
-    // レート制限を適用
-    console.log(`シート全体を取得するためのリクエスト開始: ${sheetKey}`);
-    await enforceRateLimit(`シート全体取得: ${sheetName}`, apiState.currentDepth);
-    
-    // サービスアカウントキーをロード
-    const serviceAccountKey = loadServiceAccountKey();
-    if (!serviceAccountKey) {
-      console.error('サービスアカウントキーのロードに失敗しました');
-      return null;
-    }
-    
-    // 認証クライアントの初期化
-    try {
-      // googleapis純正ライブラリを直接使用して認証
-      console.log('認証クライアント初期化開始...');
-      const { google } = require('googleapis');
-      const auth = new google.auth.JWT(
-        serviceAccountKey.client_email,
-        null,
-        serviceAccountKey.private_key,
-        ['https://www.googleapis.com/auth/spreadsheets.readonly']
-      );
-      
-      // 明示的に認証を初期化
-      console.log('認証初期化を開始します...');
-      await auth.authorize();
-      console.log('認証初期化が成功しました');
-      
-      // Sheets API クライアントの初期化
-      const sheets = google.sheets({ version: 'v4', auth });
-      
-      try {
-        // シート情報を取得
-        const response = await sheets.spreadsheets.get({
-          spreadsheetId: spreadsheetId,
-          includeGridData: false
-        });
-        
-        const spreadsheetInfo = response.data;
-        
-        // シートを見つける
-        const sheetInfo = spreadsheetInfo.sheets.find(s => 
-          s.properties.title === sheetName || s.properties.index === 0
-        );
-        
-        if (!sheetInfo) {
-          console.error(`シートが見つかりません: ${sheetName}`);
-          return null;
-        }
-        
-        // シートのセルデータを取得
-        const cellsResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId: spreadsheetId,
-          range: `${sheetInfo.properties.title}!A1:Z100`
-        });
-        
-        // GoogleSpreadsheetライブラリと同様のインターフェースをエミュレート
-        const virtualSheet = {
-          title: sheetInfo.properties.title,
-          rowCount: sheetInfo.properties.gridProperties.rowCount,
-          columnCount: sheetInfo.properties.gridProperties.columnCount,
-          cellData: cellsResponse.data.values || [],
-          getCell: function(rowIndex, colIndex) {
-            try {
-              if (this.cellData && 
-                  this.cellData.length > rowIndex && 
-                  this.cellData[rowIndex] && 
-                  this.cellData[rowIndex].length > colIndex) {
-                return { value: this.cellData[rowIndex][colIndex] };
-              }
-              return { value: null };
-            } catch (e) {
-              console.error(`getCell(${rowIndex}, ${colIndex})でエラー:`, e);
-              return { value: null };
-            }
-          }
-        };
-        
-        // API成功カウントを更新
-        apiState.successRequests++;
-        
-        // シートデータを整形してキャッシュ
-        const sheetData = {
-          sheet: virtualSheet,
-          title: virtualSheet.title,
-          rowCount: virtualSheet.rowCount,
-          columnCount: virtualSheet.columnCount,
-          timestamp: Date.now()
-        };
-        
-        // キャッシュに保存
-        sheetCache.set(sheetKey, sheetData);
-        console.log(`シート全体をキャッシュしました: ${sheetKey} (行数: ${sheetData.rowCount}, 列数: ${sheetData.columnCount})`);
-        
-        return sheetData;
-        
-      } catch (sheetError) {
-        console.error(`シート情報取得エラー: ${sheetError.message}`);
-        await handleApiError(sheetError, `シート情報取得: ${sheetName}`);
-        return null;
-      }
-      
-    } catch (authError) {
-      console.error(`認証エラー: ${authError.message}`);
-      await handleApiError(authError, `認証処理: ${sheetName}`);
-      return null;
-    }
-  } finally {
-    // リクエスト中フラグを解除
-    apiState.requestingSheets.delete(sheetKey);
-  }
-}
-
-/**
- * ノードの子を順次処理する（並列処理ではなく完全に直列に）
- * @param {Object} node - 処理するノード
- * @param {Function} processorFn - 各子ノードに適用する処理関数
- * @returns {Promise<Array>} 処理された子ノードの配列
- */
-async function processChildrenSequentially(node, processorFn) {
-  if (!node.children || !Array.isArray(node.children) || node.children.length === 0) {
-    return node.children || [];
-  }
-  
-  // 現在の深さを保存
-  const previousDepth = apiState.currentDepth;
-  
-  // 深さを1レベル増加
-  updateApiState({ currentDepth: previousDepth + 1 });
-  
-  console.log(`${node.children.length}個の子ノードを順次処理 (深さ: ${apiState.currentDepth})`);
-  
-  // 月次データを含むノードを後回しにするようソート
-  const sortedChildren = [...node.children].sort((a, b) => {
-    // 月次データ関連のノードを識別
-    const aHasMonthly = a && (
-      (a.title && typeof a.title === 'string' && 
-       (a.title.toLowerCase().includes('monthly') || a.title.toLowerCase().includes('月次'))) ||
-      a.value_monthly
-    );
-    
-    const bHasMonthly = b && (
-      (b.title && typeof b.title === 'string' && 
-       (b.title.toLowerCase().includes('monthly') || b.title.toLowerCase().includes('月次'))) ||
-      b.value_monthly
-    );
-    
-    // 月次データを後回しに
-    if (aHasMonthly && !bHasMonthly) return 1;
-    if (!aHasMonthly && bHasMonthly) return -1;
-    
-    return 0;
-  });
-  
-  // 結果を格納する配列
-  const processedChildren = [];
-  
-  // 各子ノードを順番に処理
-  for (let i = 0; i < sortedChildren.length; i++) {
-    const child = sortedChildren[i];
-    if (!child) continue;
-    
-    try {
-      console.log(`子ノード ${i+1}/${sortedChildren.length} 処理開始 (ノード: ${child.title || '名称なし'})`);
-      
-      // 月次データ関連のノードかどうか確認
-      const isMonthlyNode = child.title && typeof child.title === 'string' && 
-                         (child.title.toLowerCase().includes('monthly') || 
-                          child.title.toLowerCase().includes('月次')) ||
-                         child.value_monthly;
-      
-      // ノード間の待機時間（月次ノードはより長く待機）
-      const waitTime = isMonthlyNode 
-        ? 2000 + (1000 * apiState.currentDepth)
-        : 800 + (400 * apiState.currentDepth);
-      
-      console.log(`ノード処理前の待機: ${waitTime}ms (${isMonthlyNode ? '月次関連' : '通常'}ノード)`);
-      await delay(waitTime);
-      
-      // 子ノードを処理
-      const processedChild = await processorFn(child);
-      processedChildren.push(processedChild);
-      
-      // ノード処理後の小休止
-      const cooldownTime = Math.min(3000, 300 * apiState.currentDepth);
-      console.log(`ノード処理後のクールダウン: ${cooldownTime}ms`);
-      await delay(cooldownTime);
-      
-      // 特定の間隔でより長いクールダウンを入れる
-      if ((i + 1) % 5 === 0) {
-        const batchCooldown = 3000;
-        console.log(`5ノード処理完了による追加クールダウン: ${batchCooldown}ms`);
-        await delay(batchCooldown);
-      }
-    } catch (error) {
-      console.error(`子ノード ${i+1}/${sortedChildren.length} 処理中にエラー: ${error.message}`);
-      // エラーハンドリングを改善（スキップして続行）
-      processedChildren.push(child); // エラー時は元のノードを保持
-    }
-  }
-  
-  // 深さを戻す
-  updateApiState({ currentDepth: previousDepth });
-  
-  return processedChildren;
-}
-
-/**
- * スプレッドシート参照を持つフィールドを順次処理する
- * @param {Object} node - 処理するノード
- * @param {string} fieldName - 処理するフィールド名
- * @param {Function} processorFn - フィールドの処理関数
- * @returns {Promise<void>}
- */
-async function processFieldSequentially(node, fieldName, processorFn) {
-  if (!node || !node[fieldName]) return;
-  
-  const fieldValue = node[fieldName];
-  
-  // 単一の値の場合
-  if (typeof fieldValue === 'string' || typeof fieldValue === 'number') {
-    try {
-      node[fieldName] = await processorFn(fieldValue);
-    } catch (error) {
-      console.error(`フィールド '${fieldName}' の処理中にエラー: ${error.message}`);
-      // エラー時は元の値を保持
-    }
-    return;
-  }
-  
-  // 配列の場合は順次処理
-  if (Array.isArray(fieldValue)) {
-    const processedValues = [];
-    
-    for (let i = 0; i < fieldValue.length; i++) {
-      const value = fieldValue[i];
-      try {
-        // 処理間のクールダウン
-        await delay(500);
-        
-        const processedValue = await processorFn(value);
-        processedValues.push(processedValue);
-      } catch (error) {
-        console.error(`配列フィールド '${fieldName}[${i}]' の処理中にエラー: ${error.message}`);
-        // エラー時は元の値を保持
-        processedValues.push(value);
-      }
-    }
-    
-    node[fieldName] = processedValues;
-    return;
-  }
-  
-  // オブジェクトの場合は各プロパティを処理
-  if (typeof fieldValue === 'object' && fieldValue !== null) {
-    for (const [key, value] of Object.entries(fieldValue)) {
-      try {
-        // 処理間のクールダウン
-        await delay(300);
-        
-        fieldValue[key] = await processorFn(value);
-      } catch (error) {
-        console.error(`オブジェクトフィールド '${fieldName}.${key}' の処理中にエラー: ${error.message}`);
-        // エラー時は元の値を保持
-      }
-    }
-  }
-}
-
-/**
- * GoogleSpreadsheetのセルからA1表記の値を取得（キャッシュとリトライ機能付き）
- * @param {string} spreadsheetId - スプレッドシートID
- * @param {string} range - A1表記の範囲（例: 'Sheet1!A1'）
- * @param {number} retries - 最大再試行回数
- * @param {number} initialDelay - 初回再試行までの待機時間(ms)
- * @returns {Promise<any>} セルの値
- */
-async function getCellValueWithRetry(spreadsheetId, range, retries = 5, initialDelay = 1000) {
-  // キャッシュから値を取得するラッパー関数
-  return await getCachedValue(spreadsheetId, range, async () => {
-    let currentDelay = initialDelay;
-    const apiState = getApiState();
-    
-    // ノードの深さに応じて初期遅延を調整
-    currentDelay = Math.floor(initialDelay * (1 + (apiState.currentDepth * 0.5)));
-    
-    // monthly関連のリクエストはさらに遅延を増やす
-    if (range.toLowerCase().includes('monthly') || range.toLowerCase().includes('month')) {
-      console.log(`月次データ関連のリクエストと判断: ${range}`);
-      currentDelay = Math.floor(currentDelay * 2);
-    }
-  
-    // リトライロジック
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        if (attempt > 0) {
-          console.log(`${range}の取得リトライ (#${attempt}), ${currentDelay}ms待機後 (深さ: ${apiState.currentDepth})`);
-          await delay(currentDelay);
-          currentDelay *= 2; // 指数バックオフ
-          
-          // 深いノードで失敗が続く場合は追加のクールダウン
-          if (attempt > 1 && apiState.currentDepth > 2) {
-            const cooldown = 300 * apiState.currentDepth;
-            console.log(`深いノードでの連続失敗のため追加クールダウン: ${cooldown}ms`);
-            await delay(cooldown);
-          }
-        }
-        
-        // API呼び出しの制限を控除
-        await enforceRateLimit(range, apiState.currentDepth);
-        
-        // 実際の値取得
-        const value = await getCellValue(spreadsheetId, range);
-        return value;
-      } catch (error) {
-        // 最後のリトライでもエラーの場合
-        if (attempt === retries) {
-          console.error(`APIエラー発生 (${range}): ${error.message}`);
-          console.error(`リトライ回数(${retries})を超えました。エラーを返します。`);
-          // エラーをスローして呼び出し元に処理を委ねる
-          throw error;
-        }
-        
-        console.error(`APIエラー発生 (${range}): ${error.message}、リトライします(${attempt + 1}/${retries})`);
-      }
-    }
-    
-    // ここには到達しないはず
-    throw new Error(`リトライ後も値を取得できませんでした: ${range}`);
-  });
-}
-
-/**
- * GoogleSpreadsheetのセルからA1表記の値を取得 (実際のAPI呼び出し部分)
- * @param {string} spreadsheetId - スプレッドシートID
- * @param {string} range - A1表記の範囲（例: 'Sheet1!A1'）
- * @returns {Promise<any>} セルの値
- */
-async function getCellValue(spreadsheetId, range) {
-  try {
-    // 有効なスプレッドシートIDを取得
-    const effectiveId = getEffectiveSpreadsheetId(spreadsheetId);
-    if (!effectiveId) {
-      console.error(`有効なスプレッドシートIDが見つかりませんでした`);
-      return null;
-    }
-    
-    // シート名とセル参照を分割
-    const { sheetName, cellRef } = splitSheetAndCell(range);
-    if (!sheetName || !cellRef) {
-      console.error(`無効なレンジ形式: ${range}`);
-      return null;
-    }
-    
-    console.log(`スプレッドシート値取得開始: ID=${effectiveId}, シート=${sheetName}, セル=${cellRef}`);
-    
-    // キャッシュキーを生成
-    const cacheKey = `${effectiveId}:${range}`;
-    
-    // 個別セルのキャッシュをまず確認
-    if (cache.has(cacheKey)) {
-      console.log(`キャッシュからセル値を取得: ${cacheKey}`);
-      return cache.get(cacheKey);
-    }
-    
-    // シート単位のキャッシュを確認または取得
-    const sheetData = await fetchAndCacheEntireSheet(effectiveId, sheetName);
-    if (sheetData) {
-      // キャッシュされたシートからセル値を取得
-      const value = getCellFromCachedSheet(sheetData, cellRef);
-      
-      // 結果を個別セルのキャッシュにも保存
-      if (value !== null) {
-        cache.set(cacheKey, value);
-        return value;
-      }
-    }
-    
-    // シートキャッシュから取得できなかった場合は、従来のAPI呼び出しにフォールバック
-    console.log(`シートキャッシュから取得できないため、従来のAPI呼び出しにフォールバック: ${range}`);
-    
-    // レート制限を適用
-    await enforceRateLimit(range, apiState.currentDepth);
-    
-    apiState.activeCalls++;
-    apiState.lastRequestTime = Date.now();
-    apiState.totalRequests++;
-    
-    // サービスアカウントキーの読み込み
-    const serviceAccountKey = loadServiceAccountKey();
-    
-    // 認証情報が読み込めなかった場合
-    if (!serviceAccountKey) {
-      console.error('認証情報の読み込みに失敗しました');
-      return "ERROR: Auth Failed";
-    }
-    
-    // キー内容の確認（先頭と末尾の不要な空白を削除）
-    const cleanedPrivateKey = serviceAccountKey.private_key.trim();
-    
-    // JWTクライアントの作成（直接キーファイルパスを指定）
-    const authClient = new JWT({
-      email: serviceAccountKey.client_email,
-      key: cleanedPrivateKey, // 余分な空白を削除したキー
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
+    // A1:Z100の範囲でシートデータを取得 (必要に応じて範囲を調整)
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A1:Z100`
     });
     
-    try {
-      // スプレッドシートへのアクセス
-      console.log(`Google Sheets API認証初期化開始... (スプレッドシートID: ${spreadsheetId})`);
-      const doc = new GoogleSpreadsheet(spreadsheetId);
-      
-      // プライベートキーの検証
-      if (!serviceAccountKey.private_key.includes('BEGIN PRIVATE KEY') || 
-          !serviceAccountKey.private_key.includes('END PRIVATE KEY')) {
-        throw new Error('無効な秘密キー形式');
-      }
-      
-      // 明示的な認証プロセス
-      console.log(`サービスアカウント認証を使用: ${serviceAccountKey.client_email}`);
-      
-      // googleapis純正ライブラリを直接使用して認証
-      const { google } = require('googleapis');
-      const auth = new google.auth.JWT(
-        serviceAccountKey.client_email,
-        null,
-        serviceAccountKey.private_key,
-        ['https://www.googleapis.com/auth/spreadsheets.readonly']
-      );
-      
-      // 明示的に認証を初期化
-      console.log('認証初期化を開始します...');
-      await auth.authorize();
-      console.log('認証初期化が成功しました');
-      
-      // Sheets API クライアントの初期化
-      const sheets = google.sheets({ version: 'v4', auth });
-      
-      // スプレッドシートライブラリにも認証情報を設定
-      try {
-        await doc.useServiceAccountAuth({
-          client_email: serviceAccountKey.client_email,
-          private_key: serviceAccountKey.private_key
-        });
-        await doc.loadInfo();
-        console.log('スプレッドシート情報の読み込みに成功しました');
-      } catch (e) {
-        console.warn(`スプレッドシートライブラリの認証エラー: ${e.message}`);
-        // エラーは無視して続行します
-      }
-      
-      // 値を取得（実際のセルの値を返すように修正）
-      const fullRange = `${sheetName}!${cellRef}`;
-      console.log(`APIにリクエスト: スプレッドシートID=${spreadsheetId}, 範囲=${fullRange}`);
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: spreadsheetId,
-        range: fullRange,
-      });
-      
-      // レスポンスの値を取得
-      const values = response.data.values;
-      console.log(`APIレスポンス受信: `, response.data);
-      
-      if (!values || values.length === 0 || values[0].length === 0) {
-        console.log(`セル ${cellRef} の値が空です（API経由）`);
-        apiState.successRequests++;
-        return 0;
-      }
-      
-      // API経由での値取得
-      const cellValue = values[0][0];
-      console.log(`セル値取得成功: ${cellRef} = `, cellValue, ` (データ型: ${typeof cellValue})`);
-      apiState.successRequests++;
-      return cellValue;
-      
-    } catch (authError) {
-      console.warn(`1次APIアクセスに失敗、フォールバック試行: ${authError.message}`);
-      await delay(300); // フォールバック前に少し待機
-      
-      try {
-        // 別の方法で直接アクセス
-        const { google } = require('googleapis');
-        const auth = new google.auth.JWT(
-          serviceAccountKey.client_email,
-          null,
-          serviceAccountKey.private_key,
-          ['https://www.googleapis.com/auth/spreadsheets.readonly']
-        );
-        
-        // Sheets API クライアントの初期化
-        const sheets = google.sheets({ version: 'v4', auth });
-        
-        // 値を取得（実際のセルの値を返すように修正）
-        const fullRange = `${sheetName}!${cellRef}`;
-        console.log(`フォールバックAPI呼び出し: スプレッドシートID=${spreadsheetId}, 範囲=${fullRange}`);
-        const response = await sheets.spreadsheets.values.get({
-          spreadsheetId: spreadsheetId,
-          range: fullRange,
-        });
-        
-        // レスポンスの値を取得
-        const values = response.data.values;
-        console.log(`フォールバックAPIレスポンス受信: `, response.data);
-        
-        if (!values || values.length === 0 || values[0].length === 0) {
-          console.log(`セル ${cellRef} の値が空です（API経由）`);
-          apiState.successRequests++;
-          return 0;
-        }
-        
-        // API経由での値取得
-        const cellValue = values[0][0];
-        console.log(`フォールバックセル値取得成功: ${cellRef} = `, cellValue, ` (データ型: ${typeof cellValue})`);
-        apiState.successRequests++;
-        return cellValue;
-      } catch (error2) {
-        console.error(`フォールバックAPIもエラー: ${error2.message}`);
-        throw new Error('Failed to access spreadsheet');
-      }
-    }
-  } catch (error) {
-    console.error(`スプレッドシートアクセスエラー: ${error.message}`);
-    console.error(error.stack);
-    throw error;
-  } finally {
-    apiState.activeCalls--;
-  }
-}
-
-/**
- * A1表記(例: A1, B2)をrow, column indexに変換
- * @param {string} a1Notation - A1表記（例: 'A1', 'B2'）
- * @returns {Object} {rowIndex, colIndex}
- */
-function convertA1ToRowCol(a1Notation) {
-  const match = a1Notation.match(/([A-Z]+)([0-9]+)/);
-  if (!match) {
-    throw new Error(`無効なA1表記です: ${a1Notation}`);
-  }
-  
-  const colA1 = match[1];
-  const rowA1 = match[2];
-  
-  // 1-indexedの行番号を0-indexedに変換
-  const rowIndex = parseInt(rowA1, 10) - 1;
-  
-  // A-Z列名を0-indexedの列番号に変換
-  let colIndex = 0;
-  for (let i = 0; i < colA1.length; i++) {
-    colIndex = colIndex * 26 + colA1.charCodeAt(i) - 'A'.charCodeAt(0) + 1;
-  }
-  colIndex -= 1; // 0-indexedに調整
-  
-  return { rowIndex, colIndex };
-}
-
-/**
- * キャッシュされたシートからセル値を取得
- * @param {Object} sheetData - キャッシュされたシートデータ
- * @param {string} cellRef - セル参照 (A1形式)
- * @returns {any} セルの値
- */
-function getCellFromCachedSheet(sheetData, cellRef) {
-  if (!sheetData || !sheetData.sheet) {
-    console.error('キャッシュされたシートデータが無効です');
-    return null;
-  }
-  
-  try {
-    // A1表記を行と列のインデックスに変換
-    const { rowIndex, colIndex } = convertA1ToRowCol(cellRef);
+    // 行と列のデータを整理
+    const rows = response.data.values || [];
     
-    // 有効範囲を確認
-    if (rowIndex < 0 || rowIndex >= sheetData.rowCount || 
-        colIndex < 0 || colIndex >= sheetData.columnCount) {
-      console.warn(`範囲外のセルを参照: ${cellRef} (行: ${rowIndex}, 列: ${colIndex})`);
+    // キャッシュに格納するデータ構造
+    const sheetData = {
+      name: sheetName,
+      rows,
+      timestamp: Date.now(),
+      // A1:Z100を行列としてアクセスするためのヘルパー
+      getValue: function(cellRef) {
+        const match = cellRef.match(/([A-Z]+)([0-9]+)/);
+        if (!match) return null;
+        
+        const colLetter = match[1];
+        const rowNum = parseInt(match[2], 10);
+        
+        // A1形式を配列インデックスに変換
+        let colIndex = 0;
+        for (let i = 0; i < colLetter.length; i++) {
+          colIndex = colIndex * 26 + colLetter.charCodeAt(i) - 'A'.charCodeAt(0) + 1;
+        }
+        colIndex -= 1; // 0ベースに調整
+        const rowIndex = rowNum - 1; // 0ベースに調整
+        
+        // 範囲外チェック
+        if (rowIndex < 0 || rowIndex >= rows.length) return null;
+        if (!rows[rowIndex] || colIndex < 0 || colIndex >= rows[rowIndex].length) return null;
+        
+        return rows[rowIndex][colIndex];
+      }
+    };
+    
+    // キャッシュに保存
+    sheetCache.set(cacheKey, sheetData);
+    console.log(`シート ${sheetName} をキャッシュしました (${rows.length}行)`);
+    
+    return sheetData;
+  } catch (error) {
+    console.error(`スプレッドシート取得エラー: ${error.message}`);
+    process.exit(1); // エラー時は終了
+  }
+}
+
+/**
+ * GoogleスプレッドシートAPI用のクライアントを初期化
+ * @returns {Object} Google Sheets APIクライアント
+ */
+function initSheetsClient() {
+  try {
+    // サービスアカウントキーパスを取得
+    const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
+    if (!keyPath || !fs.existsSync(keyPath)) {
+      console.error('サービスアカウントキーが見つかりません');
+      process.exit(1);
+    }
+    
+    // サービスアカウントキーを読み込み
+    const serviceAccountKey = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+    
+    // 認証クライアントの初期化
+    const auth = new google.auth.JWT(
+      serviceAccountKey.client_email,
+      null,
+      serviceAccountKey.private_key,
+      ['https://www.googleapis.com/auth/spreadsheets.readonly']
+    );
+    
+    // Sheets APIクライアントの初期化
+    return google.sheets({ version: 'v4', auth });
+  } catch (error) {
+    console.error(`SheetsAPIクライアント初期化エラー: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+/**
+ * スプレッドシートの特定セルの値を取得
+ * @param {string} spreadsheetId - スプレッドシートID 
+ * @param {string} rangeNotation - A1形式の範囲表記（例: "Sheet1!A1"）
+ * @returns {Promise<any>} セルの値
+ */
+async function getCellValue(spreadsheetId, rangeNotation) {
+  try {
+    // シート名とセル参照を分離
+    const parts = rangeNotation.split('!');
+    if (parts.length !== 2) {
+      console.error(`無効な範囲指定です: ${rangeNotation}`);
       return null;
     }
     
-    // セルオブジェクトを取得
-    const cell = sheetData.sheet.getCell(rowIndex, colIndex);
-    const value = cell.value;
+    const sheetName = parts[0];
+    const cellRef = parts[1];
     
-    console.log(`キャッシュからセル値を取得: ${cellRef} = `, value);
+    // シート全体をキャッシュから取得または新規取得
+    const sheetData = await fetchAndCacheSheet(spreadsheetId, sheetName);
+    
+    // キャッシュからセル値を取得
+    const value = sheetData.getValue(cellRef);
+    
+    console.log(`セル ${rangeNotation} の値を取得: ${value}`);
     return value;
   } catch (error) {
-    console.error(`キャッシュからのセル取得エラー: ${error.message}`);
-    return null;
+    console.error(`セル値取得エラー: ${error.message}`);
+    process.exit(1); // エラー時は終了
   }
 }
 
 /**
- * YAMLデータ内のスプレッドシート参照を解決する
- * @param {Object} node - KPIツリーノード
- * @returns {Promise<Object>} 解決されたノード
+ * スプレッドシート参照（=シート名!セル参照 形式）を解決する
+ * @param {string} spreadsheetId - スプレッドシートID
+ * @param {string} reference - スプレッドシート参照文字列（"=Sheet1!A1" 形式）
+ * @returns {Promise<any>} 解決された値
  */
-async function resolveSpreadsheetReferences(node) {
-  if (!node) return node;
-  
-  console.log('----------- スプレッドシート参照解決開始 -----------');
-  console.log('NODE:', JSON.stringify({
-    title: node.title || '名称なし', 
-    text: node.text,
-    value: node.value,
-    value_daily: node.value_daily,
-    value_monthly: node.value_monthly
-  }, null, 2));
-  
-  // process.stdoutに直接書き込み（Docker環境でのログ出力を確実に）
-  process.stdout.write('\nノードのスプレッドシート参照確認中...\n');
-  
-  // グローバルなスプレッドシート設定を保存
-  if (!global.kpiTreeConfig) {
-    global.kpiTreeConfig = {};
+async function resolveReference(spreadsheetId, reference) {
+  // スプレッドシート参照形式の確認
+  if (typeof reference !== 'string' || !reference.startsWith('=')) {
+    return reference; // スプレッドシート参照でない場合はそのまま返す
   }
   
-  // グローバルスプレッドシートIDを取得して設定する
-  let spreadsheetIdToUse = null;
+  // '=' を除去してシート参照に変換
+  const rangeNotation = reference.substring(1);
   
   try {
-    // ノードに直接指定されたスプレッドシートIDを確認
-    if (node.spreadsheet && node.spreadsheet.id) {
-      spreadsheetIdToUse = node.spreadsheet.id;
-      console.log(`ルートレベルのスプレッドシートIDをグローバル設定に保存: ${spreadsheetIdToUse}`);
-      
-      // global.kpiTreeConfigを更新
-      if (!global.kpiTreeConfig.spreadsheet) {
-        global.kpiTreeConfig.spreadsheet = {};
-      }
-      global.kpiTreeConfig.spreadsheet.id = spreadsheetIdToUse;
-      
-      // モジュール内部のグローバル変数にも設定
-      setGlobalSpreadsheetId(spreadsheetIdToUse);
-    } 
-    // global.kpiTreeConfigからグローバルIDを取得
-    else if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheetId) {
-      spreadsheetIdToUse = global.kpiTreeConfig.spreadsheetId;
-      console.log(`global.kpiTreeConfigからスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
-      
-      // モジュール内部のグローバル変数に設定
-      setGlobalSpreadsheetId(spreadsheetIdToUse);
-    }
-    // global.kpiTreeConfig.spreadsheetからグローバルIDを取得
-    else if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
-      spreadsheetIdToUse = global.kpiTreeConfig.spreadsheet.id;
-      console.log(`global.kpiTreeConfig.spreadsheetからスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
-      
-      // モジュール内部のグローバル変数に設定
-      setGlobalSpreadsheetId(spreadsheetIdToUse);
-      
-      // 形式を統一するためにglobal.kpiTreeConfig.spreadsheetIdにも設定
-      global.kpiTreeConfig.spreadsheetId = spreadsheetIdToUse;
-    } 
-    // モジュール内グローバル変数から取得
-    else if (globalSpreadsheetId) {
-      spreadsheetIdToUse = globalSpreadsheetId;
-      console.log(`モジュール内グローバル変数からスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
-    }
-    
-    // node.configやnode._configなどからグローバル設定を探す追加処理
-    if (!spreadsheetIdToUse) {
-      if (node.config && node.config.spreadsheet && node.config.spreadsheet.id) {
-        spreadsheetIdToUse = node.config.spreadsheet.id;
-        console.log(`node.configからスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
-        setGlobalSpreadsheetId(spreadsheetIdToUse);
-      } else if (node._config && node._config.spreadsheet && node._config.spreadsheet.id) {
-        spreadsheetIdToUse = node._config.spreadsheet.id;
-        console.log(`node._configからスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
-        setGlobalSpreadsheetId(spreadsheetIdToUse);
-      }
-    }
+    return await getCellValue(spreadsheetId, rangeNotation);
   } catch (error) {
-    console.error(`スプレッドシートID取得時のエラー: ${error.message}`);
+    console.error(`参照解決エラー: ${error.message}`);
+    process.exit(1); // エラー時は終了
   }
-  
-  // 環境変数からも取得を試みる
-  if (!spreadsheetIdToUse && process.env.KPI_TREE_SPREADSHEET_ID) {
-    spreadsheetIdToUse = process.env.KPI_TREE_SPREADSHEET_ID;
-    console.log(`環境変数からスプレッドシートIDを取得: ${spreadsheetIdToUse}`);
-    setGlobalSpreadsheetId(spreadsheetIdToUse);
-    
-    if (!global.kpiTreeConfig.spreadsheet) {
-      global.kpiTreeConfig.spreadsheet = {};
-    }
-    global.kpiTreeConfig.spreadsheet.id = spreadsheetIdToUse;
-  }
-  
-  // 最終確認
-  if (!spreadsheetIdToUse) {
-    console.log('スプレッドシートIDが見つかりません。index.yamlに正しく設定されているか確認してください。');
-  } else {
-    console.log(`最終的に使用するスプレッドシートID: ${spreadsheetIdToUse}`);
-  }
-  
-  // 環境変数からも取得して設定する
-  if (process.env.KPI_TREE_SPREADSHEET_ID && !spreadsheetIdToUse) {
-    spreadsheetIdToUse = process.env.KPI_TREE_SPREADSHEET_ID;
-    console.log(`環境変数からスプレッドシートIDを取得しました: ${spreadsheetIdToUse}`);
-    setGlobalSpreadsheetId(spreadsheetIdToUse);
-  }
-  
-  if (spreadsheetIdToUse) {
-    console.log(`最終的に使用するグローバルスプレッドシートID: ${spreadsheetIdToUse}`);
-  } else {
-    console.log('スプレッドシートIDが見つかりません。YAMLファイルに正しく設定されているか確認してください。');
-  }
+}
 
-  // valueフィールドのスプレッドシート参照を解決
-  if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
-    process.stdout.write('スプレッドシート参照(value)が見つかりました\n');
-    process.stdout.write(`スプレッドシート参照詳細: ${JSON.stringify(node.value.spreadsheet, null, 2)}\n`);
-    
-    // スプレッドシートの参照情報を取得
-    let id = node.value.spreadsheet.id;
-    const range = node.value.spreadsheet.range;
-    
-    // idが指定されていない場合はグローバル設定から取得
-    if (!id) {
-      const globalId = getGlobalSpreadsheetId();
-      if (globalId) {
-        id = globalId;
-        // グローバルIDをノードのスプレッドシート設定に保存（後続の処理のため）
-        node.value.spreadsheet.id = globalId;
-        console.log(`グローバル設定からスプレッドシートIDを使用: ${id}`);
-      } else {
-        console.error('スプレッドシートIDが見つかりません。ノードとグローバル設定の両方にIDがありません。');
-        node.value = `ERROR: スプレッドシートIDが未設定`;
-        return node;
-      }
-    }
-    
-    console.log(`-----------------------------------`);
-    console.log(`スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
-    
-    try {
-      console.log(`スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
-      
-      // リトライ機能付きの関数を使用
-      const cellValue = await getCellValueWithRetry(id, range);
-      
-      console.log(`スプレッドシートから値を取得成功: (${range})`);
-      console.log(`→ 値:`, cellValue);
-      console.log(`→ 型:`, typeof cellValue);
-      console.log(`→ オブジェクトか: ${typeof cellValue === 'object' && cellValue !== null}`);
-      console.log(`→ 配列か: ${Array.isArray(cellValue)}`);
-      console.log(`→ トータルルートは: `, JSON.stringify(cellValue));
-      
-      if (typeof cellValue === 'object' && cellValue !== null) {
-        console.log(`→ オブジェクト詳細:`, JSON.stringify(cellValue, null, 2));
-        console.log(`→ オブジェクトキー一覧:`, Object.keys(cellValue));
-        
-        // オブジェクトの各プロパティを比較的安全に一層深く調査
-        for (const key of Object.keys(cellValue)) {
-          const value = cellValue[key];
-          console.log(`→ プロパティ ${key}: 型=${typeof value}, 値=${
-            typeof value === 'object' ? JSON.stringify(value) : value
-          }`);
-        }
-      }
-      
-      // 値のタイプに応じた処理
-      if (cellValue === null || cellValue === undefined) {
-        console.log(`スプレッドシートセル ${range} の値が空のため0を使用`);
-        node.value = 0;
-      } else if (typeof cellValue === 'number') {
-        // 数値はそのまま使用
-        node.value = cellValue;
-      } else if (typeof cellValue === 'string') {
-        // 文字列が数値に変換可能か試みる
-        node.value = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
-      } else if (typeof cellValue === 'object') {
-        // オブジェクトの場合は文字列化（日付などの特殊オブジェクト対応）
-        console.log('オブジェクト型の値を処理:', cellValue);
-        try {
-          if (cellValue instanceof Date) {
-            console.log('日付型を検出:', cellValue);
-            node.value = cellValue.toISOString();
-          } else {
-            // オブジェクトからcircular referenceなどの問題となるプロパティを除去
-            const safeObj = {};
-            try {
-              for (const key in cellValue) {
-                // 関数やプライベートプロパティを除外
-                if (typeof cellValue[key] !== 'function' && 
-                    key !== '_spreadsheet' && 
-                    !key.startsWith('_')) {
-                  safeObj[key] = cellValue[key];
-                }
-              }
-            } catch (loopError) {
-              console.error('オブジェクトのプロパティループ中にエラー:', loopError.message);
-            }
-            
-            try {
-              // 最も直接的な方法でAPI再取得を試みる
-              const { id, range } = node.value.spreadsheet;
-              
-              // リトライ機能付きの関数を使用
-              const directValue = await getCellValueWithRetry(id, range, 2, 300);
-              
-              if (directValue === null || directValue === undefined) {
-                node.value = 0;
-              } else if (typeof directValue === 'object') {
-                if (directValue instanceof Date) {
-                  node.value = directValue.toISOString();
-                } else {
-                  node.value = directValue.value !== undefined ? directValue.value : String(directValue);
-                }
-              } else {
-                node.value = typeof directValue === 'string' && !isNaN(Number(directValue)) 
-                  ? Number(directValue) 
-                  : directValue;
-              }
-              return;
-            } catch (retryError) {
-              console.error('API再取得エラー:', retryError.message);
-            }
-            
-            // オブジェクトから意味のある値を抽出する
-            if (cellValue === null) {
-              node.value = 0;
-              return;
-            }
-            
-            // valueプロパティを持つ場合はそれを使用
-            if (cellValue.value !== undefined) {
-              node.value = cellValue.value;
-              return;
-            }
-            
-            // formattedValueプロパティを持つ場合はそれを使用
-            if (cellValue.formattedValue !== undefined) {
-              node.value = cellValue.formattedValue;
-              return;
-            }
-            
-            // 単純なキー値オブジェクトから値を抽出
-            if (cellValue["0"] !== undefined) {
-              node.value = cellValue["0"];
-              return;
-            }
-            
-            // どれも該当しない場合は文字列化して表示
-            try {
-              const jsonString = JSON.stringify(safeObj);
-              // 数値文字列の場合は数値に変換
-              if (!isNaN(Number(jsonString))) {
-                node.value = Number(jsonString);
-              } else {
-                // その他はそのまま文字列として使用
-                node.value = jsonString;
-              }
-            } catch (jsonError) {
-              // JSON変換エラー時は単純な文字列化
-              node.value = String(cellValue);
-            }
-          }
-        } catch (e) {
-          console.warn(`オブジェクトの文字列化に失敗: ${e.message}`);
-          node.value = String(cellValue);
-        }
-      } else {
-        // その他の型は文字列化
-        node.value = String(cellValue);
-      }
-      
-    } catch (error) {
-      console.error(`スプレッドシート参照の解決に失敗: ${error.message}`);
-      node.value = 'ERROR';
-    }
+/**
+ * YAMLノードツリー内のスプレッドシート参照を解決する
+ * @param {Object} node - KPIツリーノード
+ * @param {string} spreadsheetId - スプレッドシートID
+ * @returns {Promise<Object>} 参照が解決されたノード
+ */
+async function resolveNodeReferences(node, spreadsheetId) {
+  if (!node) return node;
+  
+  // value_daily と value_monthly の参照を解決
+  if (node.value_daily) {
+    node.value_daily = await resolveReference(spreadsheetId, node.value_daily);
   }
   
-  // 文字列表記のスプレッドシート参照を解決する関数
-  async function resolveStringSpreadsheetReference(node, field) {
-    if (!node[field] || typeof node[field] !== 'string') return;
-    
-    const value = node[field];
-    
-    // いずれかの文字列参照形式に該当するか確認
-    if (!(value.startsWith('=spreadsheet:') || (value.startsWith('=') && value.includes('!')))) {
-      return;
-    }
-    
-    console.log(`文字列参照の解決を開始: ${field} = ${value}`);
-    
-    // 参照形式の判断と解析
-    let id = null;
-    let range = null;
-    
-    if (value.startsWith('=spreadsheet:')) {
-      // 形式1または形式2
-      const parts = value.substring(12).split(':');
-      
-      if (parts.length >= 2) {
-        // 形式1: =spreadsheet:id:range
-        id = parts[0];
-        range = parts[1];
-      } else if (parts.length == 1) {
-        // 形式2: =spreadsheet:range （グローバルIDを使用）
-        range = parts[0];
-        id = getEffectiveSpreadsheetId();
-        if (id) {
-          console.log(`${field}: 形式2の参照でグローバルIDを使用: ${id}`);
-        }
-      }
-    } else if (value.startsWith('=') && value.includes('!')) {
-      // 形式3: =Sheet1!A1 （グローバルIDを使用）
-      range = value.substring(1); // =を除去
-      id = getEffectiveSpreadsheetId();
-      if (id) {
-        console.log(`${field}: 形式3の最も簡易な参照でグローバルIDを使用: ${id}`);
-      }
-    }
-    
-    // IDの検証
-    if (!id) {
-      console.error(`${field}: スプレッドシートIDがありません。YAMLにグローバルIDを設定してください。`);
-      node[field] = 'ERROR: スプレッドシートIDが未設定';
-      return;
-    }
-    
-    try {
-      // リトライ機能付きの関数を使用
-      console.log(`${field}: スプレッドシートから値を取得します (ID: ${id}, 範囲: ${range})`);
-      const cellValue = await getCellValueWithRetry(id, range);
-      console.log(`${field}: 値取得成功:`, cellValue);
-      
-      // サービスアカウントキーがなかったり、認証に失敗している場合はエラー終了
-      if (!fs.existsSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH) || 
-          fs.statSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH).size < 100) {
-        console.error(`サービスアカウントキーが見つからないか不正なため、処理を終了します`);
-        console.error(`環境変数GOOGLE_SERVICE_ACCOUNT_KEY_PATH: ${process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH}`);
-        console.error(`キーファイル存在: ${fs.existsSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH) ? 'はい' : 'いいえ'}`);
-        if (fs.existsSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH)) {
-          console.error(`キーファイルサイズ: ${fs.statSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH).size} バイト`);
-        }
-        process.exit(1);
-      }
-      
-      // APIエラーが多発している場合もエラー終了
-      if (apiState.errorCount > 3) {
-        console.error(`APIエラーが多発しているため、処理を終了します`);
-        console.error(`エラー回数: ${apiState.errorCount}回`);
-        console.error(`失敗リクエスト数: ${apiState.failedRequests}回`);
-        process.exit(1);
-      }
-      
-      // 値のタイプに応じた処理
-      if (cellValue === null || cellValue === undefined) {
-        node[field] = 0;
-      } else if (typeof cellValue === 'number') {
-        node[field] = cellValue;
-      } else if (typeof cellValue === 'string') {
-        node[field] = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
-      } else if (typeof cellValue === 'object') {
-        // オブジェクトの場合の処理
-        if (cellValue === null) {
-          node[field] = 0;
-        } else if (cellValue.value !== undefined) {
-          node[field] = cellValue.value;
-        } else if (cellValue.formattedValue !== undefined) {
-          node[field] = cellValue.formattedValue;
-        } else {
-          try {
-            const jsonString = JSON.stringify(cellValue);
-            node[field] = !isNaN(Number(jsonString)) ? Number(jsonString) : jsonString;
-          } catch (e) {
-            node[field] = String(cellValue);
-          }
-        }
-      } else {
-        node[field] = String(cellValue);
-      }
-    } catch (error) {
-      console.error(`${field}: スプレッドシート参照解決エラー:`, error.message);
-      // エラー時は終了
-      console.error(`スプレッドシート参照解決中にエラーが発生したため、処理を終了します`);
-      process.exit(1);
-    }
+  if (node.value_monthly) {
+    node.value_monthly = await resolveReference(spreadsheetId, node.value_monthly);
   }
   
-  // 全ての文字列表記フィールドを解決
-  if (node.value && typeof node.value === 'string') {
-    await resolveStringSpreadsheetReference(node, 'value');
+  // 通常の value も解決（後方互換性）
+  if (node.value && typeof node.value === 'string' && node.value.startsWith('=')) {
+    node.value = await resolveReference(spreadsheetId, node.value);
   }
   
-  if (node.value_daily && typeof node.value_daily === 'string') {
-    await resolveStringSpreadsheetReference(node, 'value_daily');
-  }
-  
-  if (node.value_monthly && typeof node.value_monthly === 'string') {
-    await resolveStringSpreadsheetReference(node, 'value_monthly');
-  }
-  
-  // オブジェクト形式のスプレッドシート参照も解決
-  // 日次データの処理
-  if (node.value_daily && typeof node.value_daily === 'object' && node.value_daily.spreadsheet) {
-    try {
-      // スプレッドシート参照情報を取得
-      let id = node.value_daily.spreadsheet.id;
-      const range = node.value_daily.spreadsheet.range;
-      
-      // IDが指定されていない場合はグローバル設定から取得
-      if (!id) {
-        const globalId = getEffectiveSpreadsheetId();
-        if (globalId) {
-          id = globalId;
-          // グローバルIDをノードのスプレッドシート設定に保存
-          node.value_daily.spreadsheet.id = globalId;
-          console.log(`value_daily: グローバル設定からスプレッドシートIDを使用: ${id}`);
-        }
-      }
-      
-      console.log(`value_daily: オブジェクト形式の参照を処理 (ID: ${id}, 範囲: ${range})`);
-      
-      // リトライ機能付きの関数を使用
-      const cellValue = await getCellValueWithRetry(id, range);
-      
-      // 値の処理
-      if (cellValue === null || cellValue === undefined) {
-        node.value_daily = 0;
-      } else if (typeof cellValue === 'number') {
-        node.value_daily = cellValue;
-      } else if (typeof cellValue === 'string') {
-        node.value_daily = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
-      } else if (typeof cellValue === 'object') {
-        // 適切なプロパティを抽出
-        if (cellValue.value !== undefined) {
-          node.value_daily = cellValue.value;
-        } else if (cellValue.formattedValue !== undefined) {
-          node.value_daily = cellValue.formattedValue;
-        } else {
-          node.value_daily = String(cellValue);
-        }
-      } else {
-        node.value_daily = String(cellValue);
-      }
-    } catch (error) {
-      console.error(`value_daily処理エラー:`, error);
-      node.value_daily = 'ERROR';
-    }
-  }
-  
-  // 月次データ取得前に極めて長めの待機
-  if (node.value_monthly && typeof node.value_monthly === 'object' && node.value_monthly.spreadsheet) {
-    // 月次データは特にエラーが出やすいため、非常に長めの待機を入れる
-    const monthlyPauseTime = 1500 + (500 * apiState.currentDepth);
-    console.log(`月次データ取得前の特別待機: ${monthlyPauseTime}ms (深さ: ${apiState.currentDepth})`);
-    await delay(monthlyPauseTime);
-    
-    // さらに実行中のリクエストがすべて完了するまで待機
-    if (apiState.activeCalls > 0) {
-      console.log(`月次データ取得前に実行中の${apiState.activeCalls}個のリクエストが完了するまで待機`);
-      let totalWaitTime = 0;
-      while (apiState.activeCalls > 0 && totalWaitTime < 10000) { // 最大10秒まで待機
-        await delay(500);
-        totalWaitTime += 500;
-        console.log(`待機中... 経過: ${totalWaitTime}ms, 残りリクエスト: ${apiState.activeCalls}`);
-      }
-    }
-    process.stdout.write('スプレッドシート参照(value_monthly)が見つかりました\n');
-    process.stdout.write(`スプレッドシート参照詳細: ${JSON.stringify(node.value_monthly.spreadsheet, null, 2)}\n`);
-    
-    // スプレッドシート参照情報を取得
-    let id = node.value_monthly.spreadsheet.id;
-    const range = node.value_monthly.spreadsheet.range;
-    
-    // IDが指定されていない場合はグローバル設定から取得
-    if (!id) {
-      const globalId = getEffectiveSpreadsheetId();
-      if (globalId) {
-        id = globalId;
-        // グローバルIDをノードのスプレッドシート設定に保存
-        node.value_monthly.spreadsheet.id = globalId;
-        console.log(`value_monthly: グローバル設定からスプレッドシートIDを使用: ${id}`);
-      }
-    }
-    
-    console.log(`-----------------------------------`);
-    console.log(`value_monthly: スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
-    try {
-      console.log(`value_monthly: スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
-      
-      // リトライ機能付きの関数を使用
-      const cellValue = await getCellValueWithRetry(id, range);
-      
-      console.log(`value_monthly: スプレッドシートから値を取得成功: (${range})`);
-      console.log(`→ 値:`, cellValue);
-      console.log(`→ 型:`, typeof cellValue);
-      
-      if (typeof cellValue === 'object' && cellValue !== null) {
-        console.log(`→ オブジェクト詳細:`, JSON.stringify(cellValue, null, 2));
-      }
-      
-      // 値のタイプに応じた処理
-      if (cellValue === null || cellValue === undefined) {
-        console.log(`スプレッドシートセル ${range} の値が空のため0を使用`);
-        node.value_monthly = 0;
-      } else if (typeof cellValue === 'number') {
-        // 数値はそのまま使用
-        node.value_monthly = cellValue;
-      } else if (typeof cellValue === 'string') {
-        // 文字列が数値に変換可能か試みる
-        node.value_monthly = isNaN(Number(cellValue)) ? cellValue : Number(cellValue);
-      } else if (typeof cellValue === 'object') {
-        // オブジェクトの場合は文字列化して試みる
-        try {
-          if (cellValue === null) {
-            node.value_monthly = 0;
-          } else if (cellValue.data && cellValue.data.values && 
-              Array.isArray(cellValue.data.values) && 
-              cellValue.data.values.length > 0 && 
-              cellValue.data.values[0].length > 0) {
-            const rawValue = cellValue.data.values[0][0];
-            node.value_monthly = rawValue;
-          } else if (cellValue.value !== undefined) {
-            // valueプロパティを持つ場合
-            node.value_monthly = cellValue.value;
-          } else if (cellValue.formattedValue !== undefined) {
-            // formattedValueプロパティを持つ場合
-            node.value_monthly = cellValue.formattedValue;
-          } else if (cellValue["0"] !== undefined) {
-            // 単純なキー値オブジェクトの場合
-            node.value_monthly = cellValue["0"];
-          } else {
-            // 最後の手段として文字列化
-            try {
-              // またJSON文字列化の前に微調整
-              const safeObj = {};
-              Object.keys(cellValue).forEach(key => {
-                if (typeof cellValue[key] !== 'function' && !key.startsWith('_')) {
-                  safeObj[key] = cellValue[key];
-                }
-              });
-              
-              const jsonString = JSON.stringify(safeObj);
-              // 数値に変換可能な場合は数値に
-              if (!isNaN(Number(jsonString))) {
-                node.value_monthly = Number(jsonString);
-              } else {
-                // 文字列の場合はObject内容を確認
-                if (jsonString === '{}' || jsonString === '[]') {
-                  node.value_monthly = 0; // 空オブジェクト/配列は0として扱う
-                } else {
-                  // Object内容が実際にある場合は文字列化
-                  node.value_monthly = String(safeObj).substring(0, 100); // 長すぎる場合は切り詰め
-                }
-              }
-            } catch (jsonErr) {
-              console.warn('value_monthly: JSON変換失敗', jsonErr);
-              node.value_monthly = String(cellValue).substring(0, 50); // 長すぎる場合は切り詰め
-            }
-          }
-        } catch (objErr) {
-          console.error('value_monthly: オブジェクトの変換エラー', objErr);
-          node.value_monthly = 'ERROR';
-        }
-      } else {
-        // その他の型は文字列化
-        node.value_monthly = String(cellValue);
-      }
-    } catch (error) {
-      console.error(`value_monthly: スプレッドシート参照の解決に失敗: ${error.message}`);
-      node.value_monthly = 'ERROR';
-    }
-  }
-  
-  // APIリクエスト状況を出力
-  console.log('API呼び出し統計:', {
-    総リクエスト数: apiState.totalRequests,
-    成功: apiState.successRequests,
-    失敗: apiState.failedRequests,
-    現在実行中: apiState.activeCalls
-  });
-  
-  // ノードの子ノードも同様に処理（深度を考慮）
+  // 子ノードを再帰的に処理
   if (node.children && Array.isArray(node.children)) {
-    // 子ノード処理前に現在の深さレベルを記録
-    const previousDepth = apiState.currentDepth;
-    // 深さを1増やす
-    apiState.currentDepth++;
-    
-    // 子ノードの数が多い場合はバッチ処理
-    const batchSize = Math.max(1, Math.ceil(5 / apiState.currentDepth)); // より小さいバッチサイズに調整
-    const batches = [];
-    
-    // 月次データ関連が含まれる場合は特に慎重に
-    if (node.title && typeof node.title === 'string' && 
-        (node.title.toLowerCase().includes('monthly') || node.title.toLowerCase().includes('月次'))) {
-      console.log(`月次データ関連の子ノード処理ではバッチサイズを最小化`);
-      batchSize = 1; // 完全に逐次処理に
+    for (let i = 0; i < node.children.length; i++) {
+      node.children[i] = await resolveNodeReferences(node.children[i], spreadsheetId);
     }
-    
-    // 子ノードを複数のバッチに分割
-    for (let i = 0; i < node.children.length; i += batchSize) {
-      batches.push(node.children.slice(i, i + batchSize));
-    }
-    
-    console.log(`子ノード ${node.children.length}個を${batches.length}バッチに分割 (深さ: ${apiState.currentDepth})`);
-    
-    // 結果を格納する配列
-    const processedChildren = [];
-    
-    // 各バッチを順次処理
-    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-      const batch = batches[batchIndex];
-      console.log(`バッチ ${batchIndex + 1}/${batches.length} 処理開始 (${batch.length}ノード)`);
-      
-      // バッチ間の待機時間（特に深いノードの場合）
-      if (batchIndex > 0) {
-        const batchWaitTime = 500 * apiState.currentDepth;
-        console.log(`バッチ間の待機: ${batchWaitTime}ms (深さ: ${apiState.currentDepth})`);
-        await delay(batchWaitTime);
-        
-        // 5バッチごとに追加の長い待機を入れる（API制限回避）
-        if (batchIndex % 5 === 0) {
-          const extraWaitTime = 2000;
-          console.log(`5バッチ処理完了による追加待機: ${extraWaitTime}ms`);
-          await delay(extraWaitTime);
-        }
-      }
-      
-      // バッチ内の各ノードを並列処理
-      const batchPromises = [];
-      for (const child of batch) {
-        if (child) {
-          // 親ノードの処理完了後、深さに応じた間隔を空けてから子ノードを処理
-          const childWaitTime = 300 + (150 * apiState.currentDepth);
-          console.log(`子ノード処理前の待機: ${childWaitTime}ms (深さ: ${apiState.currentDepth})`);
-          await delay(childWaitTime);
-          
-          // 子ノードにmonthlyや月次の文字列が含まれる場合は追加待機
-          if (child.title && typeof child.title === 'string' && 
-              (child.title.toLowerCase().includes('monthly') || child.title.toLowerCase().includes('月次'))) {
-            const extraMonthlyWait = 1000;
-            console.log(`月次関連の子ノード処理前に追加待機: ${extraMonthlyWait}ms`);
-            await delay(extraMonthlyWait);
-          }
-          
-          batchPromises.push(resolveSpreadsheetReferences(child));
-        }
-      }
-      
-      // バッチの処理を待機し、結果を結合
-      const batchResults = await Promise.all(batchPromises);
-      processedChildren.push(...batchResults);
-      
-      console.log(`バッチ ${batchIndex + 1}/${batches.length} 処理完了`);
-    }
-    
-    // 結果を設定
-    node.children = processedChildren;
-    
-    // 深さレベルを元に戻す
-    apiState.currentDepth = previousDepth;
   }
   
   return node;
 }
 
+/**
+ * YAMLのルートノードからスプレッドシート参照を解決
+ * @param {Object} rootNode - KPIツリーのルートノード
+ * @returns {Promise<Object>} 参照が解決されたルートノード
+ */
+async function resolveSpreadsheetReferences(rootNode) {
+  if (!rootNode) return rootNode;
+  
+  console.log('スプレッドシート参照の解決を開始します...');
+  
+  // スプレッドシートIDを取得（ノード、グローバル設定、環境変数の順で確認）
+  let spreadsheetId = null;
+  
+  // ノードに直接指定されたID
+  if (rootNode.spreadsheet && rootNode.spreadsheet.id) {
+    spreadsheetId = rootNode.spreadsheet.id;
+    console.log(`ルートレベルのスプレッドシートIDを使用: ${spreadsheetId}`);
+  }
+  // グローバル設定からID
+  else if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
+    spreadsheetId = global.kpiTreeConfig.spreadsheet.id;
+    console.log(`グローバル設定からスプレッドシートIDを使用: ${spreadsheetId}`);
+  }
+  // 環境変数からID
+  else if (process.env.KPI_TREE_SPREADSHEET_ID) {
+    spreadsheetId = process.env.KPI_TREE_SPREADSHEET_ID;
+    console.log(`環境変数からスプレッドシートIDを使用: ${spreadsheetId}`);
+  }
+  
+  if (!spreadsheetId) {
+    console.error('スプレッドシートIDが見つかりません。設定ファイルまたは環境変数で指定してください。');
+    process.exit(1);
+  }
+  
+  // ルートから再帰的にノードの参照を解決
+  const resolvedRoot = await resolveNodeReferences(rootNode, spreadsheetId);
+  console.log('スプレッドシート参照の解決が完了しました');
+  
+  return resolvedRoot;
+}
+
 module.exports = {
   resolveSpreadsheetReferences,
   getCellValue,
-  getCellValueWithRetry,
-  clearCache,
-  setGlobalSpreadsheetId,
-  getEffectiveSpreadsheetId,
-  delay // 外部からも利用できるように公開
+  fetchAndCacheSheet
 };

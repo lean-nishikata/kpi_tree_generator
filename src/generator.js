@@ -554,7 +554,7 @@ function generateTreeHtml(node, level = 0, path = 'root') {
                   // 非同期処理をプロミスとして実行
                   try {
                     // 必要なモジュールをインポート
-                    const { getCellValueWithRetry } = require('./spreadsheet-helper');
+                    const { getCellValue } = require('./spreadsheet-helper');
                     
                     // 非同期処理を簡略化して同期的に扱う
                     displayValue = '取得中...'; // 一時的な表示値
@@ -563,7 +563,7 @@ function generateTreeHtml(node, level = 0, path = 'root') {
                     setTimeout(async () => {
                       try {
                         // 実際にセルの値取得を試みる
-                        const result = await getCellValueWithRetry(globalId, displayValue.spreadsheet.range, 2, 300);
+                        const result = await getCellValue(globalId, displayValue.spreadsheet.range);
                         console.log(`→ APIから値を取得しました:`, result);
                         
                         // 結果の型に応じた処理
