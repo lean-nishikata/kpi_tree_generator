@@ -10,6 +10,25 @@ const { JWT } = require('google-auth-library');
 require('dotenv').config();
 
 /**
+ * 遅延関数 - 指定したミリ秒だけ待機する
+ * @param {number} ms - 待機ミリ秒
+ * @returns {Promise<void>} 待機後に解決するPromise
+ */
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * API呼び出しの状態を追跡するためのシンプルなカウンター
+ */
+const apiStats = {
+  totalRequests: 0,
+  successRequests: 0,
+  failedRequests: 0,
+  lastRequestTime: 0,
+  // 同時実行数を制限するためのセマフォ
+  activeCalls: 0
+};
+
+/**
  * 環境変数からサービスアカウントのキーパスを取得
  * @returns {string} キーファイルのパス
  */
@@ -77,6 +96,37 @@ function loadServiceAccountKey() {
 }
 
 /**
+ * GoogleスプレッドシートのセルからA1表記の値を取得（リトライ機能付き）
+ * @param {string} spreadsheetId - スプレッドシートID
+ * @param {string} range - A1表記の範囲（例: 'Sheet1!A1'）
+ * @param {number} retries - 最大再試行回数
+ * @param {number} initialDelay - 初回再試行までの待機時間(ms)
+ * @returns {Promise<any>} セルの値
+ */
+async function getCellValueWithRetry(spreadsheetId, range, retries = 3, initialDelay = 200) {
+  let currentDelay = initialDelay;
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      if (attempt > 0) {
+        console.log(`${range}の取得リトライ (#${attempt}), ${currentDelay}ms待機後`);
+        await delay(currentDelay);
+        currentDelay *= 2; // 指数バックオフ
+      }
+      
+      return await getCellValue(spreadsheetId, range);
+    } catch (error) {
+      apiStats.failedRequests++;
+      if (attempt === retries) {
+        console.error(`${range}の最終リトライも失敗: ${error.message}`);
+        throw error;
+      }
+      console.warn(`${range}の取得に失敗、リトライします: ${error.message}`);
+    }
+  }
+}
+
+/**
  * GoogleスプレッドシートのセルからA1表記の値を取得
  * @param {string} spreadsheetId - スプレッドシートID
  * @param {string} range - A1表記の範囲（例: 'Sheet1!A1'）
@@ -84,14 +134,36 @@ function loadServiceAccountKey() {
  */
 async function getCellValue(spreadsheetId, range) {
   try {
+    // 前回のリクエストから最低100ms空ける
+    const now = Date.now();
+    const timeSinceLastRequest = now - apiStats.lastRequestTime;
+    if (timeSinceLastRequest < 100) {
+      const waitTime = 100 - timeSinceLastRequest;
+      console.log(`APIレート制限回避のため${waitTime}ms待機`);
+      await delay(waitTime);
+    }
+    
+    // 同時実行数を制限（最大3つまで）
+    while (apiStats.activeCalls >= 3) {
+      console.log(`同時API呼び出し数が多いため50ms待機 (現在: ${apiStats.activeCalls})`);
+      await delay(50);
+    }
+    
+    apiStats.activeCalls++;
+    apiStats.lastRequestTime = Date.now();
+    apiStats.totalRequests++;
+    
     // シート名とセル参照を分離
     const [sheetName, cellRef] = range.split('!');
+    
+    console.log(`スプレッドシート値を取得: ID=${spreadsheetId}, シート=${sheetName}, セル=${cellRef}`);
     
     // サービスアカウントキーの読み込み
     const serviceAccountKey = loadServiceAccountKey();
     
     // 認証情報が読み込めなかった場合
     if (!serviceAccountKey) {
+      console.error('認証情報の読み込みに失敗しました');
       return "ERROR: Auth Failed";
     }
     
@@ -149,15 +221,20 @@ async function getCellValue(spreadsheetId, range) {
       
       if (!values || values.length === 0 || values[0].length === 0) {
         console.log(`セル ${cellRef} の値が空です（API経由）`);
+        apiStats.successRequests++;
         return 0;
       }
       
       // API経由での値取得
       const cellValue = values[0][0];
       console.log(`セル値取得成功: ${cellRef} = `, cellValue, ` (データ型: ${typeof cellValue})`);
+      apiStats.successRequests++;
       return cellValue;
       
     } catch (authError) {
+      console.warn(`1次APIアクセスに失敗、フォールバック試行: ${authError.message}`);
+      await delay(300); // フォールバック前に少し待機
+      
       try {
         // 別の方法で直接アクセス
         const { google } = require('googleapis');
@@ -185,96 +262,26 @@ async function getCellValue(spreadsheetId, range) {
         
         if (!values || values.length === 0 || values[0].length === 0) {
           console.log(`セル ${cellRef} の値が空です（API経由）`);
+          apiStats.successRequests++;
           return 0;
         }
         
         // API経由での値取得
         const cellValue = values[0][0];
         console.log(`フォールバックセル値取得成功: ${cellRef} = `, cellValue, ` (データ型: ${typeof cellValue})`);
+        apiStats.successRequests++;
         return cellValue;
       } catch (error2) {
+        console.error(`フォールバックAPIもエラー: ${error2.message}`);
         throw new Error('Failed to access spreadsheet');
       }
     }
-    
-    // 認証情報が返されたので直接APIにアクセス
-    const sheets = authClient; // 認証オブジェクトはもうsheetsクライアント
-    
-    // シート名とセル参照は既に取得済み（関数の先頭で分離している）
-    
-    try {
-      // 値を直接取得
-      
-      // 値を取得（check-sheets-values.jsと同じ方法）
-      const fullRange = `${sheetName}!${cellRef}`;
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: spreadsheetId,
-        range: fullRange,
-      });
-      
-      // レスポンスの値を取得
-      const values = response.data.values;
-      
-      if (!values || values.length === 0 || values[0].length === 0) {
-        console.log(`セル ${cellRef} の値が空です（API経由）`);
-        return 0;
-      }
-      
-      // API経由での値取得 - check-sheets-values.jsと同じロジック
-      const cellValue = values[0][0];
-      
-      // データの形式を検証
-      if (typeof cellValue === 'object') {
-        try {
-          // オブジェクトがnullの場合
-          if (cellValue === null) {
-            return "";
-          }
-          
-          // 日付オブジェクトの場合
-          if (cellValue instanceof Date) {
-            return cellValue.toISOString();
-          }
-          
-          // オブジェクトから安全に値を取り出す試み
-          if (cellValue.data && cellValue.data.values && 
-              Array.isArray(cellValue.data.values) && 
-              cellValue.data.values.length > 0) {
-            return cellValue.data.values[0][0];
-          }
-          
-          // APIレスポンスオブジェクトから値を抽出する試み
-          if (cellValue.formattedValue) {
-            return cellValue.formattedValue;
-          }
-          
-          // 単純なキー値ペアから値を抽出する試み
-          if (cellValue["0"] !== undefined) {
-            return cellValue["0"];
-          }
-          
-          // valueプロパティがある場合
-          if (cellValue.value !== undefined) {
-            return cellValue.value;
-          }
-          
-          // 最後の手段として文字列化
-          return JSON.stringify(cellValue);
-        } catch (objError) {
-          console.error('オブジェクト解析エラー:', objError);
-          return "ERROR: Object parsing";
-        }
-      }
-      
-      // プリミティブ値はそのまま返す
-      return cellValue;
-    } catch (apiError) {
-      // API呼び出しエラー
-      return "ERROR: 値取得失敗";
-    }
-    
   } catch (error) {
-    return "ERROR: Access Failed";
+    console.error(`スプレッドシートアクセスエラー: ${error.message}`);
+    console.error(error.stack);
+    throw error;
+  } finally {
+    apiStats.activeCalls--;
   }
 }
 
@@ -334,7 +341,10 @@ async function resolveSpreadsheetReferences(node) {
     console.log(`スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
     try {
       console.log(`スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
-      const cellValue = await getCellValue(id, range);
+      
+      // リトライ機能付きの関数を使用
+      const cellValue = await getCellValueWithRetry(id, range);
+      
       console.log(`スプレッドシートから値を取得成功: (${range})`);
       console.log(`→ 値:`, cellValue);
       console.log(`→ 型:`, typeof cellValue);
@@ -392,53 +402,23 @@ async function resolveSpreadsheetReferences(node) {
               // 最も直接的な方法でAPI再取得を試みる
               const { id, range } = node.value.spreadsheet;
               
-              // 認証情報を取得
-              const serviceAccountKey = loadServiceAccountKey();
-              if (!serviceAccountKey) {
-                throw new Error('認証情報の読み込みに失敗しました');
-              }
-
-              // googleapis を使用した直接アクセス
-              const { google } = require('googleapis');
-              const auth = new google.auth.JWT(
-                serviceAccountKey.client_email,
-                null,
-                serviceAccountKey.private_key,
-                ['https://www.googleapis.com/auth/spreadsheets.readonly']
-              );
+              // リトライ機能付きの関数を使用
+              const directValue = await getCellValueWithRetry(id, range, 2, 300);
               
-              // Sheets API クライアントの初期化
-              const sheets = google.sheets({ version: 'v4', auth });
-              
-              // 値を取得
-              const response = await sheets.spreadsheets.values.get({
-                spreadsheetId: id,
-                range: range,
-              });
-              
-              if (response.data && response.data.values && response.data.values.length > 0) {
-                let directValue = response.data.values[0][0];
-                
-                // 取得した値を適切な型に変換
-                if (directValue === null || directValue === undefined) {
-                  // 空の値は0として扱う
-                  node.value = 0;
-                } else if (typeof directValue === 'object') {
-                  // オブジェクトの場合は文字列化
-                  if (directValue instanceof Date) {
-                    node.value = directValue.toISOString();
-                  } else {
-                    // その他のオブジェクトは値プロパティを試みる、なければ文字列化
-                    node.value = directValue.value !== undefined ? directValue.value : String(directValue);
-                  }
+              if (directValue === null || directValue === undefined) {
+                node.value = 0;
+              } else if (typeof directValue === 'object') {
+                if (directValue instanceof Date) {
+                  node.value = directValue.toISOString();
                 } else {
-                  // 文字列を数値に変換（可能な場合）
-                  node.value = typeof directValue === 'string' && !isNaN(Number(directValue)) 
-                    ? Number(directValue) 
-                    : directValue;
+                  node.value = directValue.value !== undefined ? directValue.value : String(directValue);
                 }
-                return; // 値が設定できたので終了
+              } else {
+                node.value = typeof directValue === 'string' && !isNaN(Number(directValue)) 
+                  ? Number(directValue) 
+                  : directValue;
               }
+              return;
             } catch (retryError) {
               console.error('API再取得エラー:', retryError.message);
             }
@@ -504,7 +484,9 @@ async function resolveSpreadsheetReferences(node) {
       const id = parts[0];
       const range = parts[1];
       try {
-        const cellValue = await getCellValue(id, range);
+        // リトライ機能付きの関数を使用
+        const cellValue = await getCellValueWithRetry(id, range);
+        
         console.log(`文字列形式の参照から値を取得 (${range}):`, cellValue, typeof cellValue);
         
         // 値のタイプに応じた処理
@@ -566,7 +548,10 @@ async function resolveSpreadsheetReferences(node) {
     console.log(`value_daily: スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
     try {
       console.log(`value_daily: スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
-      const cellValue = await getCellValue(id, range);
+      
+      // リトライ機能付きの関数を使用
+      const cellValue = await getCellValueWithRetry(id, range);
+      
       console.log(`value_daily: スプレッドシートから値を取得成功: (${range})`);
       console.log(`→ 値:`, cellValue);
       console.log(`→ 型:`, typeof cellValue);
@@ -599,15 +584,15 @@ async function resolveSpreadsheetReferences(node) {
           }
         } catch (objErr) {
           console.error('value_daily: オブジェクトの変換エラー', objErr);
-          node.value_daily = "ERROR";
+          node.value_daily = 'ERROR';
         }
       } else {
-        // その他の型はそのまま使用
-        node.value_daily = cellValue;
+        // その他の型は文字列化
+        node.value_daily = String(cellValue);
       }
     } catch (error) {
-      console.error(`value_daily: スプレッドシート参照解決エラー:`, error.message);
-      node.value_daily = "ERROR";
+      console.error(`value_daily: スプレッドシート参照の解決に失敗: ${error.message}`);
+      node.value_daily = 'ERROR';
     }
   }
   
@@ -620,7 +605,10 @@ async function resolveSpreadsheetReferences(node) {
     console.log(`value_monthly: スプレッドシートから値を取得開始: (ID: ${id}, 範囲: ${range})`);
     try {
       console.log(`value_monthly: スプレッドシートから値を取得開始: ID=${id}, 範囲=${range}`);
-      const cellValue = await getCellValue(id, range);
+      
+      // リトライ機能付きの関数を使用
+      const cellValue = await getCellValueWithRetry(id, range);
+      
       console.log(`value_monthly: スプレッドシートから値を取得成功: (${range})`);
       console.log(`→ 値:`, cellValue);
       console.log(`→ 型:`, typeof cellValue);
@@ -653,26 +641,39 @@ async function resolveSpreadsheetReferences(node) {
           }
         } catch (objErr) {
           console.error('value_monthly: オブジェクトの変換エラー', objErr);
-          node.value_monthly = "ERROR";
+          node.value_monthly = 'ERROR';
         }
       } else {
-        // その他の型はそのまま使用
-        node.value_monthly = cellValue;
+        // その他の型は文字列化
+        node.value_monthly = String(cellValue);
       }
     } catch (error) {
-      console.error(`value_monthly: スプレッドシート参照解決エラー:`, error.message);
-      node.value_monthly = "ERROR";
+      console.error(`value_monthly: スプレッドシート参照の解決に失敗: ${error.message}`);
+      node.value_monthly = 'ERROR';
     }
   }
   
-  // 子ノードの再帰処理
+  // APIリクエスト状況を出力
+  console.log('API呼び出し統計:', {
+    総リクエスト数: apiStats.totalRequests,
+    成功: apiStats.successRequests,
+    失敗: apiStats.failedRequests,
+    現在実行中: apiStats.activeCalls
+  });
+  
+  // ノードの子ノードも同様に処理
   if (node.children && Array.isArray(node.children)) {
-    // null/undefinedのノードをフィルタリング
-    node.children = await Promise.all(
-      node.children
-        .filter(child => child !== null && child !== undefined)
-        .map(child => resolveSpreadsheetReferences(child))
-    );
+    const childPromises = [];
+    for (const child of node.children) {
+      if (child) {
+        // 親ノードの処理完了後、少し間を開けてから子ノードを処理
+        await delay(50);
+        childPromises.push(resolveSpreadsheetReferences(child));
+      }
+    }
+    
+    // すべての子ノードの処理を待機
+    node.children = await Promise.all(childPromises);
   }
   
   return node;
@@ -680,5 +681,6 @@ async function resolveSpreadsheetReferences(node) {
 
 module.exports = {
   resolveSpreadsheetReferences,
-  getCellValue
+  getCellValue,
+  getCellValueWithRetry
 };
