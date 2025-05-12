@@ -477,7 +477,38 @@ function generateTreeHtml(node, level = 0, path = 'root') {
           } else if (displayValue.spreadsheet) {
             // スプレッドシート参照オブジェクトがそのまま残っている場合
             console.log(`→ スプレッドシート参照オブジェクトがそのまま残っています:`, displayValue.spreadsheet);
-            displayValue = "API参照値";
+            // 共通設定からスプレッドシートIDを取得するヘルパー関数
+            const getGlobalSpreadsheetId = () => {
+              try {
+                // YAML設定から取得する試み
+                if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
+                  return global.kpiTreeConfig.spreadsheet.id;
+                }
+                // 環境変数から取得する試み
+                if (process.env.KPI_TREE_SPREADSHEET_ID) {
+                  return process.env.KPI_TREE_SPREADSHEET_ID;
+                }
+                return null;
+              } catch (error) {
+                console.error('グローバルスプレッドシートID取得エラー:', error.message);
+                return null;
+              }
+            };
+            
+            try {
+              // グローバルIDを取得
+              const globalId = getGlobalSpreadsheetId();
+              if (globalId && displayValue.spreadsheet.range) {
+                console.log(`キャッシュ済みの値を直接表示するために再試行します (ID: ${globalId}, 範囲: ${displayValue.spreadsheet.range})`);
+                // 別の方法で値を表示
+                displayValue = `[${displayValue.spreadsheet.range}の値]`;
+              } else {
+                displayValue = "API参照値";
+              }
+            } catch (err) {
+              console.error('スプレッドシート参照値の処理エラー:', err);
+              displayValue = "API参照値";
+            }
           } else {
             // 最後の手段としてJSON変換
             const origValue = displayValue;

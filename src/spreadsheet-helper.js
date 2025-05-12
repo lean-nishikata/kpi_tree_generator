@@ -696,30 +696,67 @@ async function resolveSpreadsheetReferences(node) {
   // process.stdoutに直接書き込み（Docker環境でのログ出力を確実に）
   process.stdout.write('\nノードのスプレッドシート参照確認中...\n');
   
+  // グローバルなスプレッドシート設定を保存
+  if (!global.kpiTreeConfig) {
+    global.kpiTreeConfig = {};
+  }
+  
   // グローバルスプレッドシートIDを取得（YAMLに設定されているか確認）
   const getGlobalSpreadsheetId = () => {
     try {
+      // ルートノードの場合、ルートレベルの設定を保存
+      if (node.spreadsheet && node.spreadsheet.id) {
+        if (!global.kpiTreeConfig.spreadsheet) {
+          global.kpiTreeConfig.spreadsheet = {};
+        }
+        global.kpiTreeConfig.spreadsheet.id = node.spreadsheet.id;
+        console.log(`ルートレベルのスプレッドシートIDをグローバル設定に保存: ${node.spreadsheet.id}`);
+        return node.spreadsheet.id;
+      }
+      
       // node.configやnode._configなどからグローバル設定を探す
       if (node.config && node.config.spreadsheet && node.config.spreadsheet.id) {
+        if (!global.kpiTreeConfig.spreadsheet) {
+          global.kpiTreeConfig.spreadsheet = {};
+        }
+        global.kpiTreeConfig.spreadsheet.id = node.config.spreadsheet.id;
         return node.config.spreadsheet.id;
       }
       if (node._config && node._config.spreadsheet && node._config.spreadsheet.id) {
+        if (!global.kpiTreeConfig.spreadsheet) {
+          global.kpiTreeConfig.spreadsheet = {};
+        }
+        global.kpiTreeConfig.spreadsheet.id = node._config.spreadsheet.id;
         return node._config.spreadsheet.id;
       }
-      // globalConfigが設定されている場合（ルートノードなど）
-      if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
+      
+      // すでにグローバル設定があればそれを使用
+      if (global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
         return global.kpiTreeConfig.spreadsheet.id;
       }
+      
       // 最終手段として環境変数から取得
       if (process.env.KPI_TREE_SPREADSHEET_ID) {
+        if (!global.kpiTreeConfig.spreadsheet) {
+          global.kpiTreeConfig.spreadsheet = {};
+        }
+        global.kpiTreeConfig.spreadsheet.id = process.env.KPI_TREE_SPREADSHEET_ID;
         return process.env.KPI_TREE_SPREADSHEET_ID;
       }
+      
+      console.log('スプレッドシートIDが見つかりません。index.yamlに正しく設定されているか確認してください。');
       return null;
     } catch (error) {
       console.error('グローバルスプレッドシートID取得エラー:', error.message);
       return null;
     }
   };
+  
+  // 設定をログ出力
+  const globalId = getGlobalSpreadsheetId();
+  if (globalId) {
+    console.log(`グローバルスプレッドシートID: ${globalId}`);
+  }
 
   // valueフィールドのスプレッドシート参照を解決
   if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
