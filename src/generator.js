@@ -145,8 +145,39 @@ async function generateKPITree() {
         
         if (keyPath && fs.existsSync(keyPath)) {
           console.log(`スプレッドシート参照の解決を開始します...`);
+          
+          // グローバルスプレッドシート設定を初期化
+          if (!global.kpiTreeConfig) {
+            global.kpiTreeConfig = {};
+          }
+          
+          // YAMLファイルのルートレベルのスプレッドシート設定をグローバル変数に保存
+          if (config.spreadsheet && config.spreadsheet.id) {
+            console.log(`YAMLファイルからスプレッドシートIDを読み込みました: ${config.spreadsheet.id}`);
+            global.kpiTreeConfig.spreadsheet = config.spreadsheet;
+            
+            // rootノードにも設定を反映
+            if (!config.root.spreadsheet) {
+              config.root.spreadsheet = {};
+            }
+            config.root.spreadsheet.id = config.spreadsheet.id;
+          } else {
+            console.warn('警告: YAMLファイルのルートレベルにスプレッドシートIDが設定されていません');
+          }
+          
+          // 環境変数からIDを設定する場合
+          if (process.env.KPI_TREE_SPREADSHEET_ID) {
+            console.log(`環境変数からスプレッドシートIDを設定します: ${process.env.KPI_TREE_SPREADSHEET_ID}`);
+            if (!global.kpiTreeConfig.spreadsheet) {
+              global.kpiTreeConfig.spreadsheet = {};
+            }
+            global.kpiTreeConfig.spreadsheet.id = process.env.KPI_TREE_SPREADSHEET_ID;
+          }
+          
+          // スプレッドシート参照を解決
           config.root = await resolveSpreadsheetReferences(config.root);
           console.log(`スプレッドシート参照の解決が完了しました`);
+          
         } else {
           // スプレッドシート参照を持つノードのvalueを"ERROR"に置き換える関数
           const markSpreadsheetRefAsError = (node) => {

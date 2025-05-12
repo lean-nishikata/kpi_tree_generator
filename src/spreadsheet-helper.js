@@ -1095,14 +1095,51 @@ async function resolveSpreadsheetReferences(node) {
       } else if (typeof cellValue === 'object') {
         // オブジェクトの場合は文字列化して試みる
         try {
-          if (cellValue.data && cellValue.data.values && 
+          if (cellValue === null) {
+            node.value_monthly = 0;
+          } else if (cellValue.data && cellValue.data.values && 
               Array.isArray(cellValue.data.values) && 
               cellValue.data.values.length > 0 && 
               cellValue.data.values[0].length > 0) {
             const rawValue = cellValue.data.values[0][0];
             node.value_monthly = rawValue;
+          } else if (cellValue.value !== undefined) {
+            // valueプロパティを持つ場合
+            node.value_monthly = cellValue.value;
+          } else if (cellValue.formattedValue !== undefined) {
+            // formattedValueプロパティを持つ場合
+            node.value_monthly = cellValue.formattedValue;
+          } else if (cellValue["0"] !== undefined) {
+            // 単純なキー値オブジェクトの場合
+            node.value_monthly = cellValue["0"];
           } else {
-            node.value_monthly = JSON.stringify(cellValue);
+            // 最後の手段として文字列化
+            try {
+              // またJSON文字列化の前に微調整
+              const safeObj = {};
+              Object.keys(cellValue).forEach(key => {
+                if (typeof cellValue[key] !== 'function' && !key.startsWith('_')) {
+                  safeObj[key] = cellValue[key];
+                }
+              });
+              
+              const jsonString = JSON.stringify(safeObj);
+              // 数値に変換可能な場合は数値に
+              if (!isNaN(Number(jsonString))) {
+                node.value_monthly = Number(jsonString);
+              } else {
+                // 文字列の場合はObject内容を確認
+                if (jsonString === '{}' || jsonString === '[]') {
+                  node.value_monthly = 0; // 空オブジェクト/配列は0として扱う
+                } else {
+                  // Object内容が実際にある場合は文字列化
+                  node.value_monthly = String(safeObj).substring(0, 100); // 長すぎる場合は切り詰め
+                }
+              }
+            } catch (jsonErr) {
+              console.warn('value_monthly: JSON変換失敗', jsonErr);
+              node.value_monthly = String(cellValue).substring(0, 50); // 長すぎる場合は切り詰め
+            }
           }
         } catch (objErr) {
           console.error('value_monthly: オブジェクトの変換エラー', objErr);
