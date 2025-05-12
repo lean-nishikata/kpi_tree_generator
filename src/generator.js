@@ -530,9 +530,59 @@ function generateTreeHtml(node, level = 0, path = 'root') {
               // グローバルIDを取得
               const globalId = getGlobalSpreadsheetId();
               if (globalId && displayValue.spreadsheet.range) {
-                console.log(`キャッシュ済みの値を直接表示するために再試行します (ID: ${globalId}, 範囲: ${displayValue.spreadsheet.range})`);
-                // 別の方法で値を表示
-                displayValue = `[${displayValue.spreadsheet.range}の値]`;
+                console.log(`スプレッドシートから値を取得します (ID: ${globalId}, 範囲: ${displayValue.spreadsheet.range})`);
+                
+                // 非同期処理をプロミスとして実行
+                try {
+                  // 必要なモジュールをインポート
+                  const { getCellValueWithRetry } = require('./spreadsheet-helper');
+                  
+                  // タイムアウトを設定してAPI呼び出し
+                  const apiTimeout = 3000; // 3秒のタイムアウト
+                  
+                  // 実際にセルの値取得を試みる
+                  getCellValueWithRetry(globalId, displayValue.spreadsheet.range, 2, 300)
+                    .then(result => {
+                      console.log(`→ APIから値を取得しました:`, result);
+                      
+                      // 取得結果によって処理を分ける
+                      if (result === null || result === undefined) {
+                        displayValue = '0';
+                      } else if (typeof result === 'number') {
+                        displayValue = result;
+                      } else if (typeof result === 'string') {
+                        // 文字列が数値に変換可能か確認
+                        displayValue = !isNaN(Number(result)) ? Number(result) : result;
+                      } else if (typeof result === 'object') {
+                        // オブジェクトの場合は意味のある値を探す
+                        if (result.value !== undefined) {
+                          displayValue = result.value;
+                        } else if (result.formattedValue !== undefined) {
+                          displayValue = result.formattedValue;
+                        } else {
+                          // どれも該当しなければ文字列化
+                          try {
+                            displayValue = JSON.stringify(result);
+                          } catch (e) {
+                            displayValue = String(result);
+                          }
+                        }
+                      } else {
+                        // その他のタイプは文字列化
+                        displayValue = String(result);
+                      }
+                    })
+                    .catch(apiError => {
+                      console.error(`→ API値取得エラー:`, apiError.message);
+                      displayValue = '0'; // エラー時はデフォルト値を0に設定
+                    });
+                    
+                  // プロミスが完了するまで一時的に別の値を表示
+                  displayValue = '...';
+                } catch (error) {
+                  console.error('スプレッドシート参照処理エラー:', error);
+                  displayValue = '0';
+                }
               } else {
                 displayValue = "API参照値";
               }
