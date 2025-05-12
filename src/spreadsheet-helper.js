@@ -481,9 +481,9 @@ async function getCellValue(spreadsheetId, range) {
   try {
     // 前回のリクエストから最低空ける時間（ノードの深さに応じて増加）
     const now = Date.now();
-    const timeSinceLastRequest = now - apiStats.lastRequestTime;
+    const timeSinceLastRequest = now - apiState.lastRequestTime;
     const baseDelay = 500; // 基本待機時間を200msから500msに増加
-    const depthFactor = Math.max(1, apiStats.currentDepth / 2); // 深さによる倍率を強化
+    const depthFactor = Math.max(1, apiState.currentDepth / 2); // 深さによる倍率を強化
     
     // monthlyのAPIリクエストの場合は待機時間を2倍に
     let requiredWait = Math.floor(baseDelay * depthFactor);
@@ -499,23 +499,23 @@ async function getCellValue(spreadsheetId, range) {
     }
 
     // 同時実行数を制限（最大1つまで）- さらに厳しく制限
-    while (apiStats.activeCalls >= 1) {
-      const waitTime = 300 + (150 * apiStats.currentDepth); // 深さに応じた待機時間を大幅増加
-      console.log(`同時API呼び出し数が多いため${waitTime}ms待機 (現在: ${apiStats.activeCalls})`);
+    while (apiState.activeCalls >= 1) {
+      const waitTime = 300 + (150 * apiState.currentDepth); // 深さに応じた待機時間を大幅増加
+      console.log(`同時API呼び出し数が多いため${waitTime}ms待機 (現在: ${apiState.activeCalls})`);
       await delay(waitTime);
     }
 
     // 深いノードでエラーが多い場合は追加の待機
-    if (apiStats.deepNodeErrors > 3 && apiStats.currentDepth > 2) {
-      const cooldownTime = 500 * apiStats.currentDepth;
+    if (apiState.deepNodeErrors > 3 && apiState.currentDepth > 2) {
+      const cooldownTime = 500 * apiState.currentDepth;
       console.log(`深いノードでエラーが多発しているため${cooldownTime}ms追加待機`);
       await delay(cooldownTime);
-      apiStats.deepNodeErrors = Math.max(0, apiStats.deepNodeErrors - 1); // エラーカウントを減らす
+      apiState.deepNodeErrors = Math.max(0, apiState.deepNodeErrors - 1); // エラーカウントを減らす
     }
 
-    apiStats.activeCalls++;
-    apiStats.lastRequestTime = Date.now();
-    apiStats.totalRequests++;
+    apiState.activeCalls++;
+    apiState.lastRequestTime = Date.now();
+    apiState.totalRequests++;
     
     // シート名とセル参照を分離
     const [sheetName, cellRef] = range.split('!');
@@ -585,14 +585,14 @@ async function getCellValue(spreadsheetId, range) {
       
       if (!values || values.length === 0 || values[0].length === 0) {
         console.log(`セル ${cellRef} の値が空です（API経由）`);
-        apiStats.successRequests++;
+        apiState.successRequests++;
         return 0;
       }
       
       // API経由での値取得
       const cellValue = values[0][0];
       console.log(`セル値取得成功: ${cellRef} = `, cellValue, ` (データ型: ${typeof cellValue})`);
-      apiStats.successRequests++;
+      apiState.successRequests++;
       return cellValue;
       
     } catch (authError) {
@@ -626,14 +626,14 @@ async function getCellValue(spreadsheetId, range) {
         
         if (!values || values.length === 0 || values[0].length === 0) {
           console.log(`セル ${cellRef} の値が空です（API経由）`);
-          apiStats.successRequests++;
+          apiState.successRequests++;
           return 0;
         }
         
         // API経由での値取得
         const cellValue = values[0][0];
         console.log(`フォールバックセル値取得成功: ${cellRef} = `, cellValue, ` (データ型: ${typeof cellValue})`);
-        apiStats.successRequests++;
+        apiState.successRequests++;
         return cellValue;
       } catch (error2) {
         console.error(`フォールバックAPIもエラー: ${error2.message}`);
@@ -645,7 +645,7 @@ async function getCellValue(spreadsheetId, range) {
     console.error(error.stack);
     throw error;
   } finally {
-    apiStats.activeCalls--;
+    apiState.activeCalls--;
   }
 }
 
@@ -986,9 +986,9 @@ async function resolveSpreadsheetReferences(node) {
   // 日次データ取得前に小休止
   if (node.value_daily && typeof node.value_daily === 'object' && node.value_daily.spreadsheet) {
     // 日次データ取得前に少し待機（特に深いノードの場合）
-    if (apiStats.currentDepth > 1) {
-      const dailyPauseTime = 100 * apiStats.currentDepth;
-      console.log(`日次データ取得前の小休止: ${dailyPauseTime}ms (深さ: ${apiStats.currentDepth})`);
+    if (apiState.currentDepth > 1) {
+      const dailyPauseTime = 100 * apiState.currentDepth;
+      console.log(`日次データ取得前の小休止: ${dailyPauseTime}ms (深さ: ${apiState.currentDepth})`);
       await delay(dailyPauseTime);
     }
     process.stdout.write('スプレッドシート参照(value_daily)が見つかりました\n');
@@ -1049,18 +1049,18 @@ async function resolveSpreadsheetReferences(node) {
   // 月次データ取得前に極めて長めの待機
   if (node.value_monthly && typeof node.value_monthly === 'object' && node.value_monthly.spreadsheet) {
     // 月次データは特にエラーが出やすいため、非常に長めの待機を入れる
-    const monthlyPauseTime = 1500 + (500 * apiStats.currentDepth);
-    console.log(`月次データ取得前の特別待機: ${monthlyPauseTime}ms (深さ: ${apiStats.currentDepth})`);
+    const monthlyPauseTime = 1500 + (500 * apiState.currentDepth);
+    console.log(`月次データ取得前の特別待機: ${monthlyPauseTime}ms (深さ: ${apiState.currentDepth})`);
     await delay(monthlyPauseTime);
     
     // さらに実行中のリクエストがすべて完了するまで待機
-    if (apiStats.activeCalls > 0) {
-      console.log(`月次データ取得前に実行中の${apiStats.activeCalls}個のリクエストが完了するまで待機`);
+    if (apiState.activeCalls > 0) {
+      console.log(`月次データ取得前に実行中の${apiState.activeCalls}個のリクエストが完了するまで待機`);
       let totalWaitTime = 0;
-      while (apiStats.activeCalls > 0 && totalWaitTime < 10000) { // 最大10秒まで待機
+      while (apiState.activeCalls > 0 && totalWaitTime < 10000) { // 最大10秒まで待機
         await delay(500);
         totalWaitTime += 500;
-        console.log(`待機中... 経過: ${totalWaitTime}ms, 残りリクエスト: ${apiStats.activeCalls}`);
+        console.log(`待機中... 経過: ${totalWaitTime}ms, 残りリクエスト: ${apiState.activeCalls}`);
       }
     }
     process.stdout.write('スプレッドシート参照(value_monthly)が見つかりました\n');
@@ -1157,21 +1157,21 @@ async function resolveSpreadsheetReferences(node) {
   
   // APIリクエスト状況を出力
   console.log('API呼び出し統計:', {
-    総リクエスト数: apiStats.totalRequests,
-    成功: apiStats.successRequests,
-    失敗: apiStats.failedRequests,
-    現在実行中: apiStats.activeCalls
+    総リクエスト数: apiState.totalRequests,
+    成功: apiState.successRequests,
+    失敗: apiState.failedRequests,
+    現在実行中: apiState.activeCalls
   });
   
   // ノードの子ノードも同様に処理（深度を考慮）
   if (node.children && Array.isArray(node.children)) {
     // 子ノード処理前に現在の深さレベルを記録
-    const previousDepth = apiStats.currentDepth;
+    const previousDepth = apiState.currentDepth;
     // 深さを1増やす
-    apiStats.currentDepth++;
+    apiState.currentDepth++;
     
     // 子ノードの数が多い場合はバッチ処理
-    const batchSize = Math.max(1, Math.ceil(5 / apiStats.currentDepth)); // より小さいバッチサイズに調整
+    const batchSize = Math.max(1, Math.ceil(5 / apiState.currentDepth)); // より小さいバッチサイズに調整
     const batches = [];
     
     // 月次データ関連が含まれる場合は特に慎重に
@@ -1186,7 +1186,7 @@ async function resolveSpreadsheetReferences(node) {
       batches.push(node.children.slice(i, i + batchSize));
     }
     
-    console.log(`子ノード ${node.children.length}個を${batches.length}バッチに分割 (深さ: ${apiStats.currentDepth})`);
+    console.log(`子ノード ${node.children.length}個を${batches.length}バッチに分割 (深さ: ${apiState.currentDepth})`);
     
     // 結果を格納する配列
     const processedChildren = [];
@@ -1198,8 +1198,8 @@ async function resolveSpreadsheetReferences(node) {
       
       // バッチ間の待機時間（特に深いノードの場合）
       if (batchIndex > 0) {
-        const batchWaitTime = 500 * apiStats.currentDepth;
-        console.log(`バッチ間の待機: ${batchWaitTime}ms (深さ: ${apiStats.currentDepth})`);
+        const batchWaitTime = 500 * apiState.currentDepth;
+        console.log(`バッチ間の待機: ${batchWaitTime}ms (深さ: ${apiState.currentDepth})`);
         await delay(batchWaitTime);
         
         // 5バッチごとに追加の長い待機を入れる（API制限回避）
@@ -1215,8 +1215,8 @@ async function resolveSpreadsheetReferences(node) {
       for (const child of batch) {
         if (child) {
           // 親ノードの処理完了後、深さに応じた間隔を空けてから子ノードを処理
-          const childWaitTime = 300 + (150 * apiStats.currentDepth);
-          console.log(`子ノード処理前の待機: ${childWaitTime}ms (深さ: ${apiStats.currentDepth})`);
+          const childWaitTime = 300 + (150 * apiState.currentDepth);
+          console.log(`子ノード処理前の待機: ${childWaitTime}ms (深さ: ${apiState.currentDepth})`);
           await delay(childWaitTime);
           
           // 子ノードにmonthlyや月次の文字列が含まれる場合は追加待機
@@ -1242,7 +1242,7 @@ async function resolveSpreadsheetReferences(node) {
     node.children = processedChildren;
     
     // 深さレベルを元に戻す
-    apiStats.currentDepth = previousDepth;
+    apiState.currentDepth = previousDepth;
   }
   
   return node;
