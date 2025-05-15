@@ -9,10 +9,17 @@
   <style>
     /* 埋め込みCSS */
     {{STYLE}}
-    
+  </style>
+  
+  <!-- カレンダー用CSS -->
+  <link rel="stylesheet" href="../static/css/calendar.css">
+  
+  <style>
     /* 追加のカスタムスタイル - 水平レイアウト専用 */
     body { margin: 0; }
-    
+  </style>
+  
+  <style>
     .kpi-tree li {
       display: flex;
       flex-direction: row;
@@ -80,6 +87,42 @@
               </div>
             </div>
             
+            <!-- カレンダー -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>カレンダー</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div class="calendar-container">
+                  <div class="calendar-header">
+                    <button id="prev-month" class="calendar-nav-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div id="current-month" class="current-month"></div>
+                    <button id="next-month" class="calendar-nav-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="weekdays">
+                    <div>日</div>
+                    <div>月</div>
+                    <div>火</div>
+                    <div>水</div>
+                    <div>木</div>
+                    <div>金</div>
+                    <div>土</div>
+                  </div>
+                  <div id="calendar-days" class="calendar-days">
+                    <!-- 日付はJavaScriptで動的に生成されます -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <!-- URLコピーボタンはドロワー内に配置（共有ボタン） -->
             <div class="drawer-section-item">
               <div class="drawer-item-header">
@@ -111,6 +154,9 @@
   
   <!-- 結合されたJSがここに埋め込まれます -->
   <!-- COMBINED_SCRIPTS_PLACEHOLDER -->
+  
+  <!-- カレンダースクリプト -->
+  <script src="../static/js/calendar.js"></script>
 
 </body>
 </html>
