@@ -506,7 +506,9 @@ h1 {
 
 /* Node styles */
 .node {
-  width: 180px; /* 横幅を固定 */
+  width: 180px !important; /* 横幅を固定、上書き防止 */
+  min-width: 180px !important; /* 最小幅も固定 */
+  max-width: 180px !important; /* 最大幅も固定 */
   min-height: 70px; /* 最低の高さ */
   height: auto; /* 内容に応じて高さを自動調整 */
   padding: 8px;
@@ -520,6 +522,7 @@ h1 {
   justify-content: center;
   position: relative;
   margin-bottom: 5px;
+  box-sizing: border-box !important; /* ボックスサイズ計算を固定 */
 }
 
 .node a {
