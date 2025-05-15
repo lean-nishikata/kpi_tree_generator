@@ -16,26 +16,6 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 
 ## 使用方法
 
-### ローカルでの使用
-
-1. YAML設定ファイルを `config` ディレクトリに配置します（例: `config/index.yaml`）
-2. Node.jsを使用してHTMLを生成します：
-   ```shell
-   node src/generator.js index
-   ```
-   （この例では `config/index.yaml` から `output/index.html` を生成します）
-3. ローカルで確認する場合は、HTTPサーバーを起動してアクセスすることを推奨します：
-   ```shell
-   npx http-server output -p 8090
-   ```
-   その後、ブラウザで http://localhost:8090 にアクセスできます。
-
-4. 本番環境用にHTMLを生成する場合：
-   ```shell
-   node src/generator.js index_prd
-   ```
-   （`config/index_prd.yaml` から `output/index_prd.html` を生成）
-
 ### Dockerでの使用
 
 ```shell
@@ -155,30 +135,7 @@ root:
       operator: "+"
 ```
 
-### Googleスプレッドシート参照
 
-Googleスプレッドシートの値を参照するには、次の2つの方法があります：
-
-#### 1. オブジェクト形式（詳細設定可能）
-```yaml
-value:
-  spreadsheet:
-    id: "1AbCdEfGhIjKlMnOpQrStUvWxYz"  # スプレッドシートID
-    range: "Sheet1!B2"                 # シート名とセル参照
-```
-
-#### 2. 簡易表記（文字列形式）
-```yaml
-value: "=spreadsheet:1AbCdEfGhIjKlMnOpQrStUvWxYz:Sheet1!B2"
-```
-
-### 重要な設定パラメータ
-
-- **title**: ツリーのタイトル
-- **theme**: テーマ色（"default", "blue", "red"）
-- **direction**: レイアウト方向（"horizontal" または "vertical"）
-- **public_url**: 公開ホスティングURL（例：Google Cloud Storage URL）
-  - この設定は共有リンク生成とGCSリダイレクトに必要です
 
 ## 付属の設定例
 
@@ -253,20 +210,3 @@ gsutil acl ch -u AllUsers:R gs://your-bucket/kpi.html
 - 共有機能: 各ノードにアンカーリンク機能があり、クリックでそのノードへのリンクをコピー
 
 ### 注意点
-
-- `public_url` パラメータは、実際にファイルをアップロードするURLと正確に一致させてください
-- GCSのリダイレクト環境では、クエリパラメータは保持されませんが、URLハッシュ（#以降）は保持されます
-- 生成されたHTMLは全てのJSとCSSを含むためファイルサイズが大きくなりますが、外部参照の問題を避けるための設計です
-
-## トラブルシューティング
-
-### スプレッドシート参照の問題
-
-1. **[object Object] が表示される場合**:
-   - `make check-value` コマンドでセル値を確認する
-   - 正確なシート名とセル参照を使用しているか確認
-
-2. **認証エラーが発生する場合**:
-   - サービスアカウントキーファイルの配置を確認
-   - スプレッドシートがサービスアカウントと共有されているか確認
-   - `make debug` コマンドで認証情報を確認
