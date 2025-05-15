@@ -42,63 +42,95 @@ h1 {
   max-width: 100%; /* 親要素の幅を超えないようにする */
 }
 
-/* 日次/月次切り替えトグルスイッチ - 改善版 */
-.time-period-control {
-  display: inline-flex;
+/* コントロールパネル */
+.controls {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-left: 10px;
-  vertical-align: middle;
-  height: 30px;
-}
-
-.toggle-switch {
-  display: inline-flex;
-  position: relative;
-  height: 30px;
-  border-radius: 15px;
-  background: #e0e0e0;
-  overflow: visible;
+  margin: 20px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  min-width: 150px; /* 幅を固定 */
 }
 
-.toggle-option {
-  width: 75px;
+/* 日次/月次切り替えボタン */
+.view-mode-switch {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 0;
-  margin: 0;
-  color: #666;
-  z-index: 1;
-  transition: color 0.3s ease;
-  overflow: visible;
-  white-space: nowrap;
-  min-width: 50%;
-  text-align: center;
 }
 
-.toggle-option.active {
+.mode-options {
+  display: flex;
+  position: relative;
+  width: 140px;
+  height: 36px;
+  background-color: #e0e0e0;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  z-index: 2;
+  transition: color 0.3s ease;
+  padding: 0 10px;
+}
+
+.mode-btn.active {
   color: white;
 }
 
-.toggle-slider {
+.mode-indicator {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  height: 26px;
-  width: 50%;
-  border-radius: 13px;
-  background: #4285F4;
+  top: 3px;
+  left: 3px;
+  width: 67px;
+  height: 30px;
+  background-color: #4285F4;
+  border-radius: 15px;
   transition: transform 0.3s ease;
+  z-index: 1;
 }
 
-.toggle-option.monthly.active ~ .toggle-slider {
-  transform: translateX(100%);
+/* 月次モードの時のインジケーター位置 */
+#monthly-mode-btn.active ~ .mode-indicator {
+  transform: translateX(67px);
+}
+
+/* URLコピーボタン */
+.url-copy-container {
+  display: flex;
+  align-items: center;
+}
+
+.copy-url-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 14px;
+  background-color: #4285F4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.copy-url-btn:hover {
+  background-color: #3367d6;
+}
+
+.copy-url-btn svg {
+  margin-right: 6px;
 }
 
 /* 月次テキストの位置調整 */
@@ -198,6 +230,45 @@ h1 {
   overflow: visible; /* はみ出した部分も表示 */
   display: block; /* ブロック要素にする */
   max-width: 100%; /* 親要素の幅を超えないようにする */
+}
+
+/* 前日比・前月比のスタイル */
+.diff-value {
+  font-size: 0.85em;
+  margin-top: 5px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+/* 前日比・前月比のラベル部分 */
+.diff-label {
+  color: #333; /* 通常色 */
+  margin-right: 4px;
+}
+
+/* 前日比・前月比の値部分 */
+.diff-number {
+  font-weight: bold;
+}
+
+/* プラス値の場合の色 */
+.diff-positive .diff-number {
+  color: #28a745;
+}
+
+/* マイナス値の場合の色 */
+.diff-negative .diff-number {
+  color: #dc3545;
+}
+
+/* 変化なしの場合の色 */
+.diff-neutral .diff-number {
+  color: #6c757d;
 }
 
 /* ノード内のテキスト要素用スタイル */

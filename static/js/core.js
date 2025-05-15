@@ -204,18 +204,50 @@ function addHighlightStyle() {
   document.head.appendChild(style);
 }
 
+
 /**
  * アプリケーションのエントリーポイント
  * DOM読み込み完了時に実行されるメイン処理
  */
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM読み込み完了、KPIツリー初期化開始');
+  // ページ読み込み完了時に実行される初期化処理
+  console.log('ページ読み込み完了');
+
+  // 共有ボタンの追加
+  addShareButton();
+  
+  // 日次/月次切り替えボタンの設定
+  setupViewModeToggle();
+
+  // ツリーの開閉ボタンの初期化
+  setupToggleButtons();
+  
+  // 前日比・前月比の色を初期状態で適用
+  applyInitialDiffStyles();
+  
+  // 初期化処理の実行
+  initializeApplication();
+  
+  // 全ノードの値を更新
+  updateAllNodeValues();
+  
+  // 初回読み込み時に前日比・前月比の色を適用
+  applyInitialDiffStyles();
+  
+  // 初期データ読み込み完了を通知
+  document.dispatchEvent(new Event('kpi-tree-loaded'));
   
   // URL変更の監視を開始
   monitorUrlChanges();
   
   // KPIツリーの初期化処理を実行
   kpiTreeInit();
+  
+  // 初回読み込み時に前日比・前月比の色を適用
+  applyInitialDiffStyles();
+  
+  // 日次/月次切り替えボタンのイベントリスナーを設定
+  setupViewModeToggle();
   
   console.log('KPIツリーの初期化完了');
 });
@@ -322,6 +354,189 @@ function switchViewMode(mode) {
 }
 
 /**
+ * 差分値に応じて適切なスタイルを適用する
+ * @param {HTMLElement} element - スタイルを適用する要素
+ * @param {string} diffValue - 差分値
+ */
+function updateDiffStyle(element, diffValue) {
+  // まず既存のスタイルクラスを削除
+  element.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+  
+  if (!diffValue) return;
+  
+  // 日次モードか月次モードかを判定
+  const isMonthly = element.textContent.includes('前月比');
+  
+  // 数値化する前に文字列を整形
+  let valueStr = diffValue.toString().trim();
+  // 「+」記号が付いているかチェック
+  const isPositive = valueStr.startsWith('+');
+  
+  // 付いている場合は削除して値を取り出す
+  if (isPositive) {
+    valueStr = valueStr.substring(1);
+  }
+  
+  // パーセント値を取り扱う場合
+  const isPercent = valueStr.endsWith('%');
+  if (isPercent) {
+    valueStr = valueStr.replace('%', '');
+  }
+  
+  // 数値化して比較
+  const numValue = parseFloat(valueStr);
+  
+  if (isNaN(numValue)) {
+    // 数値でない場合はデフォルトスタイル
+    element.classList.add('diff-neutral');
+    return;
+  }
+  
+  // 月次モードと日次モードで条件を変える
+  if (isMonthly) {
+    // 月次モード: 100%以上なら緑、100%未満なら赤
+    if (numValue >= 100) {
+      element.classList.add('diff-positive');
+    } else {
+      element.classList.add('diff-negative');
+    }
+  } else {
+    // 日次モード: プラス値は緑、マイナス値は赤
+    if (isPositive || numValue > 0) {
+      element.classList.add('diff-positive');
+    } else if (numValue < 0) {
+      element.classList.add('diff-negative');
+    } else {
+      element.classList.add('diff-neutral');
+    }
+  }
+}
+
+/**
+ * 日次/月次切り替えボタンのイベントリスナーを設定する
+ */
+function setupViewModeToggle() {
+  // ボタン要素を取得
+  const dailyBtn = document.getElementById('daily-mode-btn');
+  const monthlyBtn = document.getElementById('monthly-mode-btn');
+  const modeIndicator = document.querySelector('.mode-indicator');
+  
+  if (!dailyBtn || !monthlyBtn || !modeIndicator) {
+    console.error('表示モード切り替え要素が見つかりません:', {
+      dailyBtn: !!dailyBtn,
+      monthlyBtn: !!monthlyBtn,
+      modeIndicator: !!modeIndicator
+    });
+    return;
+  }
+  
+  // 初期化時に正しいモードを選択状態にする
+  if (window._viewMode === 'daily') {
+    // 日次モードの場合
+    modeIndicator.style.transform = 'translateX(0)';
+    dailyBtn.classList.add('active');
+    monthlyBtn.classList.remove('active');
+  } else if (window._viewMode === 'monthly') {
+    // 月次モードの場合
+    modeIndicator.style.transform = 'translateX(67px)';
+    dailyBtn.classList.remove('active');
+    monthlyBtn.classList.add('active');
+  }
+  
+  console.log('現在のモード:', window._viewMode);
+  
+  // 日次ボタンのクリックイベント
+  dailyBtn.addEventListener('click', function() {
+    console.log('日次モードに切り替え');
+    modeIndicator.style.transform = 'translateX(0)';
+    dailyBtn.classList.add('active');
+    monthlyBtn.classList.remove('active');
+    switchViewMode('daily');
+  });
+  
+  // 月次ボタンのクリックイベント
+  monthlyBtn.addEventListener('click', function() {
+    console.log('月次モードに切り替え');
+    modeIndicator.style.transform = 'translateX(67px)';
+    dailyBtn.classList.remove('active');
+    monthlyBtn.classList.add('active');
+    switchViewMode('monthly');
+  });
+  
+  console.log('表示モード切り替えリスナーを設定しました');
+}
+
+/**
+ * 初回ページ読み込み時に前日比・前月比の色を適用する
+ */
+function applyInitialDiffStyles() {
+  // 現在のモードをグローバル変数から取得
+  const currentMode = window._viewMode || 'daily';
+  console.log('ページ読み込み時の表示モード:', currentMode);
+  
+  // 全ての差分表示要素を取得
+  const diffElements = document.querySelectorAll('.diff-value');
+  
+  diffElements.forEach(element => {
+    // 初期化前に既存のクラスを削除
+    element.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+    
+    // データ属性から値を取得
+    const diffDaily = element.getAttribute('data-diff-daily');
+    const diffMonthly = element.getAttribute('data-diff-monthly');
+    
+    // HTML構造を修正
+    if (currentMode === 'daily' && diffDaily) {
+      // 数値変換
+      let numValue = parseFloat(diffDaily);
+      let displayValue = diffDaily;
+      
+      // プラスの値に「+」を付ける
+      if (numValue > 0 && !displayValue.toString().startsWith('+')) {
+        displayValue = '+' + displayValue;
+      }
+      
+      // HTML再構築
+      element.innerHTML = `
+        <span class="diff-label">前日比: </span>
+        <span class="diff-number">${displayValue}</span>
+      `;
+      
+      // スタイルクラスを適用
+      if (numValue > 0) {
+        element.classList.add('diff-positive');
+      } else if (numValue < 0) {
+        element.classList.add('diff-negative');
+      } else {
+        element.classList.add('diff-neutral');
+      }
+    } else if (currentMode === 'monthly' && diffMonthly) {
+      // パーセント削除して数値化
+      let displayValue = diffMonthly;
+      let numValue = parseFloat(displayValue.toString().replace('%', ''));
+      
+      // パーセントがない場合は付ける
+      if (!displayValue.toString().endsWith('%')) {
+        displayValue = displayValue + '%';
+      }
+      
+      // HTML再構築
+      element.innerHTML = `
+        <span class="diff-label">前月比: </span>
+        <span class="diff-number">${displayValue}</span>
+      `;
+      
+      // スタイルクラスを適用
+      if (numValue >= 100) {
+        element.classList.add('diff-positive');
+      } else {
+        element.classList.add('diff-negative');
+      }
+    }
+  });
+}
+
+/**
  * 全てのノードの値を現在のモードに応じて更新
  */
 function updateAllNodeValues() {
@@ -344,6 +559,69 @@ function updateAllNodeValues() {
     if (!valueElement) {
       // console.log(`ノード#${index}: .value要素が見つかりません`);
       return;
+    }
+    
+    // 前日比・前月比の要素を取得
+    const diffElement = node.querySelector('.diff-value');
+    if (diffElement) {
+      // 表示モードに応じて差分表示を切り替え
+      const diffDaily = diffElement.getAttribute('data-diff-daily');
+      const diffMonthly = diffElement.getAttribute('data-diff-monthly');
+      
+      if (currentMode === 'daily' && diffDaily) {
+        // 日次モードの場合は前日比を表示
+        let displayValue = diffDaily;
+        // 数値に変換
+        let numValue = parseFloat(displayValue);
+        
+        // プラスの値には「+」を付けるようにする
+        if (numValue > 0 && !displayValue.toString().startsWith('+')) {
+          displayValue = '+' + displayValue;
+        }
+        
+        // HTMLを再構築
+        diffElement.innerHTML = `
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">${displayValue}</span>
+        `;
+        diffElement.setAttribute('title', `前日比: ${displayValue}`);
+        
+        // 親要素にスタイルクラスを適用
+        diffElement.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+        if (numValue > 0) {
+          diffElement.classList.add('diff-positive');
+        } else if (numValue < 0) {
+          diffElement.classList.add('diff-negative');
+        } else {
+          diffElement.classList.add('diff-neutral');
+        }
+        
+      } else if (currentMode === 'monthly' && diffMonthly) {
+        // 月次モードの場合は前月比を表示
+        let displayValue = diffMonthly;
+        // パーセント文字を削除して数値化
+        let numValue = parseFloat(displayValue.toString().replace('%', ''));
+        
+        // パーセントがない場合は付ける
+        if (!displayValue.toString().endsWith('%')) {
+          displayValue = displayValue + '%';
+        }
+        
+        // HTMLを再構築
+        diffElement.innerHTML = `
+          <span class="diff-label">前月比: </span>
+          <span class="diff-number">${displayValue}</span>
+        `;
+        diffElement.setAttribute('title', `前月比: ${displayValue}`);
+        
+        // 100%を基準に色分け
+        diffElement.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+        if (numValue >= 100) {
+          diffElement.classList.add('diff-positive');
+        } else {
+          diffElement.classList.add('diff-negative');
+        }
+      }
     }
     
     // 各モードの値を取得 - .value要素から直接取得するように修正

@@ -29,6 +29,18 @@
 <body data-theme="{{THEME}}">
   <div class="container">
     <h1>{{TITLE}}</h1>
+    <!-- コントロールパネル（ページ上部に配置） -->
+    <div class="controls">
+      <!-- 日次/月次切り替え -->
+      <div class="view-mode-switch">
+        <div class="mode-options">
+          <button id="daily-mode-btn" class="mode-btn active">日次</button>
+          <button id="monthly-mode-btn" class="mode-btn">月次</button>
+          <span class="mode-indicator"></span>
+        </div>
+      </div>
+    </div>
+    
     <div class="kpi-tree-container theme-{{THEME}}">
       <ul class="kpi-tree">
         {{TREE_HTML}}
