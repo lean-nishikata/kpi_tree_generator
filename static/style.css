@@ -111,8 +111,8 @@ body {
 .drawer {
   position: fixed;
   top: 56px; /* ヘッダーの高さを考慮して下に配置 */
-  left: -240px; /* 初期状態は画面外 */
-  width: 240px;
+  left: -320px; /* 初期状態は画面外 */
+  width: 320px;
   height: calc(100% - 56px); /* ヘッダー高さを引いた高さ */
   background-color: #fff;
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
@@ -123,6 +123,7 @@ body {
 
 .drawer.open {
   left: 0; /* 画面内に表示 */
+  margin-left: 0; /* ドロワーが開いた状態の位置を調整 */
 }
 
 /* ドロワーメニューのヘッダー */
@@ -303,7 +304,7 @@ body {
 @media (min-width: 769px) {
   /* PCサイズの場合はコンテンツをオフセット */
   .main-content.drawer-open {
-    margin-left: 240px;
+    margin-left: 320px;
   }
 }
 

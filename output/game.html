@@ -142,8 +142,8 @@ body {
 .drawer {
   position: fixed;
   top: 56px; /* ヘッダーの高さを考慮して下に配置 */
-  left: -240px; /* 初期状態は画面外 */
-  width: 240px;
+  left: -320px; /* 初期状態は画面外 */
+  width: 320px;
   height: calc(100% - 56px); /* ヘッダー高さを引いた高さ */
   background-color: #fff;
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
@@ -154,6 +154,7 @@ body {
 
 .drawer.open {
   left: 0; /* 画面内に表示 */
+  margin-left: 0; /* ドロワーが開いた状態の位置を調整 */
 }
 
 /* ドロワーメニューのヘッダー */
@@ -334,7 +335,7 @@ body {
 @media (min-width: 769px) {
   /* PCサイズの場合はコンテンツをオフセット */
   .main-content.drawer-open {
-    margin-left: 240px;
+    margin-left: 320px;
   }
 }
 
@@ -688,10 +689,17 @@ h1 {
   border-color: #d32f2f;
   background-color: #ffebee;
 }
-    
+  </style>
+  
+  <!-- カレンダー用CSS -->
+  <link rel="stylesheet" href="../static/css/calendar.css">
+  
+  <style>
     /* 追加のカスタムスタイル - 水平レイアウト専用 */
     body { margin: 0; }
-    
+  </style>
+  
+  <style>
     .kpi-tree li {
       display: flex;
       flex-direction: row;
@@ -754,6 +762,42 @@ h1 {
                     <button id="daily-mode-btn" class="mode-btn active" aria-pressed="true">日次</button>
                     <button id="monthly-mode-btn" class="mode-btn" aria-pressed="false">月次</button>
                     <span class="mode-indicator"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- カレンダー -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>カレンダー</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div class="calendar-container">
+                  <div class="calendar-header">
+                    <button id="prev-month" class="calendar-nav-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div id="current-month" class="current-month"></div>
+                    <button id="next-month" class="calendar-nav-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="weekdays">
+                    <div>日</div>
+                    <div>月</div>
+                    <div>火</div>
+                    <div>水</div>
+                    <div>木</div>
+                    <div>金</div>
+                    <div>土</div>
+                  </div>
+                  <div id="calendar-days" class="calendar-days">
+                    <!-- 日付はJavaScriptで動的に生成されます -->
                   </div>
                 </div>
               </div>
@@ -2890,6 +2934,9 @@ function addHighlightStyle() {
 
 
 </script>
+  
+  <!-- カレンダースクリプト -->
+  <script src="../static/js/calendar.js"></script>
 
 </body>
 </html>
