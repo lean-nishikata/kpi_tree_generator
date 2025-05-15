@@ -8,7 +8,8 @@ spreadsheet:
   id: "1kCEQwecJyjJztEaTCLfJwkDfi1rsxcGEhBdLZb6F2Z0"
 
 root:
-  text: "Revenue (JPY)"
+  text: "売上"
+  text_en: "Revenue (JPY)"
   # 日次・月次データを別々に設定（簡易形式で統一）
   value_daily: "=sample!B1"
   value_monthly: "=sample!C1"  # 月次データは異なるセルを参照
@@ -58,7 +59,7 @@ root:
               value_daily: "=sample!C10"
               value_monthly: "=sample!D10"
               operator: "+"
-            - text: "Acquisition"
+            - text: "課金率（長い文字列の表示テスト。あああああああああああああああああああああああああ）"
               value_daily: "=sample!C11"
               value_monthly: "=sample!D11"
               operator: "+"

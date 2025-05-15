@@ -87,7 +87,6 @@ function loadTreeState() {
  * ツリー全体を展開状態に戻します
  */
 function resetAllNodes() {
-  // すべての子ノードを展開状態に設定
   document.querySelectorAll('.children').forEach(function(child) {
     child.classList.remove('collapsed');
   });
@@ -96,6 +95,49 @@ function resetAllNodes() {
   document.querySelectorAll('.toggle-btn').forEach(function(button) {
     button.classList.remove('collapsed');
   });
+}
+
+/**
+ * ノードの開閉状態を初期化（3階層目まで展開、それ以降は折りたたみ）
+ */
+function initAllNodes() {
+  document.querySelectorAll('.children').forEach(function(child) {
+    const depth = getNodeDepth(child);
+
+    const toggleBtn = document.querySelector('.toggle-btn[data-target="' + child.id + '"]');
+    if (depth <= 2) {
+      child.classList.remove('collapsed');
+      if (toggleBtn) toggleBtn.classList.remove('collapsed');
+    } else {
+      child.classList.add('collapsed');
+      if (toggleBtn) toggleBtn.classList.add('collapsed');
+    }
+  });
+}
+
+/**
+ * 指定されたノード (.children) の階層レベル（深さ）を取得
+ * これは、親要素が .node を持つ回数で判定することで、
+ * 視覚的に「親→子→孫→ひ孫…」の何段目かを返します。
+ *
+ * @param {HTMLElement} element - .children UL要素
+ * @returns {number} - ノードの階層の深さ（1階層目から始まる）
+ */
+function getNodeDepth(element) {
+  let depth = 0;
+  let current = element;
+
+  while (current && current !== document.body) {
+    if (current.classList.contains('children')) {
+      const parentLi = current.closest('li');
+      if (parentLi && parentLi.querySelector('.node')) {
+        depth++;
+      }
+    }
+    current = current.parentElement;
+  }
+
+  return depth;
 }
 
 /**

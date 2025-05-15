@@ -1,6 +1,6 @@
 node_modules/
-# output directory should be excluded from git
-output/
+# output directory is now included for development
+# output/
 !output/.gitkeep
 npm-debug.log
 .DS_Store

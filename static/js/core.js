@@ -108,7 +108,12 @@ function kpiTreeInit() {
   
   // 取得した状態をツリーに適用（開閉状態の復元）
   console.log('ツリー状態を適用します');
-  applyTreeState(state);
+  // applyTreeState(state);
+  if (state && Object.keys(state).length > 0) {
+    applyTreeState(state); // 取得した状態があればそれを適用
+  } else {
+    initAllNodes(); // 状態がなければ初期展開（3段目まで）
+  }
   
   // トグルボタンの機能を設定
   setupToggleButtons();
@@ -317,7 +322,7 @@ function switchViewMode(mode) {
 }
 
 /**
- * 全てのノードの値とテキストを現在のモードに応じて更新
+ * 全てのノードの値を現在のモードに応じて更新
  */
 function updateAllNodeValues() {
   // 現在の表示モードを確認
@@ -332,34 +337,8 @@ function updateAllNodeValues() {
   let changedNodes = 0;
   let missingValueNodes = 0;
   let unchangedFixedNodes = 0;
-  let changedTextNodes = 0;
   
   allNodes.forEach((node, index) => {
-    // テキスト要素の更新
-    const textElement = node.querySelector('.node-text');
-    if (textElement) {
-      // 各モードのテキストを取得
-      const dailyText = textElement.getAttribute('data-text-daily');
-      const monthlyText = textElement.getAttribute('data-text-monthly');
-      const defaultText = textElement.getAttribute('data-text-default');
-      
-      // 切り替え可能な場合のみ変更
-      let newText = textElement.textContent;
-      if (dailyText && monthlyText) {
-        if (window._viewMode === 'daily') {
-          newText = dailyText;
-        } else if (window._viewMode === 'monthly') {
-          newText = monthlyText;
-        }
-        
-        // 変更があれば反映
-        if (textElement.textContent !== newText) {
-          textElement.textContent = newText;
-          changedTextNodes++;
-        }
-      }
-    }
-    
     // 値を表示する要素を取得
     const valueElement = node.querySelector('.value');
     if (!valueElement) {
@@ -416,5 +395,5 @@ function updateAllNodeValues() {
     }
   });
   
-  console.log(`値の更新完了: ${changedNodes}個の値を更新、${changedTextNodes}個のテキストを更新、${missingValueNodes}個のノードに属性なし、${unchangedFixedNodes}個は固定値`);
+  console.log(`値の更新完了: ${changedNodes}個のノードを更新、${missingValueNodes}個のノードに属性なし、${unchangedFixedNodes}個は固定値`);
 }
