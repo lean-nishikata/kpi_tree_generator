@@ -178,6 +178,70 @@ async function generateKPITree() {
           config.root = await resolveSpreadsheetReferences(config.root);
           console.log(`スプレッドシート参照の解決が完了しました`);
           
+          // 前日比・前月比の参照が解決されているか確認し、必要なら再度解決する追加処理
+          const manuallyResolveDiffValues = async (node) => {
+            if (!node) return node;
+            
+            // スプレッドシートIDを取得
+            const spreadsheetId = global.kpiTreeConfig.spreadsheet.id;
+            
+            // デモモードの判定
+            const shouldUseDemo = !spreadsheetId || !fs.existsSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH);
+            
+            // 前日比の解決
+            if (node.diff_daily && typeof node.diff_daily === 'string' && node.diff_daily.startsWith('=')) {
+              try {
+                if (shouldUseDemo) {
+                  // デモモードの場合はランダム値を設定
+                  const demoValues = ['+5%', '+10%', '-3%', '+0%', '+7%', '-2%'];
+                  node.diff_daily = demoValues[Math.floor(Math.random() * demoValues.length)];
+                } else {
+                  // スプレッドシートから値を取得
+                  const rangeNotation = node.diff_daily.substring(1); // = を除去
+                  const spreadsheetHelper = require('./spreadsheet-helper');
+                  node.diff_daily = await spreadsheetHelper.getCellValue(spreadsheetId, rangeNotation);
+                }
+              } catch (e) {
+                console.error(`前日比値の解決エラー:`, e);
+                // エラーが発生した場合はデフォルト値を設定
+                node.diff_daily = '+0%';
+              }
+            }
+            
+            // 前月比の解決
+            if (node.diff_monthly && typeof node.diff_monthly === 'string' && node.diff_monthly.startsWith('=')) {
+              try {
+                if (shouldUseDemo) {
+                  // デモモードの場合はランダム値を設定
+                  const demoValues = ['95%', '110%', '103%', '90%', '120%', '98%'];
+                  node.diff_monthly = demoValues[Math.floor(Math.random() * demoValues.length)];
+                } else {
+                  // スプレッドシートから値を取得
+                  const rangeNotation = node.diff_monthly.substring(1); // = を除去
+                  const spreadsheetHelper = require('./spreadsheet-helper');
+                  node.diff_monthly = await spreadsheetHelper.getCellValue(spreadsheetId, rangeNotation);
+                }
+              } catch (e) {
+                console.error(`前月比値の解決エラー:`, e);
+                // エラーが発生した場合はデフォルト値を設定
+                node.diff_monthly = '100%';
+              }
+            }
+            
+            // 子ノードも再帰的に処理
+            if (node.children && Array.isArray(node.children)) {
+              for (let i = 0; i < node.children.length; i++) {
+                node.children[i] = await manuallyResolveDiffValues(node.children[i]);
+              }
+            }
+            
+            return node;
+          };
+          
+          // 前日比・前月比の参照を手動で解決
+          config.root = await manuallyResolveDiffValues(config.root);
+          console.log(`前日比・前月比の参照解決が完了しました`);
+          
         } else {
           // スプレッドシート参照を持つノードのvalueを"ERROR"に置き換える関数
           const markSpreadsheetRefAsError = (node) => {
@@ -416,6 +480,56 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     }
   }
   
+  // 前日比の値を属性として設定
+  let diffDailyValue = node.diff_daily;
+  if (node.diff_daily !== undefined) {
+    // スプレッドシート参照の場合は解決して表示
+    if (typeof node.diff_daily === 'string' && node.diff_daily.startsWith('=')) {
+      // スプレッドシートAPIの結果が返ってきた場合
+      if (typeof diffDailyValue === 'object' && diffDailyValue !== null) {
+        try {
+          if (diffDailyValue.data && diffDailyValue.data.values && 
+              Array.isArray(diffDailyValue.data.values) && 
+              diffDailyValue.data.values.length > 0 && 
+              diffDailyValue.data.values[0].length > 0) {
+            // 値を取得
+            diffDailyValue = diffDailyValue.data.values[0][0];
+          }
+        } catch (e) {
+          console.error('差分値処理エラー:', e);
+        }
+      }
+    }
+    
+    // 前日比の値を設定
+    valueAttributes += ` data-diff-daily="${diffDailyValue}"`;
+  }
+  
+  // 前月比の値を属性として設定
+  let diffMonthlyValue = node.diff_monthly;
+  if (node.diff_monthly !== undefined) {
+    // スプレッドシート参照の場合は解決して表示
+    if (typeof node.diff_monthly === 'string' && node.diff_monthly.startsWith('=')) {
+      // スプレッドシートAPIの結果が返ってきた場合
+      if (typeof diffMonthlyValue === 'object' && diffMonthlyValue !== null) {
+        try {
+          if (diffMonthlyValue.data && diffMonthlyValue.data.values && 
+              Array.isArray(diffMonthlyValue.data.values) && 
+              diffMonthlyValue.data.values.length > 0 && 
+              diffMonthlyValue.data.values[0].length > 0) {
+            // 値を取得
+            diffMonthlyValue = diffMonthlyValue.data.values[0][0];
+          }
+        } catch (e) {
+          console.error('差分値処理エラー:', e);
+        }
+      }
+    }
+    
+    // 前月比の値を設定
+    valueAttributes += ` data-diff-monthly="${diffMonthlyValue}"`;
+  }
+  
   // 表示値がない場合はスキップ
   if (displayValue !== null) {
     // HTML生成前に値の詳細をログ出力
@@ -647,6 +761,84 @@ function generateTreeHtml(node, level = 0, path = 'root') {
     
     // value要素自体にデータ属性を直接設定
     nodeContent += `<div class="value" title="${displayValue}"${valueAttributes}>${displayValue}</div>`;
+    
+    // 前日比・前月比の表示を追加
+    // 日次モードの場合は前日比を表示し、月次モードの場合は前月比を表示
+    if (node.diff_daily !== undefined || node.diff_monthly !== undefined) {
+      // 日次データをデフォルトとして表示
+      let diffDailyDisplay = diffDailyValue;
+      let diffMonthlyDisplay = diffMonthlyValue;
+      let diffAttributes = '';
+      
+      // スプレッドシート参照の消去 - 前日比
+      if (diffDailyDisplay && typeof diffDailyDisplay === 'string' && diffDailyDisplay.startsWith('=')) {
+        // 参照が自動解決されていない場合はデモ値を設定
+        if (shouldUseDemo) {
+          // デモモードの場合はデモ値を設定
+          const demoValues = ['+5%', '+10%', '-3%', '+0%', '+7%', '-2%'];
+          diffDailyDisplay = demoValues[Math.floor(Math.random() * demoValues.length)];
+        }
+      }
+      
+      // スプレッドシート参照の消去 - 前月比
+      if (diffMonthlyDisplay && typeof diffMonthlyDisplay === 'string' && diffMonthlyDisplay.startsWith('=')) {
+        // 参照が自動解決されていない場合はデモ値を設定
+        if (shouldUseDemo) {
+          // デモモードの場合はデモ値を設定
+          const demoValues = ['95%', '110%', '103%', '90%', '120%', '98%'];
+          diffMonthlyDisplay = demoValues[Math.floor(Math.random() * demoValues.length)];
+        }
+      }
+      
+      // オブジェクトの場合の特別処理
+      if (typeof diffDailyDisplay === 'object' && diffDailyDisplay !== null) {
+        try {
+          if (diffDailyDisplay.data && diffDailyDisplay.data.values && 
+              Array.isArray(diffDailyDisplay.data.values) && 
+              diffDailyDisplay.data.values.length > 0) {
+            diffDailyDisplay = diffDailyDisplay.data.values[0][0];
+          } else {
+            diffDailyDisplay = JSON.stringify(diffDailyDisplay);
+          }
+        } catch (e) {
+          console.error('前日比処理エラー:', e);
+          diffDailyDisplay = '0%';
+        }
+      }
+      
+      if (typeof diffMonthlyDisplay === 'object' && diffMonthlyDisplay !== null) {
+        try {
+          if (diffMonthlyDisplay.data && diffMonthlyDisplay.data.values && 
+              Array.isArray(diffMonthlyDisplay.data.values) && 
+              diffMonthlyDisplay.data.values.length > 0) {
+            diffMonthlyDisplay = diffMonthlyDisplay.data.values[0][0];
+          } else {
+            diffMonthlyDisplay = JSON.stringify(diffMonthlyDisplay);
+          }
+        } catch (e) {
+          console.error('前月比処理エラー:', e);
+          diffMonthlyDisplay = '100%';
+        }
+      }
+      
+      // 属性を設定
+      if (node.diff_daily !== undefined) {
+        diffAttributes += ` data-diff-daily="${diffDailyDisplay}"`;
+      }
+      
+      if (node.diff_monthly !== undefined) {
+        diffAttributes += ` data-diff-monthly="${diffMonthlyDisplay}"`;
+      }
+      
+      // 差分表示を追加
+      if (diffDailyDisplay !== undefined) {
+        // 日次データの場合は前日比を表示
+        nodeContent += `<div class="diff-value" title="前日比: ${diffDailyDisplay}"${diffAttributes}>
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">${diffDailyDisplay}</span>
+        </div>`;
+      }
+    }
   }
   
   // node要素にはデータ属性を設定しないようにする。すべての属性はvalue要素に移動済み

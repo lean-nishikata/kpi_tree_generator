@@ -214,7 +214,7 @@ function addShareButton() {
   // ボタンスタイルの設定
   Object.assign(shareButton.style, {
     padding: '8px 15px',
-    backgroundColor: '#4285F4',
+    backgroundColor: '#09BA85',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -227,10 +227,10 @@ function addShareButton() {
   
   // ホバー効果
   shareButton.onmouseover = function() {
-    this.style.backgroundColor = '#3367D6'; // 濃い青
+    this.style.backgroundColor = '#078e66'; // 濃い緑
   };
   shareButton.onmouseout = function() {
-    this.style.backgroundColor = '#4285F4'; // 元の青
+    this.style.backgroundColor = '#09BA85'; // 元の緑
   };
   
   // ツールチップ要素の作成

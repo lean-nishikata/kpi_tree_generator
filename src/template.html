@@ -11,6 +11,8 @@
     {{STYLE}}
     
     /* 追加のカスタムスタイル - 水平レイアウト専用 */
+    body { margin: 0; }
+    
     .kpi-tree li {
       display: flex;
       flex-direction: row;
@@ -27,19 +29,78 @@
   </style>
 </head>
 <body data-theme="{{THEME}}">
-  <div class="container">
-    <h1>{{TITLE}}</h1>
-    <!-- コントロールパネル（ページ上部に配置） -->
-    <div class="controls">
-      <!-- 日次/月次切り替え -->
-      <div class="view-mode-switch">
-        <div class="mode-options">
-          <button id="daily-mode-btn" class="mode-btn active">日次</button>
-          <button id="monthly-mode-btn" class="mode-btn">月次</button>
-          <span class="mode-indicator"></span>
+  <!-- メインコンテンツヘッダーにハンバーガーボタンを配置 - 左上配置 -->
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button id="menu-toggle" class="menu-toggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="drawer-menu">
+          <svg class="menu-icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+          </svg>
+        </button>
+        <h1 class="page-title">{{TITLE}}</h1>
+      </div>
+      <div class="header-controls">
+        <!-- 将来的に必要なコントロールをここに追加 -->
+      </div>
+    </div>
+  </header>
+
+  <!-- ナビゲーションドロワー -->
+  <div id="drawer-menu" class="drawer" aria-hidden="true" role="navigation" aria-label="メインナビゲーション">
+    <div class="drawer-header">
+      <div class="drawer-header-title">
+
+        <h2>設定</h2>
+        <button id="drawer-close" class="drawer-close" aria-label="メニューを閉じる">
+          <span class="close-icon"></span>
+        </button>
+      </div>
+    </div>
+    <div class="drawer-content">
+      <div class="drawer-nav">
+        <!-- ナビゲーションセクション -->
+        <div class="drawer-section-group">
+          <div class="drawer-section active">
+
+            
+            <!-- 日次/月次切り替え -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>表示モード</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div class="view-mode-switch">
+                  <div class="mode-options">
+                    <button id="daily-mode-btn" class="mode-btn active" aria-pressed="true">日次</button>
+                    <button id="monthly-mode-btn" class="mode-btn" aria-pressed="false">月次</button>
+                    <span class="mode-indicator"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- URLコピーボタンはドロワー内に配置（共有ボタン） -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>共有</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div id="drawer-share-btn-container"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ドロワーオーバーレイ -->
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+
+  <!-- メインコンテンツ -->
+  <div class="main-content">
+    <div class="container">
     
     <div class="kpi-tree-container theme-{{THEME}}">
       <ul class="kpi-tree">

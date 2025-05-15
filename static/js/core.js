@@ -206,6 +206,123 @@ function addHighlightStyle() {
 
 
 /**
+ * ナビゲーションドロワーの初期化とイベント設定
+ */
+function setupNavigationDrawer() {
+  const menuToggle = document.getElementById('menu-toggle');
+  const drawer = document.getElementById('drawer-menu');
+  const overlay = document.getElementById('drawer-overlay');
+  const mainContent = document.querySelector('.main-content');
+  const drawerClose = document.getElementById('drawer-close');
+  
+  // 要素が見つからない場合のエラーハンドリング
+  if (!menuToggle || !drawer) {
+    console.error('ナビゲーションドロワーの必要な要素が見つかりません');
+    return;
+  }
+  
+  // オーバーレイ要素がない場合は作成
+  let overlayElement = overlay;
+  if (!overlayElement) {
+    console.log('オーバーレイ要素を作成します');
+    overlayElement = document.createElement('div');
+    overlayElement.id = 'drawer-overlay';
+    overlayElement.className = 'drawer-overlay';
+    document.body.appendChild(overlayElement);
+  }
+  
+  // ドロワーを開く関数
+  function openDrawer() {
+    drawer.classList.add('open');
+    menuToggle.classList.add('open');
+    overlay.classList.add('visible');
+    mainContent.classList.add('drawer-open');
+    
+    // ARIA属性を更新
+    menuToggle.setAttribute('aria-expanded', 'true');
+    drawer.setAttribute('aria-hidden', 'false');
+    
+    // メニューボタンのラベルを更新
+    menuToggle.setAttribute('aria-label', 'メニューを閉じる');
+    
+    console.log('ドロワーを開きました');
+  }
+  
+  // ドロワーを閉じる関数
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    menuToggle.classList.remove('open');
+    overlay.classList.remove('visible');
+    mainContent.classList.remove('drawer-open');
+    
+    // ARIA属性を更新
+    menuToggle.setAttribute('aria-expanded', 'false');
+    drawer.setAttribute('aria-hidden', 'true');
+    
+    // メニューボタンのラベルを更新
+    menuToggle.setAttribute('aria-label', 'メニューを開く');
+    
+    console.log('ドロワーを閉じました');
+  }
+  
+  // メニューボタンのクリックイベント
+  menuToggle.addEventListener('click', function() {
+    if (drawer.classList.contains('open')) {
+      closeDrawer();
+    } else {
+      openDrawer();
+    }
+  });
+  
+  // ドロワー内の閉じるボタンのクリックイベント
+  if (drawerClose) {
+    drawerClose.addEventListener('click', closeDrawer);
+  }
+  
+  // オーバーレイのクリックイベント
+  overlayElement.addEventListener('click', closeDrawer);
+  
+  // ESCキーでドロワーを閉じる
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && drawer.classList.contains('open')) {
+      closeDrawer();
+    }
+  });
+  
+  // ドロワー内に共有ボタンを配置
+  moveShareButtonToDrawer();
+  
+  console.log('ナビゲーションドロワーの初期化完了');
+}
+
+/**
+ * 共有ボタンをドロワー内に移動する関数
+ */
+function moveShareButtonToDrawer() {
+  const shareButton = document.getElementById('shareButton');
+  const drawerShareContainer = document.getElementById('drawer-share-btn-container');
+  
+  // 共有ボタンが存在する場合はドロワー内に移動
+  if (shareButton && drawerShareContainer) {
+    // 元の親要素からボタンを削除
+    if (shareButton.parentNode) {
+      shareButton.parentNode.removeChild(shareButton);
+    }
+    
+    // ドロワー内のコンテナに追加
+    drawerShareContainer.appendChild(shareButton);
+    
+    // ドロワー内での表示にふさわしいスタイルに調整
+    shareButton.style.width = '100%';
+    shareButton.style.marginTop = '8px';
+    
+    console.log('共有ボタンをドロワーに移動しました');
+  } else {
+    console.warn('共有ボタンまたはドロワー内コンテナが見つかりません');
+  }
+}
+
+/**
  * アプリケーションのエントリーポイント
  * DOM読み込み完了時に実行されるメイン処理
  */
@@ -221,6 +338,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ツリーの開閉ボタンの初期化
   setupToggleButtons();
+  
+  // ナビゲーションドロワーの設定
+  setupNavigationDrawer();
   
   // 前日比・前月比の色を初期状態で適用
   applyInitialDiffStyles();
