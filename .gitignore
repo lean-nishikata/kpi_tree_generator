@@ -24,3 +24,4 @@ output/backup/
 **/*.bak
 **/*_backup*.*
 **/.claude/settings.local.json
+temp_backup/
