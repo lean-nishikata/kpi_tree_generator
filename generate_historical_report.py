@@ -38,13 +38,25 @@ except ImportError:
     print("pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib")
     sys.exit(1)
 
+# Dockerコンテナ内かどうかを判定
+IS_DOCKER = os.path.exists('/.dockerenv') or os.path.exists('/app')
+
 # 設定
 SPREADSHEET_ID = "1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U"
-OUTPUT_DIR = "./output"
-CONFIG_FILE = "./config/index.yaml"
-CALENDAR_DATA_FILE = "./static/calendar-data.json"
+if IS_DOCKER:
+    # Dockerコンテナ内
+    OUTPUT_DIR = "/app/output"
+    CONFIG_FILE = "/app/config/index.yaml"
+    CALENDAR_DATA_FILE = "/app/static/calendar-data.json"
+    SERVICE_ACCOUNT_FILE = "/app/keys/service-account-key.json"
+else:
+    # ホスト環境
+    OUTPUT_DIR = "./output"
+    CONFIG_FILE = "./config/index.yaml"
+    CALENDAR_DATA_FILE = "./static/calendar-data.json"
+    SERVICE_ACCOUNT_FILE = "./keys/service-account-key.json"
+
 GCS_BASE_PATH = "gs://cc-data-platform-kpi-tree-viewer-prod"
-SERVICE_ACCOUNT_FILE = "./keys/service-account-key.json"  # Google Sheets APIのサービスアカウントキー
 
 def check_dependencies():
     """必要な依存関係をチェック"""

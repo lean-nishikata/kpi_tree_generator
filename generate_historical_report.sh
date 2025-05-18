@@ -19,9 +19,20 @@ fi
 
 TARGET_DATE="$1"
 YYYYMMDD=$(echo "$TARGET_DATE" | tr -d '-')
-OUTPUT_DIR="./output"
-CONFIG_FILE="./config/index.yaml"
-CALENDAR_DATA_FILE="./static/calendar-data.json"
+# Dockerコンテナ内かどうかを判定
+if [ -f "/.dockerenv" ] || [ -d "/app" ]; then
+  # Dockerコンテナ内
+  OUTPUT_DIR="/app/output"
+  CONFIG_FILE="/app/config/index.yaml"
+  CALENDAR_DATA_FILE="/app/static/calendar-data.json"
+  IS_DOCKER=true
+else
+  # ホスト環境
+  OUTPUT_DIR="./output"
+  CONFIG_FILE="./config/index.yaml"
+  CALENDAR_DATA_FILE="./static/calendar-data.json"
+  IS_DOCKER=false
+fi
 GCS_BASE_PATH="gs://cc-data-platform-kpi-tree-viewer-prod"
 
 # 必要なツールの確認
@@ -48,7 +59,14 @@ read -r
 # 2. KPIツリーHTMLを生成
 echo "2. KPIツリーHTMLを生成しています..."
 echo "コマンド: node src/generator.js $CONFIG_FILE --date $TARGET_DATE"
-node src/generator.js "$CONFIG_FILE" --date "$TARGET_DATE"
+
+if [ "$IS_DOCKER" = true ]; then
+  # Dockerコンテナ内: node_modulesがDockerイメージ内にあるので直接実行
+  node /app/src/generator.js "$CONFIG_FILE" --date "$TARGET_DATE"
+else
+  # ホスト環境
+  node src/generator.js "$CONFIG_FILE" --date "$TARGET_DATE"
+fi
 
 # 生成結果の確認
 INDEX_HTML="$OUTPUT_DIR/index.html"

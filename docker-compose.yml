@@ -7,6 +7,11 @@ services:
       - ./config:/app/config
       - ./output:/app/output
       - ./static:/app/static
+      # srcディレクトリをマウント（開発中の変更をすぐに反映するため）
+      - ./src:/app/src
+      # スクリプトをマウント
+      - ./generate_historical_report.py:/app/generate_historical_report.py
+      - ./generate_historical_report.sh:/app/generate_historical_report.sh
       # 認証キーをマウントしてコンテナ内で使用できるようにする
       - ./keys:/app/keys
     environment:

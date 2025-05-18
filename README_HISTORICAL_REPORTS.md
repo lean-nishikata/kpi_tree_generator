@@ -36,7 +36,9 @@ pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
 ## 使用方法
 
-### シェルスクリプト版
+### ホスト環境から実行
+
+#### シェルスクリプト版
 
 ```bash
 ./generate_historical_report.sh YYYY-MM-DD
@@ -47,7 +49,7 @@ pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
 ./generate_historical_report.sh 2025-06-01
 ```
 
-### Python版
+#### Python版
 
 ```bash
 python generate_historical_report.py YYYY-MM-DD
@@ -64,11 +66,49 @@ python generate_historical_report.py YYYY-MM-DD
 ./generate_historical_report.py 2025-06-01
 ```
 
+### Dockerコンテナから実行（推奨）
+
+Dockerコンテナから実行する場合は、以下のMakeコマンドを使用します：
+
+#### シェルスクリプト版
+
+```bash
+make historical-report date=YYYY-MM-DD
+```
+
+例：
+```bash
+make historical-report date=2025-06-01
+```
+
+#### Python版
+
+```bash
+make historical-report-py date=YYYY-MM-DD
+```
+
+例：
+```bash
+make historical-report-py date=2025-06-01
+```
+
+## Dockerビルドと環境準備
+
+初回実行前には、以下の手順でDockerイメージをビルドします：
+
+```bash
+# Dockerイメージをビルド
+make build
+
+# 必要に応じてサービスアカウントキーを配置
+cp /path/to/your-service-account-key.json ./keys/service-account-key.json
+```
+
 ## スクリプトのフロー
 
 1. **Googleスプレッドシートの更新**：
    - 「データソース」シートのSQLクエリ内の `SET target_date = DATE 'YYYY-MM-DD'` を更新
-   - Python版ではサービスアカウントキー（`./keys/service-account-key.json`）があれば自動的に更新
+   - Python版ではサービスアカウントキー（`/app/keys/service-account-key.json`）があれば自動的に更新
    - データコネクトの更新ボタンは手動でクリックする必要があります
 
 2. **データ抽出と確認**：
