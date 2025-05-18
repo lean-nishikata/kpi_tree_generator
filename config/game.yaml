@@ -10,11 +10,8 @@ spreadsheet:
 # ヘッダー表示のカスタム情報
 header_info:
   label: "DAU"  # ヘッダーに表示するラベル
-  # スプレッドシートから値を取得
-  value:
-    spreadsheet:
-      # idを指定しない場合は上記のグローバルスプレッドシートIDを使用
-      range: "=sample!C8"  # DAUの値を取得
+  # スプレッドシート参照文字列をそのまま使用
+  value: "=sample!C8"  # DAUの値を取得
 
 root:
   text: "売上"
