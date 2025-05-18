@@ -390,6 +390,7 @@ async function generateKPITree() {
     const faviconLink = faviconUrl ? `<link rel="icon" href="${faviconUrl}" type="image/x-icon">` : '';
     
     // カスタムヘッダー情報の処理
+    // （ノードのスプレッドシート解決後に実行される）
     let headerInfoText = '';
     if (config.header_info) {
       try {
@@ -399,7 +400,7 @@ async function generateKPITree() {
         // 値の処理
         let headerValue = '';
         
-        // スプレッドシートからの値を取得する場合
+        // パターン1: スプレッドシート参照オブジェクトの場合
         if (config.header_info.value && typeof config.header_info.value === 'object' && config.header_info.value.spreadsheet) {
           const spreadsheetId = global.kpiTreeConfig?.spreadsheet?.id || 
                                config.header_info.value.spreadsheet.id || 
@@ -408,34 +409,54 @@ async function generateKPITree() {
           if (spreadsheetId && config.header_info.value.spreadsheet.range) {
             try {
               console.log(`ヘッダー情報をスプレッドシートから取得します: ${spreadsheetId}, ${config.header_info.value.spreadsheet.range}`);
-              // スプレッドシートから値を取得
+              // すでにシートが読み込まれているならそのキャッシュを使用
               const spreadsheetHelper = require('./spreadsheet-helper');
               
-              // 参照形式を簡単にチェックして取得を試みる
+              // 参照文字列を整形して取得を試みる
+              const rangeString = config.header_info.value.spreadsheet.range;
+              // "="で始まる場合は除去する
+              const cleanRange = rangeString.startsWith('=') ? rangeString.substring(1) : rangeString;
+              
               try {
-                const rangeString = config.header_info.value.spreadsheet.range;
-                // "="で始まる場合は除去する
-                const cleanRange = rangeString.startsWith('=') ? rangeString.substring(1) : rangeString;
-                
-                console.log(`DEBUG: スプレッドシート取得を試みます: ${spreadsheetId}, ${cleanRange}`);
-                try {
-                  headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, cleanRange);
-                  console.log(`ヘッダー情報の値を取得しました: ${headerValue}`);
-                } catch (fetchErr) {
-                  console.log(`ヘッダー情報取得失敗、参照文字列をそのまま使用: ${rangeString}`);  
-                  headerValue = rangeString;
-                }
-              } catch (e) {
-                console.log(`参照処理エラー、元の値を使用: ${config.header_info.value.spreadsheet.range}`);  
-                headerValue = config.header_info.value.spreadsheet.range;
+                headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, cleanRange);
+                console.log(`ヘッダー情報の値を取得しました: ${headerValue}`);
+              } catch (fetchErr) {
+                console.log(`ヘッダー情報取得失敗、参照文字列をそのまま使用: ${rangeString}`);  
+                headerValue = rangeString;
               }
             } catch (err) {
               console.error(`ヘッダー情報のスプレッドシート取得エラー:`, err);
-              // エラー時はスプレッドシートの照合文字列をそのまま表示
+              // エラー時はスプレッドシートの参照文字列をそのまま表示
               headerValue = config.header_info.value.spreadsheet.range;
             }
           } else {
             headerValue = '未設定';
+          }
+        }
+        // パターン2: 参照文字列の場合（"="で始まる文字列）
+        else if (config.header_info.value && typeof config.header_info.value === 'string' && config.header_info.value.startsWith('=')) {
+          try {
+            const spreadsheetId = global.kpiTreeConfig?.spreadsheet?.id || process.env.KPI_TREE_SPREADSHEET_ID;
+            if (spreadsheetId) {
+              // "="を除去した位置指定データを取得
+              const cleanRange = config.header_info.value.substring(1);
+              console.log(`ヘッダー情報をスプレッドシートから取得します (文字列形式): ${spreadsheetId}, ${cleanRange}`);
+              
+              try {
+                const spreadsheetHelper = require('./spreadsheet-helper');
+                headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, cleanRange);
+                console.log(`ヘッダー情報の値を取得しました: ${headerValue}`);
+              } catch (fetchErr) {
+                console.log(`ヘッダー情報取得失敗、参照文字列をそのまま使用: ${config.header_info.value}`);  
+                headerValue = config.header_info.value;
+              }
+            } else {
+              // スプレッドシートIDがない場合は参照文字列をそのまま表示
+              headerValue = config.header_info.value;
+            }
+          } catch (err) {
+            console.error(`ヘッダー情報のスプレッドシート取得エラー:`, err);
+            headerValue = config.header_info.value;
           }
         } else {
           // 固定値の場合
