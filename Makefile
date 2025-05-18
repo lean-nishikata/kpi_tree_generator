@@ -16,4 +16,8 @@ historical-report:
 
 .PHONY: historical-report-py
 historical-report-py:
-	docker-compose run --rm --entrypoint "python ./generate_historical_report.py" kpi-generator $(date)
+	docker-compose run --rm --entrypoint "/app/venv/bin/python ./generate_historical_report.py" kpi-generator $(date)
+
+.PHONY: historical-report-py-docker
+historical-report-py-docker:
+	docker-compose run --rm --entrypoint "/app/venv/bin/python ./generate_historical_report_docker.py" kpi-generator $(date)

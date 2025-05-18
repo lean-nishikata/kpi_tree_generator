@@ -6,6 +6,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3-venv \
+    python3-google-auth \
+    python3-requests \
     jq \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -13,8 +16,12 @@ RUN apt-get update && apt-get install -y \
 # Pythonのシンボリックリンクを作成（pythonコマンドでpython3を実行可能に）
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
+# 仮想環境を作成し、その中にライブラリをインストール
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
 # Python依存ライブラリをインストール
-RUN pip3 install --no-cache-dir \
+RUN /app/venv/bin/pip install --no-cache-dir \
     google-api-python-client \
     google-auth-httplib2 \
     google-auth-oauthlib

@@ -12,6 +12,8 @@ services:
       # スクリプトをマウント
       - ./generate_historical_report.py:/app/generate_historical_report.py
       - ./generate_historical_report.sh:/app/generate_historical_report.sh
+      - ./generate_historical_report_docker.py:/app/generate_historical_report_docker.py
+      - ./test_python_script.py:/app/test_python_script.py
       # 認証キーをマウントしてコンテナ内で使用できるようにする
       - ./keys:/app/keys
     environment:
