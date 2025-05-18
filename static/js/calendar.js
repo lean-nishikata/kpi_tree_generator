@@ -296,29 +296,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // リンク先を生成（YAMLのpublic_urlに基づく）
       let reportUrl = '';
       if (baseUrl) {
-        // baseURLのドメイン部分とパスを取得（別の例: https://storage.googleapis.com/your-bucket)
-        const urlParts = baseUrl.match(/^(https?:\/\/[^/]+)(\/.*)?$/);
-        if (urlParts) {
-          const domain = urlParts[1]; // 例: https://storage.googleapis.com
-          const path = urlParts[2] || ''; // 例: /your-bucket
-          
-          // ドメインを抽出（例：kpi-tree-data）
-          const bucketMatch = path.match(/\/([^\/]+)/);
-          const bucket = bucketMatch ? bucketMatch[1] : '';
-          
-          // 必ずこの形式に強制する（https://storage.googleapis.com/kpi-tree-data/reports/20250515.html）
-          // バケット名とパスをハードコードして確実に生成
-          reportUrl = `${domain}/kpi-tree-data/reports/${dateForUrl}.html`;
+        // baseUrlからindex.htmlなどのファイル名を削除
+        const baseUrlWithoutFile = baseUrl.replace(/\/[^\/]*\.html$/, '');
+        
+        // reports/YYYYMMDD.html 形式のURLを生成
+        if (baseUrlWithoutFile.endsWith('/')) {
+          reportUrl = `${baseUrlWithoutFile}reports/${dateForUrl}.html`;
         } else {
-          // 他のパターンでもreportsディレクトリを含める
-          if (baseUrl.endsWith('/')) {
-            reportUrl = `${baseUrl}reports/${dateForUrl}.html`;
-          } else {
-            reportUrl = `${baseUrl}/reports/${dateForUrl}.html`;
-          }
+          reportUrl = `${baseUrlWithoutFile}/reports/${dateForUrl}.html`;
         }
       } else {
-        // フォールバック - この場合も必たreportsディレクトリを含める
+        // フォールバック
         reportUrl = `/reports/${dateForUrl}.html`;
       }
       
