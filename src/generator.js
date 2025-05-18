@@ -95,7 +95,14 @@ async function generateKPITree() {
   // --date オプションがある場合、その値を使用
   const dateIndex = args.indexOf('--date');
   if (dateIndex > -1 && args.length > dateIndex + 1) {
-    dataDate = args[dateIndex + 1];
+    // コマンドラインからの入力は「YYYY-MM-DD」形式で受け付ける
+    const isoDate = args[dateIndex + 1];
+    if (isoDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [inputYear, inputMonth, inputDay] = isoDate.split('-');
+      dataDate = `${inputYear}年${inputMonth}月${inputDay}日`;
+    } else {
+      dataDate = isoDate; // フォーマットが異なる場合はそのまま使用
+    }
   }
   try {
     // Get YAML file from command line or use default
