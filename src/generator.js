@@ -411,23 +411,22 @@ async function generateKPITree() {
               // スプレッドシートから値を取得
               const spreadsheetHelper = require('./spreadsheet-helper');
               
-              // スプレッドシート参照文字列か不正な形式かチェック
-              const rangePattern = /=([^!]+)!([A-Z]+[0-9]+)/;
-              if (typeof config.header_info.value.spreadsheet.range === 'string' && 
-                  config.header_info.value.spreadsheet.range.match(rangePattern)) {
-                // 正規表現にマッチする場合は取得を試みる
+              // 参照形式を簡単にチェックして取得を試みる
+              try {
+                const rangeString = config.header_info.value.spreadsheet.range;
+                // "="で始まる場合は除去する
+                const cleanRange = rangeString.startsWith('=') ? rangeString.substring(1) : rangeString;
+                
+                console.log(`DEBUG: スプレッドシート取得を試みます: ${spreadsheetId}, ${cleanRange}`);
                 try {
-                  console.log(`DEBUG: スプレッドシート取得を試みます: ${spreadsheetId}, ${config.header_info.value.spreadsheet.range}`);
-                  headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, config.header_info.value.spreadsheet.range.substring(1));
+                  headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, cleanRange);
                   console.log(`ヘッダー情報の値を取得しました: ${headerValue}`);
                 } catch (fetchErr) {
-                  // 取得失敗の場合は元の参照文字列をそのまま表示
-                  console.log(`ヘッダー情報取得失敗、参照文字列をそのまま使用: ${config.header_info.value.spreadsheet.range}, エラー: ${fetchErr}`);
-                  headerValue = config.header_info.value.spreadsheet.range;
+                  console.log(`ヘッダー情報取得失敗、参照文字列をそのまま使用: ${rangeString}`);  
+                  headerValue = rangeString;
                 }
-              } else {
-                // 参照形式でない場合はそのまま表示
-                console.log(`参照形式ではありません: ${config.header_info.value.spreadsheet.range}`);
+              } catch (e) {
+                console.log(`参照処理エラー、元の値を使用: ${config.header_info.value.spreadsheet.range}`);  
                 headerValue = config.header_info.value.spreadsheet.range;
               }
             } catch (err) {
