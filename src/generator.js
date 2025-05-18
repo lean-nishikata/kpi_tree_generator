@@ -410,11 +410,28 @@ async function generateKPITree() {
               console.log(`ヘッダー情報をスプレッドシートから取得します: ${spreadsheetId}, ${config.header_info.value.spreadsheet.range}`);
               // スプレッドシートから値を取得
               const spreadsheetHelper = require('./spreadsheet-helper');
-              headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, config.header_info.value.spreadsheet.range);
-              console.log(`ヘッダー情報の値を取得しました: ${headerValue}`);
+              
+              // スプレッドシート参照文字列か不正な形式かチェック
+              const rangePattern = /=([^!]+)!([A-Z]+[0-9]+)/;
+              if (typeof config.header_info.value.spreadsheet.range === 'string' && 
+                  config.header_info.value.spreadsheet.range.match(rangePattern)) {
+                // 正規表現にマッチする場合は取得を試みる
+                try {
+                  headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, config.header_info.value.spreadsheet.range.substring(1));
+                  console.log(`ヘッダー情報の値を取得しました: ${headerValue}`);
+                } catch (fetchErr) {
+                  // 取得失敗の場合は元の参照文字列をそのまま表示
+                  console.log(`ヘッダー情報取得失敗、参照文字列をそのまま使用: ${config.header_info.value.spreadsheet.range}`);
+                  headerValue = config.header_info.value.spreadsheet.range;
+                }
+              } else {
+                // 参照形式でない場合はそのまま表示
+                headerValue = config.header_info.value.spreadsheet.range;
+              }
             } catch (err) {
               console.error(`ヘッダー情報のスプレッドシート取得エラー:`, err);
-              headerValue = 'エラー';
+              // エラー時はスプレッドシートの照合文字列をそのまま表示
+              headerValue = config.header_info.value.spreadsheet.range;
             }
           } else {
             headerValue = '未設定';

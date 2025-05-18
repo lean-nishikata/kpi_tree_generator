@@ -8,13 +8,11 @@ spreadsheet:
 # ヘッダー表示のカスタム情報
 header_info:
   label: "販売所以外収益/販売所収益"  # ヘッダーに表示するラベル
-  value: "1.24"  # Docker環境用に固定値を設定
-  
-  # スプレッドシートから値を取得する場合の設定（ローカル開発用）
-  # value:
-  #   spreadsheet:
-  #     # idを指定しない場合は上記のグローバルスプレッドシートIDを使用
-  #     range: "=for_generator!G70"  # DAUの値を設定
+  # スプレッドシートから値を取得
+  value:
+    spreadsheet:
+      # idを指定しない場合は上記のグローバルスプレッドシートIDを使用
+      range: "=for_generator!G70"  # 指標の値を取得
 
 root:
   text: 営業収益合計
