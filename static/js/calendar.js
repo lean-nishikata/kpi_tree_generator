@@ -17,7 +17,24 @@ document.addEventListener('DOMContentLoaded', function() {
           const date = dateMatch[0];
           const dateParts = date.split('-');
           const formattedDate = dateParts.join('');
-          const newUrl = `https://storage.googleapis.com/kpi-tree-data/reports/${formattedDate}.html`;
+          
+          // ベースURLからリンクを生成（public_urlに基づく）
+          let baseUrlForLinks = window.PUBLIC_URL || '';
+          baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, ''); // 末尾のファイル名を削除
+          
+          // 新しいリンク形式
+          let newUrl = '';
+          if (baseUrlForLinks) {
+            if (baseUrlForLinks.endsWith('/')) {
+              newUrl = `${baseUrlForLinks}reports/${formattedDate}.html`;
+            } else {
+              newUrl = `${baseUrlForLinks}/reports/${formattedDate}.html`;
+            }
+          } else {
+            // フォールバック
+            newUrl = `/reports/${formattedDate}.html`;
+          }
+          
           link.setAttribute('href', newUrl);
           console.log(`リンク修正: ${href} → ${newUrl}`);
         }
@@ -134,10 +151,19 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // 常に固定のGCSパスからカレンダーデータを取得する
-    const gcsCalendarDataUrl = 'https://storage.googleapis.com/kpi-tree-data/static/calendar-data.json';
+    // 検索パス
+    // public_urlに基づいて外部カレンダーデータのURLを生成
+    let externalCalendarUrl = '';
+    if (baseUrl) {
+      const baseUrlWithoutFile = baseUrl.replace(/\/[^\/]*\.html$/, '');
+      if (baseUrlWithoutFile.endsWith('/')) {
+        externalCalendarUrl = `${baseUrlWithoutFile}static/calendar-data.json`;
+      } else {
+        externalCalendarUrl = `${baseUrlWithoutFile}/static/calendar-data.json`;
+      }
+    }
     
-    // バックアップ検索パス (GCSへのアクセスができない場合のフォールバック)
+    // ローカルバックアップパス
     const localPaths = [
       './static/calendar-data.json',
       '/static/calendar-data.json',
@@ -146,13 +172,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // キャッシュを回避するためのタイムスタンプパラメータを追加
     const timestamp = new Date().getTime();
-    const urlWithCache = `${gcsCalendarDataUrl}?t=${timestamp}`;
+    const urlWithCache = externalCalendarUrl ? `${externalCalendarUrl}?t=${timestamp}` : '';
     
-    // まずGCSから取得を試みる
-    fetch(urlWithCache)
+    // まず外部URLから取得を試みる（URLが設定されている場合）
+    const initialFetch = externalCalendarUrl 
+      ? fetch(urlWithCache)
+      : Promise.reject(new Error('外部URLが設定されていません'));
+      
+    // 外部URLから取得を試みる、失敗したらローカルパスを試す
+    initialFetch
       .catch(() => {
-        console.warn('GCSからのカレンダーデータ取得に失敗しました。ローカルのパスを試します。');
-        // GCSから失敗した場合、ローカルのパスを順に試す
+        console.warn('外部URLからのカレンダーデータ取得に失敗しました。ローカルのパスを試します。');
+        // 外部URLから失敗した場合、ローカルのパスを順に試す
         return fetch(localPaths[0])
           .catch(() => fetch(localPaths[1]))
           .catch(() => fetch(localPaths[2]))
