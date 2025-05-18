@@ -81,6 +81,22 @@ ${calendarJs}
 
 // Main function
 async function generateKPITree() {
+  // 現在の日付をデフォルトとして使用
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const defaultDate = `${year}年${month}月${day}日`;
+  
+  // コマンドライン引数から日付パラメータを取得
+  const args = process.argv.slice(2);
+  let dataDate = defaultDate;
+  
+  // --date オプションがある場合、その値を使用
+  const dateIndex = args.indexOf('--date');
+  if (dateIndex > -1 && args.length > dateIndex + 1) {
+    dataDate = args[dateIndex + 1];
+  }
   try {
     // Get YAML file from command line or use default
     let configName = process.argv[2] || 'config';
@@ -351,7 +367,8 @@ async function generateKPITree() {
       .replace(/\{\{STYLE\}\}/g, styleContent)
       .replace(/\{\{THEME\}\}/g, theme)
       .replace(/\{\{PUBLIC_URL_SCRIPT\}\}/g, publicUrlScript)
-      .replace(/\{\{FAVICON_LINK\}\}/g, faviconLink);
+      .replace(/\{\{FAVICON_LINK\}\}/g, faviconLink)
+      .replace(/\{\{DATA_DATE\}\}/g, dataDate);
       
     // 方向変換ロジックを削除（対応するプレースホルダーもテンプレートから削除済み）
     
