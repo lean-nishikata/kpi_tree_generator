@@ -8,11 +8,8 @@ spreadsheet:
 # ヘッダー表示のカスタム情報
 header_info:
   label: "販売所以外収益/販売所収益"  # ヘッダーに表示するラベル
-  # スプレッドシートから値を取得
-  value:
-    spreadsheet:
-      # idを指定しない場合は上記のグローバルスプレッドシートIDを使用
-      range: "=for_generator!G70"  # 指標の値を取得
+  # スプレッドシート参照文字列をそのまま使用
+  value: "=for_generator!G70"  # 指標の値を取得
 
 root:
   text: 営業収益合計
