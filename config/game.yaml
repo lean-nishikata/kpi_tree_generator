@@ -1,7 +1,7 @@
 title: "Game KPIs"
 theme: "blue"
 # 公開時のURL設定（GCSなどでホスティングする場合に使用）
-public_url: "https://storage.googleapis.com/your-bucket/game.html"
+public_url: "https://storage.googleapis.com/kpi-tree-data/game.html"
 
 # グローバルスプレッドシート設定 - すべてのノードで共有
 spreadsheet:

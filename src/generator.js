@@ -14,6 +14,7 @@ const JS_TREE_PATH = path.join(__dirname, '..', 'static', 'js', 'tree.js');
 const JS_URL_PATH = path.join(__dirname, '..', 'static', 'js', 'url.js');
 const JS_SHARE_PATH = path.join(__dirname, '..', 'static', 'js', 'share.js');
 const JS_ANCHOR_PATH = path.join(__dirname, '..', 'static', 'js', 'anchor.js');
+const JS_CALENDAR_PATH = path.join(__dirname, '..', 'static', 'js', 'calendar.js');
 
 // 全てのスクリプトを読み込んで結合する関数
 async function loadAllScripts() {
@@ -31,7 +32,7 @@ async function loadAllScripts() {
   };
   
   // 各ファイルの存在を確認
-  const files = [JS_CORE_PATH, JS_TREE_PATH, JS_URL_PATH, JS_SHARE_PATH, JS_ANCHOR_PATH];
+  const files = [JS_CORE_PATH, JS_TREE_PATH, JS_URL_PATH, JS_SHARE_PATH, JS_ANCHOR_PATH, JS_CALENDAR_PATH];
   for (const file of files) {
     if (!await fileExists(file)) {
       console.error(`ファイルが見つかりません: ${file}`);
@@ -44,6 +45,7 @@ async function loadAllScripts() {
   const urlJs = await fs.readFile(JS_URL_PATH, 'utf8');
   const shareJs = await fs.readFile(JS_SHARE_PATH, 'utf8');
   const anchorJs = await fs.readFile(JS_ANCHOR_PATH, 'utf8');
+  const calendarJs = await fs.readFile(JS_CALENDAR_PATH, 'utf8');
   
   console.log('スクリプト読み込み完了');
   
@@ -53,6 +55,7 @@ async function loadAllScripts() {
   console.log(`url.js: ${urlJs.length} バイト`);
   console.log(`share.js: ${shareJs.length} バイト`);
   console.log(`anchor.js: ${anchorJs.length} バイト`);
+  console.log(`calendar.js: ${calendarJs.length} バイト`);
   
   return `
 // KPIツリージェネレーター JavaScript 結合ファイル
@@ -70,6 +73,9 @@ ${shareJs}
 
 // anchor.js
 ${anchorJs}
+
+// calendar.js
+${calendarJs}
 `;
 }
 
