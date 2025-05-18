@@ -22,13 +22,13 @@
 ### 共通の前提条件
 
 - Google Cloud SDKのインストール (`gsutil` コマンドが使用可能であること)
-- `jq` コマンドのインストール (`brew install jq`)
 - GCSバケットへの書き込み権限
 
-### Python版の追加条件 (ホスト環境での実行時のみ)
+### ホスト環境での実行時の追加条件
 
-- Python 3.6以上
-- Google API Pythonクライアントライブラリ
+- `jq` コマンドのインストール (`brew install jq`)
+- Python 3.6以上 (Python版を使用する場合)
+- Google API Pythonクライアントライブラリ (Python版を使用する場合)
 
 ```bash
 pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
@@ -38,6 +38,12 @@ pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
 - Docker および docker-compose がインストール済み
 - マウントされたボリュームへの書き込み権限
+
+Dockerイメージには以下が含まれています:
+- Node.js
+- Python 3 および pip
+- jq
+- Google API Pythonクライアントライブラリ
 
 ## 使用方法
 
@@ -75,6 +81,8 @@ python generate_historical_report.py YYYY-MM-DD
 
 Dockerコンテナから実行する場合は、以下のMakeコマンドを使用します：
 
+#### シェルスクリプト版
+
 ```bash
 make historical-report date=YYYY-MM-DD
 ```
@@ -84,7 +92,16 @@ make historical-report date=YYYY-MM-DD
 make historical-report date=2025-06-01
 ```
 
-> **注意**: Dockerコンテナ内ではシェルスクリプト版のみ使用可能です。Python版を実行するには、コンテナ内にPythonと必要なライブラリをインストールする必要があります。
+#### Python版
+
+```bash
+make historical-report-py date=YYYY-MM-DD
+```
+
+例：
+```bash
+make historical-report-py date=2025-06-01
+```
 
 ## Dockerビルドと環境準備
 

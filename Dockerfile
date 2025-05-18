@@ -2,6 +2,24 @@ FROM node:20-slim
 
 WORKDIR /app
 
+# Pythonとpipをインストール
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    jq \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pythonのシンボリックリンクを作成（pythonコマンドでpython3を実行可能に）
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Python依存ライブラリをインストール
+RUN pip3 install --no-cache-dir \
+    google-api-python-client \
+    google-auth-httplib2 \
+    google-auth-oauthlib
+
+# Node.jsの依存関係のインストール
 COPY package.json ./
 RUN npm install
 
@@ -22,6 +40,7 @@ RUN mkdir -p /app/output && chmod 777 /app/output
 
 # 環境変数の設定
 ENV GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
+ENV PYTHONUNBUFFERED=1
 
 VOLUME ["/app/config"]
 VOLUME ["/app/output"]
