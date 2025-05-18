@@ -13,5 +13,14 @@ static/index.html
 
 # Google API credentials
 /keys/**/*.json  # すべてのサブディレクトリを含む
+**/*service-account-key.json  # どのディレクトリにあるservice-account-key.jsonも除外
+**/keys/**/*.json  # すべてのディレクトリ内のkeysフォルダのJSONファイル
+temp_backup/keys/  # temp_backupディレクトリ内のkeysフォルダ全体
 .env
+**/.env  # どのディレクトリにある.envファイルも除外
+
+# バックアップとテンポラリファイル
+output/backup/
+**/*.bak
+**/*_backup*.*
 **/.claude/settings.local.json
