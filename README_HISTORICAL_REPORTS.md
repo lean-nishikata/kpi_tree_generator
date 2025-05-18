@@ -25,7 +25,7 @@
 - `jq` コマンドのインストール (`brew install jq`)
 - GCSバケットへの書き込み権限
 
-### Python版の追加条件
+### Python版の追加条件 (ホスト環境での実行時のみ)
 
 - Python 3.6以上
 - Google API Pythonクライアントライブラリ
@@ -33,6 +33,11 @@
 ```bash
 pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
 ```
+
+### Docker環境での実行時の前提条件
+
+- Docker および docker-compose がインストール済み
+- マウントされたボリュームへの書き込み権限
 
 ## 使用方法
 
@@ -70,8 +75,6 @@ python generate_historical_report.py YYYY-MM-DD
 
 Dockerコンテナから実行する場合は、以下のMakeコマンドを使用します：
 
-#### シェルスクリプト版
-
 ```bash
 make historical-report date=YYYY-MM-DD
 ```
@@ -81,16 +84,7 @@ make historical-report date=YYYY-MM-DD
 make historical-report date=2025-06-01
 ```
 
-#### Python版
-
-```bash
-make historical-report-py date=YYYY-MM-DD
-```
-
-例：
-```bash
-make historical-report-py date=2025-06-01
-```
+> **注意**: Dockerコンテナ内ではシェルスクリプト版のみ使用可能です。Python版を実行するには、コンテナ内にPythonと必要なライブラリをインストールする必要があります。
 
 ## Dockerビルドと環境準備
 

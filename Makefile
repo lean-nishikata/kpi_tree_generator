@@ -14,6 +14,7 @@ sh:
 historical-report:
 	docker-compose run --rm --entrypoint "./generate_historical_report.sh" kpi-generator $(date)
 
-.PHONY: historical-report-py
-historical-report-py:
-	docker-compose run --rm --entrypoint "python ./generate_historical_report.py" kpi-generator $(date)
+# Python版は必要なライブラリがないためコメントアウト
+# .PHONY: historical-report-py
+# historical-report-py:
+# 	docker-compose run --rm --entrypoint "python ./generate_historical_report.py" kpi-generator $(date)
