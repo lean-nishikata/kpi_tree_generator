@@ -59,23 +59,32 @@
   .weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
     text-align: center;
     font-size: 12px;
     font-weight: 500;
     color: #5f6368;
     background-color: #f8f9fa;
     border-bottom: 1px solid #eaeaea;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 0;
+    border-bottom: 2px solid #f0f0f0;
   }
   
   .weekdays div {
-    padding: 8px 0;
+    padding: 0;
+    margin: 0;
+    height: 28px;
+    line-height: 28px;
   }
   
   .calendar-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    padding: 4px 8px;
+    gap: 2px;
+    padding: 4px 0;
+    margin: 0;
   }
   
   .calendar-day {

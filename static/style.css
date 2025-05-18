@@ -713,12 +713,15 @@ h1 {
 
 /* カレンダースタイル */
 .calendar-container {
-  max-width: 800px;
-  margin: 20px auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 10px 0;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 16px;
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .calendar-header {
@@ -751,38 +754,130 @@ h1 {
   font-weight: bold;
 }
 
-.calendar-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  text-align: center;
+/* カレンダーグリッドの共通設定 - レイアウトを完全に統一 */
+.calendar-days,
+.weekdays {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  text-align: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
+/* 曜日ヘッダー・日付グリッドの間隔調整 */
+.weekdays {
+  margin-bottom: 0 !important;
+  border-bottom: 2px solid #f0f0f0 !important;
+}
+
+/* 曜日ヘッダーの共通設定 */
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 3px;
   text-align: center;
   font-weight: bold;
-  margin-bottom: 8px;
 }
 
-.calendar-weekdays div {
-  padding: 6px;
+/* 土曜日と日曜日の色設定 */
+.calendar-days .calendar-day:nth-child(7n-1) {
+  color: #4285f4 !important; /* 土曜日 */
+}
+
+.calendar-days .calendar-day:nth-child(7n) {
+  color: #ea4335 !important; /* 日曜日 */
+}
+
+/* 他の月の日付の色 */
+.calendar-days .calendar-day.other-month:nth-child(7n-1),
+.calendar-days .calendar-day.other-month:nth-child(7n) {
+  color: #bdc1c6 !important;
+}
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0 0 8px 0;
+}
+
+.calendar-weekdays div,
+.weekdays div {
+  padding: 6px 0;
   font-size: 14px;
   color: #666;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* 曜日ヘッダーの土曜日（6番目の要素）の色 */
+.calendar-weekdays div:nth-child(6),
+.weekdays div:nth-child(6) {
+  color: #4285f4; /* 青色 */
+}
+
+/* 曜日ヘッダーの日曜日（7番目の要素）の色 */
+.calendar-weekdays div:nth-child(7),
+.weekdays div:nth-child(7) {
+  color: #ea4335; /* 赤色 */
+}
+
+.weekdays div {
+  height: 28px;
+  line-height: 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  padding: 0;
+  overflow: hidden;
 }
 
 .calendar-day {
   position: relative;
-  height: 40px;
-  line-height: 40px;
+  height: 28px;
+  line-height: 28px;
   border-radius: 4px;
-  font-size: 16px;
+  font-size: 14px;
+  overflow: hidden;
 }
 
 .calendar-day.other-month {
   color: #ccc;
+}
+
+/* 土曜日の色 - 実際のHTML構造では6番目が土曜日 */
+.calendar-days .calendar-day:nth-child(7n+6),
+.calendar-day:nth-child(7n+6) {
+  color: #4285f4 !important; /* 青色、優先順位を高くする */
+}
+
+/* 緑ポチがない土曜日の色を薄く */
+.calendar-days .calendar-day:not(.has-data):nth-child(7n+6) a,
+.calendar-day:not(.has-data):nth-child(7n+6) {
+  color: #84aef9 !important; /* より薄い青色 */
+}
+
+/* 日曜日の色 - 実際のHTML構造では7番目が日曜日 */
+.calendar-days .calendar-day:nth-child(7n),
+.calendar-day:nth-child(7n) {
+  color: #ea4335 !important; /* 赤色、優先順位を高くする */
+}
+
+/* 緑ポチがない日曜日の色を薄く */
+.calendar-days .calendar-day:not(.has-data):nth-child(7n) a,
+.calendar-day:not(.has-data):nth-child(7n) {
+  color: #f2928a !important; /* より薄い赤色 */
+}
+
+/* 他の月の日でも土日の色を保持（グレーにならないようにする） */
+.calendar-days .calendar-day.other-month:nth-child(7n+6),
+.calendar-day.other-month:nth-child(7n+6) {
+  color: #a5c0f7 !important; /* 薄い青色 */
+}
+
+.calendar-days .calendar-day.other-month:nth-child(7n),
+.calendar-day.other-month:nth-child(7n) {
+  color: #f5b6b3 !important; /* 薄い赤色 */
 }
 
 .calendar-day.today {
