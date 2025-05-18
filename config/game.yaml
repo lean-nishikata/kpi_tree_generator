@@ -7,6 +7,15 @@ public_url: "https://storage.googleapis.com/kpi-tree-data/game.html"
 spreadsheet:
   id: "1kCEQwecJyjJztEaTCLfJwkDfi1rsxcGEhBdLZb6F2Z0"
 
+# ヘッダー表示のカスタム情報
+header_info:
+  label: "DAU"  # ヘッダーに表示するラベル
+  # スプレッドシートから値を取得
+  value:
+    spreadsheet:
+      # idを指定しない場合は上記のグローバルスプレッドシートIDを使用
+      range: "sample!C8"  # DAUの値を設定
+
 root:
   text: "売上"
   text_en: "Revenue (JPY)"

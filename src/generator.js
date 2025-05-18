@@ -389,6 +389,48 @@ async function generateKPITree() {
     // faviconリンクタグを生成
     const faviconLink = faviconUrl ? `<link rel="icon" href="${faviconUrl}" type="image/x-icon">` : '';
     
+    // カスタムヘッダー情報の処理
+    let headerInfoText = '';
+    if (config.header_info) {
+      try {
+        // ラベルがあれば取得
+        const headerLabel = config.header_info.label || 'カスタム情報';
+        
+        // 値の処理
+        let headerValue = '';
+        
+        // スプレッドシートからの値を取得する場合
+        if (config.header_info.value && typeof config.header_info.value === 'object' && config.header_info.value.spreadsheet) {
+          const spreadsheetId = global.kpiTreeConfig?.spreadsheet?.id || 
+                               config.header_info.value.spreadsheet.id || 
+                               process.env.KPI_TREE_SPREADSHEET_ID;
+          
+          if (spreadsheetId && config.header_info.value.spreadsheet.range) {
+            try {
+              console.log(`ヘッダー情報をスプレッドシートから取得します: ${spreadsheetId}, ${config.header_info.value.spreadsheet.range}`);
+              // スプレッドシートから値を取得
+              const spreadsheetHelper = require('./spreadsheet-helper');
+              headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, config.header_info.value.spreadsheet.range);
+              console.log(`ヘッダー情報の値を取得しました: ${headerValue}`);
+            } catch (err) {
+              console.error(`ヘッダー情報のスプレッドシート取得エラー:`, err);
+              headerValue = 'エラー';
+            }
+          } else {
+            headerValue = '未設定';
+          }
+        } else {
+          // 固定値の場合
+          headerValue = config.header_info.value || '未設定';
+        }
+        
+        headerInfoText = ` / ${headerLabel}:${headerValue}`;
+      } catch (error) {
+        console.error('ヘッダー情報処理エラー:', error);
+        headerInfoText = '';
+      }
+    }
+    
     // テンプレート変数を確実に置換するための関数
     function replacePlaceholder(text, placeholder, value) {
       const pattern = new RegExp('\\{\\{' + placeholder + '\\}\\}', 'g');
@@ -403,7 +445,7 @@ async function generateKPITree() {
     html = replacePlaceholder(html, 'THEME', theme);
     html = replacePlaceholder(html, 'PUBLIC_URL_SCRIPT', publicUrlScript);
     html = replacePlaceholder(html, 'FAVICON_LINK', faviconLink);
-    html = replacePlaceholder(html, 'DATA_DATE', dataDate);
+    html = replacePlaceholder(html, 'DATA_DATE', dataDate + headerInfoText);
     
     // デバッグ情報
     console.log('テンプレート変数置換完了');
