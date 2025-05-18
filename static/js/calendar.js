@@ -91,17 +91,10 @@ document.addEventListener('DOMContentLoaded', function() {
       baseUrl = baseUrl.replace(/\/[^\/]*\.html$/, ''); // 末尾のHTML名を削除
     }
     
-    // 日付データをJSONファイルから取得 (無効なパスを修正)
-    // デバッグ用にハードコードしたデータ - JSONからの正確な日付一覧
+    // 日付データをJSONファイルから取得
+    // フォールバックとして空のデータを使用
     const fallbackData = {
-      datesWithData: [
-        "2025-04-01", "2025-04-03", "2025-04-05", "2025-04-08", "2025-04-10", "2025-04-15", 
-        "2025-04-17", "2025-04-20", "2025-04-22", "2025-04-25",
-        "2025-05-01", "2025-05-03", "2025-05-04", "2025-05-05", "2025-05-08", "2025-05-09", 
-        "2025-05-10", "2025-05-15", "2025-05-17", "2025-05-19", "2025-05-20", "2025-05-22", "2025-05-25",
-        "2025-06-01", "2025-06-03", "2025-06-05", "2025-06-08", "2025-06-10", "2025-06-15", 
-        "2025-06-17", "2025-06-20", "2025-06-22", "2025-06-25"
-      ]
+      datesWithData: []
     };
     
     // データ処理関数
@@ -169,6 +162,11 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .then(data => {
         console.log('カレンダーデータを取得しました', data);
+        // 空のJSONファイルの場合も適切に処理
+        if (!data || !data.datesWithData || !Array.isArray(data.datesWithData)) {
+          console.warn('カレンダーデータが正しい形式ではありません。空のデータを使用します。');
+          return processJsonData(fallbackData);
+        }
         processJsonData(data);
       })
       .catch(error => {
