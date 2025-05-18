@@ -19,6 +19,6 @@ services:
     environment:
       - NODE_ENV=production
       - GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
-      - KPI_TREE_SPREADSHEET_ID=1kCEQwecJyjJztEaTCLfJwkDfi1rsxcGEhBdLZb6F2Z0
+      - KPI_TREE_SPREADSHEET_ID=1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U
     # コマンドライン引数を渡すことができます（例：docker-compose run kpi-generator sales）
     # デフォルトはconfig.yaml
