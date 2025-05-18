@@ -134,24 +134,36 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // 複数のパスを試す
-    const paths = [
+    // 常に固定のGCSパスからカレンダーデータを取得する
+    const gcsCalendarDataUrl = 'https://storage.googleapis.com/kpi-tree-data/static/calendar-data.json';
+    
+    // バックアップ検索パス (GCSへのアクセスができない場合のフォールバック)
+    const localPaths = [
       './static/calendar-data.json',
       '/static/calendar-data.json',
       'calendar-data.json'
     ];
     
-    // データ取得試行
-    fetch(paths[0])
-      .catch(() => fetch(paths[1]))
-      .catch(() => fetch(paths[2]))
+    // キャッシュを回避するためのタイムスタンプパラメータを追加
+    const timestamp = new Date().getTime();
+    const urlWithCache = `${gcsCalendarDataUrl}?t=${timestamp}`;
+    
+    // まずGCSから取得を試みる
+    fetch(urlWithCache)
       .catch(() => {
-        console.warn('カレンダーデータの取得に失敗しました。フォールバックデータを使用します。');
-        // 全てのパスで失敗した場合はフォールバックを返す
-        return { 
-          ok: true,
-          json: () => Promise.resolve(fallbackData)
-        };
+        console.warn('GCSからのカレンダーデータ取得に失敗しました。ローカルのパスを試します。');
+        // GCSから失敗した場合、ローカルのパスを順に試す
+        return fetch(localPaths[0])
+          .catch(() => fetch(localPaths[1]))
+          .catch(() => fetch(localPaths[2]))
+          .catch(() => {
+            console.warn('すべてのパスでカレンダーデータの取得に失敗しました。フォールバックデータを使用します。');
+            // 全てのパスで失敗した場合はフォールバックを返す
+            return { 
+              ok: true,
+              json: () => Promise.resolve(fallbackData)
+            };
+          });
       })
       .then(response => {
         if (!response.ok && response.ok !== undefined) {
@@ -310,13 +322,13 @@ document.addEventListener('DOMContentLoaded', function() {
         reportUrl = `/reports/${dateForUrl}.html`;
       }
       
-      // データがある場合のみリンクを有効に
+      // すべての日付に対してリンクを有効にする
+      dateLink.href = reportUrl;
+      dateLink.title = `${formattedDate}のレポートを表示`;
+      
+      // データがある日付には特別なクラスを追加（スタイリング用）
       if (hasDataForDate(currentYear, currentMonth, i)) {
-        dateLink.href = reportUrl;
-        dateLink.title = `${formattedDate}のレポートを表示`;
-      } else {
-        dateLink.classList.add('no-data');
-        dateLink.title = `${formattedDate}のデータはありません`;
+        dateLink.classList.add('has-data');
       }
       
       dateLink.textContent = i;
