@@ -10,11 +10,13 @@ spreadsheet:
 # ヘッダー表示のカスタム情報
 header_info:
   label: "DAU"  # ヘッダーに表示するラベル
-  # スプレッドシートから値を取得
-  value:
-    spreadsheet:
-      # idを指定しない場合は上記のグローバルスプレッドシートIDを使用
-      range: "sample!C8"  # DAUの値を設定
+  value: "15000"  # Docker環境用に固定値を設定
+  
+  # スプレッドシートから値を取得する場合の設定（ローカル開発用）
+  # value:
+  #   spreadsheet:
+  #     # idを指定しない場合は上記のグローバルスプレッドシートIDを使用
+  #     range: "sample!C8"  # DAUの値を設定
 
 root:
   text: "売上"

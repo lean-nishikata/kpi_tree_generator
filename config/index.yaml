@@ -1,0 +1,552 @@
+title: コインチェック 収益KPIツリー
+theme: default
+favicon: "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/b9c95f718640eab6.png"
+public_url: "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/index.html"
+spreadsheet:
+  id: "1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U"
+
+# ヘッダー表示のカスタム情報
+header_info:
+  label: "販売所以外収益/販売所収益"  # ヘッダーに表示するラベル
+  value: "1.24"  # Docker環境用に固定値を設定
+  
+  # スプレッドシートから値を取得する場合の設定（ローカル開発用）
+  # value:
+  #   spreadsheet:
+  #     # idを指定しない場合は上記のグローバルスプレッドシートIDを使用
+  #     range: "=for_generator!G70"  # DAUの値を設定
+
+root:
+  text: 営業収益合計
+  text_en: Revenue
+  url: "https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd"
+  operator: "+"
+  value_daily: "=for_generator!G67"
+  value_monthly: "=for_generator!I67"
+  diff_daily: "=for_generator!L67"
+  diff_monthly: "=for_generator!M67"
+  children:
+  - text: 販売所収益
+    text_en: Marketplace Revenue
+    operator: "+"
+    url: "https://lookerstudio.google.com/u/0/reporting/bc9ee1e8-b5e5-4f02-bd33-a7a5da56229b/page/p_xsek8mmgrd"
+    value_daily: "=for_generator!G2"
+    value_monthly: "=for_generator!I2"
+    diff_daily: "=for_generator!L2"
+    diff_monthly: "=for_generator!M2"
+    children:
+    - text: 販売所
+      text_en: Marketplace Revenue
+      operator: "+"
+      url: "https://lookerstudio.google.com/u/0/reporting/bc9ee1e8-b5e5-4f02-bd33-a7a5da56229b/page/p_xsek8mmgrd"
+      value_daily: "=for_generator!G3"
+      value_monthly: "=for_generator!I3"
+      diff_daily: "=for_generator!L3"
+      diff_monthly: "=for_generator!M3"
+      children:
+      - text: スプレッド
+        text_en: Exchange Spread
+        operator: "*"
+        value_daily: "=for_generator!G4"
+        value_monthly: "=for_generator!I4"
+        diff_daily: "=for_generator!L4"
+        diff_monthly: "=for_generator!M4"
+      - text: 取引金額
+        text_en: Trading Volume
+        operator: "*"
+        value_daily: "=for_generator!G5"
+        value_monthly: "=for_generator!I5"
+        diff_daily: "=for_generator!L5"
+        diff_monthly: "=for_generator!M5"
+        children:
+        - text: 取引単価
+          text_en: Average Trade Size
+          operator: "*"
+          value_daily: "=for_generator!G6"
+          value_monthly: "=for_generator!I6"
+          diff_daily: "=for_generator!L6"
+          diff_monthly: "=for_generator!M6"
+        - text: 取引ユーザー数
+          text_en: Number of Trading Users
+          operator: "*"
+          value_daily: "=for_generator!G7"
+          value_monthly: "=for_generator!I7"
+          diff_daily: "=for_generator!L7"
+          diff_monthly: "=for_generator!M7"
+          children:
+          - text: 既存取引ユーザー数
+            text_en: Trading Existing Customers
+            operator: "+"
+            value_daily: "=for_generator!G9"
+            value_monthly: "=for_generator!I9"
+            diff_daily: "=for_generator!L9"
+            diff_monthly: "=for_generator!M9"
+            children:
+            - text: 月末本人確認済既存口座数
+              text_en: Number of Verified Existing Accounts at Month-End
+              operator: "*"
+              value: "-"
+            - text: 既存ユーザー取引率
+              text_en: Trading Rate of Existing Users
+              operator: "*"
+              value: "-"
+          - text: 新規取引ユーザー数
+            text_en: Trading New Customers
+            operator: "+"
+            value_daily: "=for_generator!G8"
+            value_monthly: "=for_generator!I8"
+            diff_daily: "=for_generator!L8"
+            diff_monthly: "=for_generator!M8"
+            children:
+            - text: 新規口座開設数
+              text_en: Number of New Accounts Opened
+              operator: "*"
+              value: "-"
+              children:
+              - text: 広告宣伝費
+                text_en: Advertising Expense Transfers
+                operator: "*"
+                value: "-"
+              - text: Blended CPA
+                operator: "*"
+                value: "-"
+            - text: 新規ユーザー取引率
+              text_en: Trading Rate of New Users
+              operator: "*"
+              value: "-"
+  - text: 販売所以外収益
+    text_en: Non-Marketplace Revenue
+    operator: "+"
+    value_daily: "=for_generator!G10"
+    value_monthly: "=for_generator!I10"
+    diff_daily: "=for_generator!L10"
+    diff_monthly: "=for_generator!M10"
+    url: "https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd"
+    children:
+    - text: ステーキング
+      text_en: Staking
+      operator: "+"
+      url: "https://lookerstudio.google.com/u/0/reporting/a5869868-a23f-48f1-b98c-d5759ad578de/page/arSIF"
+      value_daily: "=for_generator!G39"
+      value_monthly: "=for_generator!I39"
+      diff_daily: "=for_generator!L39"
+      diff_monthly: "=for_generator!M39"
+      children:
+      - text: ETH保有金額
+        text_en: ETH Balance
+        operator: "*"
+        value_daily: "=for_generator!G40"
+        value_monthly: "=for_generator!I40"
+        diff_daily: "=for_generator!L40"
+        diff_monthly: "=for_generator!M40"
+        children:
+        - text: 保有UU
+          text_en: Number of ETH Holders
+          operator: "*"
+          value_daily: "=for_generator!G41"
+          value_monthly: "=for_generator!I41"
+          diff_daily: "=for_generator!L41"
+          diff_monthly: "=for_generator!M41"
+        - text: 一人当たり保有金額
+          operator: "*"
+          value_daily: "=for_generator!G68"
+          value_monthly: "=for_generator!I68"
+          diff_daily: "=for_generator!L68"
+          diff_monthly: "=for_generator!M68"
+      - text: 手数料率
+        text_en: Staking Fee Rate
+        operator: "*"
+        value_daily: "=for_generator!G41"
+        value_monthly: "=for_generator!I41"
+        diff_daily: "=for_generator!L41"
+        diff_monthly: "=for_generator!M41"
+    - text: 取引所（現物）
+      text_en: Exchange Revenue
+      operator: "+"
+      value_daily: "=for_generator!G11"
+      value_monthly: "=for_generator!I11"
+      diff_daily: "=for_generator!L11"
+      diff_monthly: "=for_generator!M11"
+      url: "https://lookerstudio.google.com/u/0/reporting/758085d1-c9d8-4e7e-898f-8a2d74904045/page/p_xsek8mmgrd"
+      children:
+      - text: 出来高
+        text_en: Trading Amount
+        operator: "*"
+        value_daily: "=for_generator!G12"
+        value_monthly: "=for_generator!I12"
+        diff_daily: "=for_generator!L12"
+        diff_monthly: "=for_generator!M12"
+        children:
+        - text_daily: DTU
+          text_monthly: MTU
+          text_en: Trading Users
+          operator: "*"
+          value_daily: "=for_generator!G13"
+          value_monthly: "=for_generator!I13"
+          diff_daily: "=for_generator!L13"
+          diff_monthly: "=for_generator!M13"
+        - text: 平均約定回数
+          text_en: Avg. Trades per User
+          operator: "*"
+          value_daily: "=for_generator!G15"
+          value_monthly: "=for_generator!I15"
+          diff_daily: "=for_generator!L15"
+          diff_monthly: "=for_generator!M15"
+        - text: 平均約定金額
+          text_en: Average Trade Size
+          operator: "*"
+          value_daily: "=for_generator!G16"
+          value_monthly: "=for_generator!I16"
+          diff_daily: "=for_generator!L16"
+          diff_monthly: "=for_generator!M16"
+      - text: 手数料率
+        text_en: Trading Fee Rate
+        operator: "*"
+        value_daily: "=for_generator!G69"
+        value_monthly: "=for_generator!I69"
+        diff_daily: "=for_generator!L69"
+        diff_monthly: "=for_generator!M69"
+    - text: つみたて
+      text_en: Periodic Purchase
+      operator: "+"
+      value_daily: "=for_generator!G17"
+      value_monthly: "=for_generator!I17"
+      diff_daily: "=for_generator!L17"
+      diff_monthly: "=for_generator!M17"
+      url: "https://lookerstudio.google.com/u/0/reporting/e4ad8b3b-913a-4312-8ed1-3709a5b75956/page/p_9nnkwdngrd"
+      children:
+      - text: つみたて件数
+        text_en: Number of Periodic Purchases
+        operator: "*"
+        value_daily: "=for_generator!G18"
+        value_monthly: "=for_generator!I18"
+        diff_daily: "=for_generator!L18"
+        diff_monthly: "=for_generator!M18"
+        children:
+        - text: 新規UU
+          text_en: Number of New Periodic Purchase Users
+          operator: "+"
+          value_daily: "=for_generator!G19"
+          value_monthly: "=for_generator!I19"
+          diff_daily: "=for_generator!L19"
+          diff_monthly: "=for_generator!M19"
+        - text: 再開UU
+          text_en: Number of Reactivated Periodic Purchase Users
+          operator: "+"
+          value_daily: "=for_generator!G20"
+          value_monthly: "=for_generator!I20"
+          diff_daily: "=for_generator!L20"
+          diff_monthly: "=for_generator!M20"
+        - text: 継続UU
+          text_en: Number of Continuing Periodic Purchase Users
+          operator: "+"
+          value_daily: "=for_generator!G21"
+          value_monthly: "=for_generator!I21"
+          diff_daily: "=for_generator!L21"
+          diff_monthly: "=for_generator!M21"
+      - text: ARPPU
+        text_en: Average Revenue per Paying User (Periodic Purchase)
+        operator: "*"
+        value_daily: "=for_generator!G22"
+        value_monthly: "=for_generator!I22"
+        diff_daily: "=for_generator!L22"
+        diff_monthly: "=for_generator!M22"
+        children:
+        - text: 平均積立単価
+          text_en: Average Periodic Purchase Amount per User
+          operator: "*"
+          value: "-"
+        - text: スプレッド
+          text_en: Spread
+          operator: "*"
+          value: "-"
+    - text: 大口OTC
+      text_en: OTC Trade
+      operator: "+"
+      url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_91cjqm5lrd"
+      value_daily: "=for_generator!G25"
+      value_monthly: "=for_generator!I25"
+      diff_daily: "=for_generator!L25"
+      diff_monthly: "=for_generator!M25"
+    - text: 暗号資産送金
+      text_en: Remittance Fees Crypto Currency
+      operator: "+"
+      url: "https://lookerstudio.google.com/u/0/reporting/cce6430d-1bfa-4fc8-b4ae-6af4345572f2/page/p_7n6shcsgrd"
+      value_daily: "=for_generator!G34"
+      value_monthly: "=for_generator!I34"
+      diff_daily: "=for_generator!L34"
+      diff_monthly: "=for_generator!M34"
+      children:
+      - text: 送金金額
+        text_en: Remitted Amount
+        operator: "*"
+        value_daily: "=for_generator!G35"
+        value_monthly: "=for_generator!I35"
+        diff_daily: "=for_generator!L35"
+        diff_monthly: "=for_generator!M35"
+      - text: 手数料率
+        text_en: Remittance Fee Rate
+        operator: "*"
+        value: "-"
+    - text: 法定通貨入出金
+      text_en: Deposit & Withdrawal Fees Fiat Currency
+      operator: "+"
+      url: "https://lookerstudio.google.com/u/0/reporting/f94bfa99-67bf-420b-acd2-e6aa1d19917d/page/p_xsek8mmgrd"
+      value_daily: "=for_generator!G26"
+      value_monthly: "=for_generator!I26"
+      diff_daily: "=for_generator!L26"
+      diff_monthly: "=for_generator!M26"
+      children:
+      - text: 入金手数料収益
+        text_en: Deposit Fee Revenue
+        operator: "+"
+        value_daily: "=for_generator!G27"
+        value_monthly: "=for_generator!I27"
+        diff_daily: "=for_generator!L27"
+        diff_monthly: "=for_generator!M27"
+        children:
+        - text: 入金総額
+          text_en: Total Deposit Amount
+          operator: "+"
+          value_daily: "=for_generator!G28"
+          value_monthly: "=for_generator!I28"
+          diff_daily: "=for_generator!L28"
+          diff_monthly: "=for_generator!M28"
+        - text: 手数料率
+          text_en: Deposit Fee Rate
+          operator: "+"
+          value_daily: "=for_generator!G29"
+          value_monthly: "=for_generator!I29"
+          diff_daily: "=for_generator!L29"
+          diff_monthly: "=for_generator!M29"
+      - text: 出金手数料収益
+        text_en: Withdrawal Fee Revenue
+        operator: "+"
+        value_daily: "=for_generator!G30"
+        value_monthly: "=for_generator!I30"
+        diff_daily: "=for_generator!L30"
+        diff_monthly: "=for_generator!M30"
+        children:
+        - text: 出金総額
+          text_en: Total Withdrawal Amount
+          operator: "*"
+          value_daily: "=for_generator!G32"
+          value_monthly: "=for_generator!I32"
+          diff_daily: "=for_generator!L32"
+          diff_monthly: "=for_generator!M32"
+        - text: 手数料率
+          text_en: Withdrawal Fee Rate
+          operator: "*"
+          value_daily: "=for_generator!G33"
+          value_monthly: "=for_generator!I33"
+          diff_daily: "=for_generator!L33"
+          diff_monthly: "=for_generator!M33"
+    - text: アセットロック
+      text_en: Asset Lock
+      operator: "+"
+      url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_4ug3jdczrd"
+      value_daily: "=for_generator!G66"
+      value_monthly: "=for_generator!I66"
+      diff_daily: "=for_generator!L66"
+      diff_monthly: "=for_generator!M66"
+    - text: IEO
+      text_en: Initial Exchange Offering
+      operator: "+"
+      url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_k4l83l5lrd"
+      value_daily: "=for_generator!G49"
+      value_monthly: "=for_generator!I49"
+      diff_daily: "=for_generator!L49"
+      diff_monthly: "=for_generator!M49"
+      children:
+      - text: PLT
+        text_en: Palette Token
+        operator: "+"
+        url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_k4l83l5lrd"
+        value_daily: "=for_generator!G50"
+        value_monthly: "=for_generator!I50"
+        diff_daily: "=for_generator!L50"
+        diff_monthly: "=for_generator!M50"
+      - text: FNCT
+        text_en: FiNANCiE Token
+        operator: "+"
+        url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_jtjj2l5lrd"
+        value_daily: "=for_generator!G51"
+        value_monthly: "=for_generator!I51"
+        diff_daily: "=for_generator!L51"
+        diff_monthly: "=for_generator!M51"
+      - text: BRIL
+        text_en: Brilliantcrypto Token
+        operator: "+"
+        url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_anp5qcsgrd"
+        value_daily: "=for_generator!G52"
+        value_monthly: "=for_generator!I52"
+        diff_daily: "=for_generator!L52"
+        diff_monthly: "=for_generator!M52"
+    - text: 金銭信託運用
+      text_en: Interest Income
+      operator: "+"
+      url: ""
+      value_daily: "-"
+      value_monthly: "-"
+    - text: その他
+      text_en: Others
+      operator: "+"
+      value_daily: "-"
+      value_monthly: "-"
+      children:
+      - text: NFT
+        text_en: Non-Fungible Tokens
+        operator: "+"
+        url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_vt545k5lrd"
+        value_daily: "=for_generator!G43"
+        value_monthly: "=for_generator!I43"
+        diff_daily: "=for_generator!L43"
+        diff_monthly: "=for_generator!M43"
+        children:
+        - text: CC出品
+          text_en: Coincheck Direct Listings
+          operator: "+"
+          value_daily: "=for_generator!G44"
+          value_monthly: "=for_generator!I44"
+          diff_daily: "=for_generator!L44"
+          diff_monthly: "=for_generator!M44"
+        - text: CtoC
+          text_en: Customer-to-Customer Transactions
+          operator: "+"
+          value_daily: "=for_generator!G45"
+          value_monthly: "=for_generator!I45"
+          diff_daily: "=for_generator!L45"
+          diff_monthly: "=for_generator!M45"
+        - text: 発行体
+          text_en: Issuer
+          operator: "+"
+          value_daily: "=for_generator!G46"
+          value_monthly: "=for_generator!I46"
+          diff_daily: "=for_generator!L46"
+          diff_monthly: "=for_generator!M46"
+        - text: 自社NFT
+          text_en: Proprietary NFTs
+          operator: "+"
+          value_daily: "=for_generator!G47"
+          value_monthly: "=for_generator!I47"
+          diff_daily: "=for_generator!L47"
+          diff_monthly: "=for_generator!M47"
+        - text: 出庫手数料
+          text_en: NFT Withdrawal Fee
+          operator: "+"
+          value_daily: "=for_generator!G48"
+          value_monthly: "=for_generator!I48"
+          diff_daily: "=for_generator!L48"
+          diff_monthly: "=for_generator!M48"
+      - text: OnRamp
+        text_en: Crypto OnRamp
+        operator: "+"
+        url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_cf5wucsgrd"
+        value_daily: "=for_generator!G53"
+        value_monthly: "=for_generator!I53"
+        diff_daily: "=for_generator!L53"
+        diff_monthly: "=for_generator!M53"
+        children:
+        - text_daily: DTU
+          text_monthly: MTU
+          text_en: Trading User
+          operator: "*"
+          value_daily: "=for_generator!G54"
+          value_monthly: "=for_generator!I54"
+          diff_daily: "=for_generator!L54"
+          diff_monthly: "=for_generator!M54"
+        - text: ARPPU
+          text_en: Average Revenue per Paying User (Periodic Purchase)
+          operator: "*"
+          value_daily: "=for_generator!G57"
+          value_monthly: "=for_generator!I57"
+          diff_daily: "=for_generator!L57"
+          diff_monthly: "=for_generator!M57"
+      - text: リワード
+        text_en: Rewards
+        operator: "+"
+        url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_7n6shcsgrd"
+        value_daily: "=for_generator!G60"
+        value_monthly: "=for_generator!I60"
+        diff_daily: "=for_generator!L60"
+        diff_monthly: "=for_generator!M60"
+        children:
+        - text: 広告費
+          text_en: Advertising cost
+          operator: "-"
+          value: "-"
+        - text: 付与したポイント
+          text_en: Points awarded
+          operator: "-"
+          value: "-"
+      - text: でんき・ガス
+        text_en: CC Electricity & Gas
+        operator: "+"
+        url: "https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_brc2lm5lrd"
+        value_daily: "=for_generator!G63"
+        value_monthly: "=for_generator!I63"
+        diff_daily: "=for_generator!L63"
+        diff_monthly: "=for_generator!M63"
+        children:
+        - text: でんき
+          text_en: Electricity bill
+          operator: "+"
+          value_daily: "=for_generator!G64"
+          value_monthly: "=for_generator!I64"
+          diff_daily: "=for_generator!L64"
+          diff_monthly: "=for_generator!M64"
+        - text: ガス
+          text_en: Gas Bill
+          operator: "+"
+          value_daily: "=for_generator!G65"
+          value_monthly: "=for_generator!I65"
+          diff_daily: "=for_generator!L65"
+          diff_monthly: "=for_generator!M65"
+      - text: クロス取引
+        text_en: Cross Trade
+        operator: "+"
+        url: ""
+        value_daily: "-"
+        value_monthly: "-"
+      - text: IEOモニタリング
+        text_en: Monitoring Earnings (IEO)
+        operator: "+"
+        url: ""
+        value_daily: "-"
+        value_monthly: "-"
+      - text: リスティングフィー
+        text_en: Listing Fees
+        operator: "+"
+        url: ""
+        value_daily: "-"
+        value_monthly: "-"
+      - text: 退会手数料収益
+        text_en: Account Cancellation Fee
+        operator: "+"
+        url: ""
+        value_daily: "-"
+        value_monthly: "-"
+      - text: 不明入金
+        text_en: Monetization Of Unclaimed Deposits
+        operator: "+"
+        url: ""
+        value_daily: "-"
+        value_monthly: "-"
+      - text: その他トレーディング損益
+        text_en: Unrealized Gain (Loss) On Own Position
+        operator: "+"
+        url: ""
+        value_daily: "-"
+        value_monthly: "-"
+      - text: Binanceリベート
+        text_en: Rebate
+        operator: "+"
+        url: ""
+        value_daily: "-"
+        value_monthly: "-"
+      - text: 雑収入・雑費
+        text_en: Miscellaneous Income And Expenses
+        operator: "+"
+        url: ""
+        value_daily: "-"
+        value_monthly: "-"
