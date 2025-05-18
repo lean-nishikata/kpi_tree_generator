@@ -21,6 +21,15 @@ async function loadAllScripts() {
   // キャッシュバスティングのためにタイムスタンプを追加
   console.log('スクリプト読み込み開始...');
   
+  // デバッグ: 読み込むファイルのリストを表示
+  console.log('読み込み予定JSファイル:');
+  console.log('- ' + JS_CORE_PATH);
+  console.log('- ' + JS_TREE_PATH);
+  console.log('- ' + JS_URL_PATH);
+  console.log('- ' + JS_SHARE_PATH);
+  console.log('- ' + JS_ANCHOR_PATH);
+  console.log('- ' + JS_CALENDAR_PATH);
+  
   // ファイル存在確認と最新バージョンのロード
   const fileExists = async (path) => {
     try {
@@ -40,12 +49,22 @@ async function loadAllScripts() {
   }
   
   // キャッシュを避けるために強制的に再読み込み
-  const coreJs = await fs.readFile(JS_CORE_PATH, 'utf8');
-  const treeJs = await fs.readFile(JS_TREE_PATH, 'utf8');
-  const urlJs = await fs.readFile(JS_URL_PATH, 'utf8');
-  const shareJs = await fs.readFile(JS_SHARE_PATH, 'utf8');
-  const anchorJs = await fs.readFile(JS_ANCHOR_PATH, 'utf8');
-  const calendarJs = await fs.readFile(JS_CALENDAR_PATH, 'utf8');
+  // 安全にファイルを読み込むヘルパー関数
+  const safeReadFile = async (path) => {
+    try {
+      return await fs.readFile(path, 'utf8');
+    } catch (e) {
+      console.error(`ファイルの読み込みに失敗しました: ${path}`);
+      return ''; // 空文字列を返す
+    }
+  };
+  
+  const coreJs = await safeReadFile(JS_CORE_PATH);
+  const treeJs = await safeReadFile(JS_TREE_PATH);
+  const urlJs = await safeReadFile(JS_URL_PATH);
+  const shareJs = await safeReadFile(JS_SHARE_PATH);
+  const anchorJs = await safeReadFile(JS_ANCHOR_PATH);
+  const calendarJs = await safeReadFile(JS_CALENDAR_PATH);
   
   console.log('スクリプト読み込み完了');
   
@@ -112,6 +131,9 @@ async function generateKPITree() {
     if (configName.endsWith('.yaml')) {
       configName = configName.slice(0, -5);
     }
+    
+    // Remove directory part from configName if it includes path separators
+    configName = path.basename(configName);
     
     // Check several possible file paths
     const possiblePaths = [
@@ -312,9 +334,8 @@ async function generateKPITree() {
       if (isDocker) {
         config.output = `/app/output/${configName}.html`;
       } else {
-        // Extract just the filename without path
-        const fileName = path.basename(configName);
-        config.output = path.join(process.cwd(), 'output', `${fileName}.html`);
+        // configNameはすでにpath.basenameで処理済み
+        config.output = path.join(process.cwd(), 'output', `${configName}.html`);
       }
     }
     
@@ -368,14 +389,25 @@ async function generateKPITree() {
     // faviconリンクタグを生成
     const faviconLink = faviconUrl ? `<link rel="icon" href="${faviconUrl}" type="image/x-icon">` : '';
     
-    let html = template
-      .replace(/\{\{TITLE\}\}/g, title)
-      .replace(/\{\{TREE_HTML\}\}/g, treeHtml)
-      .replace(/\{\{STYLE\}\}/g, styleContent)
-      .replace(/\{\{THEME\}\}/g, theme)
-      .replace(/\{\{PUBLIC_URL_SCRIPT\}\}/g, publicUrlScript)
-      .replace(/\{\{FAVICON_LINK\}\}/g, faviconLink)
-      .replace(/\{\{DATA_DATE\}\}/g, dataDate);
+    // テンプレート変数を確実に置換するための関数
+    function replacePlaceholder(text, placeholder, value) {
+      const pattern = new RegExp('\\{\\{' + placeholder + '\\}\\}', 'g');
+      return text.replace(pattern, value || '');
+    }
+    
+    // 全テンプレート変数を置換
+    let html = template;
+    html = replacePlaceholder(html, 'TITLE', title);
+    html = replacePlaceholder(html, 'TREE_HTML', treeHtml);
+    html = replacePlaceholder(html, 'STYLE', styleContent);
+    html = replacePlaceholder(html, 'THEME', theme);
+    html = replacePlaceholder(html, 'PUBLIC_URL_SCRIPT', publicUrlScript);
+    html = replacePlaceholder(html, 'FAVICON_LINK', faviconLink);
+    html = replacePlaceholder(html, 'DATA_DATE', dataDate);
+    
+    // デバッグ情報
+    console.log('テンプレート変数置換完了');
+    console.log(`スタイルシートサイズ: ${styleContent ? styleContent.length : 0} バイト`);
       
     // 方向変換ロジックを削除（対応するプレースホルダーもテンプレートから削除済み）
     

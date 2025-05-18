@@ -25,6 +25,7 @@ ENV GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json
 
 VOLUME ["/app/config"]
 VOLUME ["/app/output"]
+VOLUME ["/app/static"]
 # keysディレクトリはイメージ内にあるものを使うため、VOLUMEは必要に応じて上書き
 
 # デフォルトは引数なしでnpm startを実行（package.jsonのscripts.startを使用）

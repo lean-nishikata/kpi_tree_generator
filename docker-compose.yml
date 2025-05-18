@@ -6,6 +6,7 @@ services:
     volumes:
       - ./config:/app/config
       - ./output:/app/output
+      - ./static:/app/static
       # 認証キーをマウントしてコンテナ内で使用できるようにする
       - ./keys:/app/keys
     environment:

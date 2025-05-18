@@ -18,8 +18,32 @@ YAMLファイル形式の設定から、HTML形式のKPIツリーを生成する
 
 ### Dockerでの使用
 
+#### ビルド方法
+
 ```shell
-docker-compose run kpi-generator index
+# docker-composeを使用する場合
+docker-compose build
+
+# docker buildを直接使用する場合
+docker build -t kpi-tree-generator .
+```
+
+#### KPIツリーの生成
+
+特定の日付のデータを指定して生成することができます：
+
+```shell
+# docker-composeを使用する場合
+docker-compose run --rm kpi-generator config/game.yaml --date 2025-05-19
+
+# docker runを直接使用する場合
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/static:/app/static kpi-tree-generator config/game.yaml --date 2025-05-19
+```
+
+日付を指定しない場合は現在の日付が使用されます：
+
+```shell
+docker-compose run --rm kpi-generator config/game.yaml
 ```
 
 ### Googleスプレッドシートとの連携
@@ -77,12 +101,17 @@ docker-compose run kpi-generator index
 docker build -t kpi-tree-generator .
 
 # コンテナを実行（例：sales.yamlから生成）
-docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output kpi-tree-generator sales
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/static:/app/static kpi-tree-generator sales
+```
+
+特定の日付でツリーを生成する場合：
+```shell
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/static:/app/static kpi-tree-generator sales --date 2025-05-19
 ```
 
 実行時に認証情報をマウントする場合：
 ```shell
-docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/keys:/app/keys -e GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json kpi-tree-generator sales
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/static:/app/static -v $(pwd)/keys:/app/keys -e GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/app/keys/service-account-key.json kpi-tree-generator sales
 ```
 
 ## 設定ファイルの指定
@@ -90,7 +119,7 @@ docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/k
 コマンドラインで設定ファイル名を指定できます（`.yaml` 拡張子は省略可能）:
 
 ```shell
-docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output kpi-tree-generator my_tree
+docker run -v $(pwd)/config:/app/config -v $(pwd)/output:/app/output -v $(pwd)/static:/app/static kpi-tree-generator my_tree
 ```
 
 - 指定したファイル名（例：`my_tree`）を使って `config/my_tree.yaml` を探します
@@ -177,7 +206,11 @@ root:
 2. HTMLファイルの生成
 
 ```shell
+# 現在の日付でHTMLを生成
 node src/generator.js config/your-config.yaml
+
+# 特定の日付でHTMLを生成
+node src/generator.js config/your-config.yaml --date 2025-05-19
 ```
 
 このコマンドにより `output/your-config.html` に単一のHTMLファイルが生成されます。
