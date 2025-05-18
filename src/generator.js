@@ -417,15 +417,17 @@ async function generateKPITree() {
                   config.header_info.value.spreadsheet.range.match(rangePattern)) {
                 // 正規表現にマッチする場合は取得を試みる
                 try {
+                  console.log(`DEBUG: スプレッドシート取得を試みます: ${spreadsheetId}, ${config.header_info.value.spreadsheet.range}`);
                   headerValue = await spreadsheetHelper.getCellValue(spreadsheetId, config.header_info.value.spreadsheet.range.substring(1));
                   console.log(`ヘッダー情報の値を取得しました: ${headerValue}`);
                 } catch (fetchErr) {
                   // 取得失敗の場合は元の参照文字列をそのまま表示
-                  console.log(`ヘッダー情報取得失敗、参照文字列をそのまま使用: ${config.header_info.value.spreadsheet.range}`);
+                  console.log(`ヘッダー情報取得失敗、参照文字列をそのまま使用: ${config.header_info.value.spreadsheet.range}, エラー: ${fetchErr}`);
                   headerValue = config.header_info.value.spreadsheet.range;
                 }
               } else {
                 // 参照形式でない場合はそのまま表示
+                console.log(`参照形式ではありません: ${config.header_info.value.spreadsheet.range}`);
                 headerValue = config.header_info.value.spreadsheet.range;
               }
             } catch (err) {
