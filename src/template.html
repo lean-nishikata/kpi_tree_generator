@@ -11,8 +11,137 @@
     {{STYLE}}
   </style>
   
-  <!-- カレンダー用CSS -->
-  <link rel="stylesheet" href="../static/css/calendar.css">
+  <!-- カレンダー用CSS（内包化） -->
+  <style>
+  /* カレンダー用CSS */
+  .calendar-container {
+    width: 100%;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+  }
+  
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .current-month {
+    font-weight: 500;
+    color: #3c4043;
+    font-size: 14px;
+  }
+  
+  .calendar-nav-btn {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #5f6368;
+    transition: background-color 0.2s;
+  }
+  
+  .calendar-nav-btn:hover {
+    background-color: rgba(9, 186, 133, 0.1);
+  }
+  
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5f6368;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .weekdays div {
+    padding: 8px 0;
+  }
+  
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    padding: 4px 8px;
+  }
+  
+  .calendar-day {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: #3c4043;
+    border-radius: 50%;
+    margin: 2px auto;
+  }
+  
+  .calendar-day:hover {
+    background-color: rgba(9, 186, 133, 0.1);
+  }
+  
+  .calendar-day.today {
+    font-weight: bold;
+    background-color: #09BA85;
+    color: white;
+  }
+  
+  .calendar-day.other-month {
+    color: #bdc1c6;
+  }
+  
+  .calendar-day.has-data::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+    background-color: #09BA85;
+    border-radius: 50%;
+  }
+  
+  .calendar-day a {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  /* 土曜日の色 - 月曜始まりでは7n-1が土曜日 */
+  .calendar-days .calendar-day:nth-child(7n-1) {
+    color: #4285f4;
+  }
+  
+  /* 日曜日の色 - 月曜始まりでは7nが日曜日 */
+  .calendar-days .calendar-day:nth-child(7n) {
+    color: #ea4335;
+  }
+  
+  /* 他の月の日曜・土曜日 */
+  .calendar-days .calendar-day.other-month:nth-child(7n-1),
+  .calendar-days .calendar-day.other-month:nth-child(7n) {
+    color: #bdc1c6;
+  }
+  </style>
   
   <style>
     /* 追加のカスタムスタイル - 水平レイアウト専用 */
@@ -24,7 +153,7 @@
       display: flex;
       flex-direction: row;
       align-items: flex-start !important;
-      margin: 3px 0;
+      margin: 0px 0px 10px 0px;
     }
     /* 縦方向表示は非表示にし、水平方向表示は表示する */
     .direction-vertical {
@@ -108,13 +237,13 @@
                     </button>
                   </div>
                   <div class="weekdays">
-                    <div>日</div>
                     <div>月</div>
                     <div>火</div>
                     <div>水</div>
                     <div>木</div>
                     <div>金</div>
                     <div>土</div>
+                    <div>日</div>
                   </div>
                   <div id="calendar-days" class="calendar-days">
                     <!-- 日付はJavaScriptで動的に生成されます -->
@@ -143,9 +272,14 @@
 
   <!-- メインコンテンツ -->
   <div class="main-content">
-    <div class="container">
-    
+    <div class="direction-horizontal">
     <div class="kpi-tree-container theme-{{THEME}}">
+      <div class="note">
+        <ul>
+          <li>金銭信託運用、その他の一部の数値は月次のみ手動掲載のため、営業収益合計は正確でない場合があります</li>
+          <li>情報ソースは<a href="https://docs.google.com/spreadsheets/d/1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U/edit?usp=sharing" target="_blank">こちら</a>、数値に関してのお問い合わせは <a href="https://coincheck.enterprise.slack.com/archives/C069WL5UH3L" target="_blank">#req-data-platform</a> @data-platform-admin まで</li>
+        </ul>
+      </div>
       <ul class="kpi-tree">
         {{TREE_HTML}}
       </ul>
@@ -155,8 +289,137 @@
   <!-- 結合されたJSがここに埋め込まれます -->
   <!-- COMBINED_SCRIPTS_PLACEHOLDER -->
   
-  <!-- カレンダースクリプト -->
-  <script src="../static/js/calendar.js"></script>
+  <!-- カレンダースクリプト（内包化） -->
+  <script>
+  /**
+   * カレンダーUI機能
+   * 日付をクリックすると該当日付のHTMLにリンク
+   */
+  document.addEventListener('DOMContentLoaded', function() {
+    // カレンダー要素
+    const prevMonthBtn = document.getElementById('prev-month');
+    const nextMonthBtn = document.getElementById('next-month');
+    const currentMonthEl = document.getElementById('current-month');
+    const calendarDaysEl = document.getElementById('calendar-days');
+    
+    // 現在の日付
+    let currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+    
+    // 月の名前（日本語）
+    const monthNames = [
+      '1月', '2月', '3月', '4月', '5月', '6月',
+      '7月', '8月', '9月', '10月', '11月', '12月'
+    ];
+    
+    // 前月ボタン
+    prevMonthBtn.addEventListener('click', function() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar();
+    });
+    
+    // 翌月ボタン
+    nextMonthBtn.addEventListener('click', function() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar();
+    });
+    
+    // カレンダー描画関数
+    function renderCalendar() {
+      // 月表示の更新
+      currentMonthEl.textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
+      
+      // カレンダーをクリア
+      calendarDaysEl.innerHTML = '';
+      
+      // 月初めの日
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      // 月末の日
+      const lastDay = new Date(currentYear, currentMonth + 1, 0);
+      
+      // 前月の最終日
+      const prevLastDay = new Date(currentYear, currentMonth, 0);
+      const prevDays = prevLastDay.getDate();
+      
+      // 月初めの曜日（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
+      // 月曜始まりに調整（日曜日の場合は6、それ以外は前日-1）
+      const firstDayIndex = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+      
+      // 月末の曜日（月曜始まりに調整）
+      const lastDayIndex = lastDay.getDay() === 0 ? 6 : lastDay.getDay() - 1;
+      
+      // 翌月の日数（カレンダーの最後の行を埋めるため）
+      const nextDays = 7 - lastDayIndex - 1;
+      
+      // 今日の日付
+      const today = new Date();
+      
+      // データがある日（仮のダミーデータ）
+      const hasDataDays = [5, 10, 15, 20, 25];
+      
+      // 前月の日を表示
+      for (let x = firstDayIndex; x > 0; x--) {
+        const day = prevDays - x + 1;
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day other-month';
+        dayEl.textContent = day;
+        calendarDaysEl.appendChild(dayEl);
+      }
+      
+      // 当月の日を表示
+      for (let i = 1; i <= lastDay.getDate(); i++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        
+        // データがある日付にはマーカーを表示
+        if (hasDataDays.includes(i)) {
+          dayEl.classList.add('has-data');
+        }
+        
+        // 今日の日付にはスタイルを適用
+        if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+          dayEl.classList.add('today');
+        }
+        
+        // 日付ごとのリンクを作成（ダミーURL）
+        const dateLink = document.createElement('a');
+        // YYYY-MM-DD 形式
+        const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        // GCSのダミーURL
+        dateLink.href = `https://storage.googleapis.com/kpi-tree-data/${formattedDate}.html`;
+        dateLink.textContent = i;
+        
+        // 実際のデータがあるかどうかを確認してスタイルを適用（この例ではランダム）
+        if (Math.random() > 0.7) {
+          dayEl.classList.add('has-data');
+        }
+        
+        dayEl.appendChild(dateLink);
+        calendarDaysEl.appendChild(dayEl);
+      }
+      
+      // 翌月の日を表示
+      for (let j = 1; j <= nextDays; j++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day other-month';
+        dayEl.textContent = j;
+        calendarDaysEl.appendChild(dayEl);
+      }
+    }
+    
+    // 初期カレンダーを描画
+    renderCalendar();
+  });
+  </script>
 
 </body>
 </html>

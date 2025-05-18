@@ -319,13 +319,6 @@ body {
   }
 }
 
-.container {
-  width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 20px 40px;
-}
-
 h1 {
   text-align: center;
   color: #333;
@@ -334,7 +327,7 @@ h1 {
 /* KPI Tree styles - Common */
 .kpi-tree-container {
   overflow: auto;
-  padding: 20px 0;
+  padding: 20px;
   margin: 0 auto;
   width: 100%;
 }
@@ -453,10 +446,14 @@ h1 {
   left: 0;
 }
 
-
-
-
 /* Horizontal direction styles */
+.direction-horizontal {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
 .direction-horizontal .kpi-tree {
   display: flex;
   align-items: center;
@@ -474,7 +471,6 @@ h1 {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
 }
 
 .direction-horizontal .kpi-tree ul::before {
@@ -486,30 +482,32 @@ h1 {
   height: 100%;
 }
 
-.direction-horizontal .children > li::before {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  border-top: 2px solid #ccc;
-  width: 20px;
-  transform: translateY(-50%);
+.direction-horizontal .kpi-tree li.operator {
+  margin: 0 0 10px 0;
 }
 
 .direction-horizontal .operator {
+  vertical-align: middle;
+  height: 45px;
+  line-height: 45px;
+  text-align: center;
+  font-size: 32px;
   margin: 0 10px;
 }
 
 .direction-horizontal .toggle-btn {
-  margin: 0 10px;
+  margin: 0 10px 0 0;
 }
 
 /* Node styles */
 .node {
-  width: 180px !important; /* 横幅を固定、上書き防止 */
+  // 20250517-iwase-MEMO 横幅固定しなくて良い
+  // width: 180px !important; /* 横幅を固定、上書き防止 */
+  // max-width: 180px !important; /* 最大幅も固定 */
+  // margin-bottom: 5px;
+  // box-sizing: border-box !important; /* ボックスサイズ計算を固定 */
   min-width: 180px !important; /* 最小幅も固定 */
-  max-width: 180px !important; /* 最大幅も固定 */
-  min-height: 70px; /* 最低の高さ */
+  min-height: 100px; /* 最低の高さ */
   height: auto; /* 内容に応じて高さを自動調整 */
   padding: 8px;
   background-color: #fff;
@@ -521,18 +519,21 @@ h1 {
   flex-direction: column;
   justify-content: center;
   position: relative;
-  margin-bottom: 5px;
-  box-sizing: border-box !important; /* ボックスサイズ計算を固定 */
+  margin-bottom: auto;
+  margin-right: 10px;
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
 }
 
 .node a {
   color: #0066cc;
   text-decoration: none;
-  white-space: normal; /* テキストを折り返す */
-  word-wrap: break-word; /* 長い単語も折り返す */
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
   overflow: visible; /* はみ出した部分も表示 */
   display: block; /* ブロック要素にする */
-  max-width: 100%; /* 親要素の幅を超えないようにする */
+  // 20250517-iwase-MEMO 横幅固定しなくて良い
+  // max-width: 100%; /* 親要素の幅を超えないようにする */
+  // white-space: normal; /* テキストを折り返す */
+  // word-wrap: break-word; /* 長い単語も折り返す */
 }
 
 .node a:hover {
@@ -543,11 +544,13 @@ h1 {
   font-weight: bold;
   margin-top: 10px;
   color: #333;
-  white-space: normal; /* テキストを折り返す */
-  word-wrap: break-word; /* 長い単語も折り返す */
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
   overflow: visible; /* はみ出した部分も表示 */
   display: block; /* ブロック要素にする */
-  max-width: 100%; /* 親要素の幅を超えないようにする */
+  // 20250517-iwase-MEMO 横幅固定しなくて良い
+  // max-width: 100%; /* 親要素の幅を超えないようにする */
+  // white-space: normal; /* テキストを折り返す */
+  // word-wrap: break-word; /* 長い単語も折り返す */
 }
 
 /* 前日比・前月比のスタイル */
@@ -591,11 +594,13 @@ h1 {
 
 /* ノード内のテキスト要素用スタイル */
 .node-text {
-  white-space: normal; /* テキストを折り返す */
-  word-wrap: break-word; /* 長い単語も折り返す */
-  overflow: visible; /* はみ出した部分も表示 */
-  display: block; /* ブロック要素にする */
-  max-width: 100%; /* 親要素の幅を超えないようにする */
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
+  // 20250517-iwase-MEMO 横幅固定しなくて良い
+  // white-space: normal; /* テキストを折り返す */
+  // word-wrap: break-word; /* 長い単語も折り返す */
+  // overflow: visible; /* はみ出した部分も表示 */
+  // display: block; /* ブロック要素にする */
+  // max-width: 100%; /* 親要素の幅を超えないようにする */
 }
 
 /* Operator styles */
@@ -605,6 +610,7 @@ h1 {
   color: #666; /* 元の色に戻す */
   width: 45px; /* 幅を大きく */
   height: 45px; /* 高さを大きく */
+  line-height: 45px; /* height と揃える */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -613,6 +619,7 @@ h1 {
   z-index: 10; /* 前面に表示 */
   box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
   border: 2px solid #ddd; /* 境界線色を元に近い色に調整 */
+  margin-bottom: 10px;
 }
 
 /* Toggle button styles */
@@ -629,6 +636,7 @@ h1 {
   position: relative;
   font-size: 0;
   z-index: 2;
+  margin: 0px 10px;
 }
 
 .toggle-btn::before {
@@ -660,4 +668,33 @@ h1 {
 .theme-red .node {
   border-color: #d32f2f;
   background-color: #ffebee;
+}
+
+.note {
+  margin-top: 16px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background-color: #e8f4fd; /* 淡い青 */
+  border-left: 4px solid #2196f3; /* Google系の青 */
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: #333;
+}
+
+.note ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.note li {
+  margin-bottom: 4px;
+}
+
+.note a {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.note a:hover {
+  text-decoration: none;
 }

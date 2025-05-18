@@ -374,9 +374,9 @@ h1 {
   font-size: 0.7em;
   color: #666;
   margin-top: 2px;
-  white-space: nowrap; /* 改行しない */
-  overflow: hidden; /* はみ出した部分を非表示 */
-  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
+  white-space: normal; /* テキストを折り返す */
+  word-wrap: break-word; /* 長い単語も折り返す */
+  overflow: visible; /* はみ出した部分を表示 */
   display: block; /* ブロック要素にする */
   max-width: 100%; /* 親要素の幅を超えないようにする */
 }
@@ -536,7 +536,6 @@ h1 {
   // width: 180px !important; /* 横幅を固定、上書き防止 */
   // max-width: 180px !important; /* 最大幅も固定 */
   // margin-bottom: 5px;
-  // box-sizing: border-box !important; /* ボックスサイズ計算を固定 */
   min-width: 180px !important; /* 最小幅も固定 */
   min-height: 100px; /* 最低の高さ */
   height: auto; /* 内容に応じて高さを自動調整 */
@@ -553,6 +552,7 @@ h1 {
   margin-bottom: auto;
   margin-right: 10px;
   white-space: nowrap; /* テキストは折り返さず全て表示する */
+  box-sizing: border-box;
 }
 
 .node a {
@@ -729,138 +729,295 @@ h1 {
 .note a:hover {
   text-decoration: none;
 }
-  </style>
+
+/* カレンダー関連スタイル */
+.current-date {
+  display: inline-block;
+  padding: 5px 10px;
+  margin-left: 15px;
+  font-size: 0.85em;
+  color: #555;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.last-updated {
+  margin-top: 10px;
+  font-size: 0.8em;
+  color: #888;
+  text-align: right;
+  font-style: italic;
+}
+
+.calendar-icon {
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.calendar-container {
+  width: 100%;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: visible;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  min-height: 300px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: #F8F9FA;
+  border-bottom: 1px solid #EAEAEA;
+}
+
+.current-month {
+  font-weight: 500;
+  color: #3C4043;
+  font-size: 14px;
+}
+
+.calendar-nav-btn {
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #5F6368;
+  transition: background-color 0.2s;
+}
+
+.calendar-nav-btn:hover {
+  background-color: rgba(9, 186, 133, 0.1);
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #5F6368;
+  background-color: #F8F9FA;
+  border-bottom: 1px solid #EAEAEA;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.weekdays div {
+  width: 32px;
+  margin: 0 auto;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* 日曜日と土曜日の色（月曜始まり用） */
+.weekdays div:nth-child(6) {
+  color: #4285F4; /* 土曜日（右から2列目） - 青 */
+}
+
+.weekdays div:nth-child(7) {
+  color: #EA4335; /* 日曜日（右端） - 赤 */
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.calendar-day {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: #3C4043;
+  border-radius: 50%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.calendar-day:hover {
+  background-color: rgba(9, 186, 133, 0.1);
+}
+
+.calendar-day.today {
+  font-weight: bold;
+  background-color: rgba(9, 186, 133, 0.7);
+  color: white;
+}
+
+.calendar-day.has-data::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: rgba(9, 186, 133, 0.9);
+  border-radius: 50%;
+}
+
+.has-data-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: rgba(9, 186, 133, 0.9);
+  border-radius: 50%;
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.calendar-day.other-month {
+  color: #BDC1C6;
+}
+
+.calendar-day.has-data::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  background-color: #09BA85;
+  border-radius: 50%;
+}
+
+.calendar-day a {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 月曜始まりカレンダー用の日付の色 */
+/* 土曜日（右から2列目）の色 - 青 */
+.calendar-days .calendar-day:nth-child(7n+6) {
+  color: #4285F4;
+}
+
+/* 日曜日（右端）の色 - 赤 */
+.calendar-days .calendar-day:nth-child(7n) {
+  color: #EA4335;
+}
+
+/* 他の月の日曜・土曜日は薄い灰色にする */
+.calendar-days .calendar-day.other-month:nth-child(7n+6),
+.calendar-days .calendar-day.other-month:nth-child(7n) {
+  color: #BDC1C6;
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+  .current-date {
+    background-color: #333;
+    color: #eee;
+    box-shadow: 0 1px 2px rgba(255,255,255,0.05);
+  }
   
-  <!-- カレンダー用CSS（内包化） -->
-  <style>
-  /* カレンダー用CSS */
+  .last-updated {
+    color: #aaa;
+  }
+  
   .calendar-container {
-    width: 100%;
-    background-color: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    margin-bottom: 16px;
-  }
-  
-  .calendar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #eaeaea;
-  }
-  
-  .current-month {
-    font-weight: 500;
-    color: #3c4043;
-    font-size: 14px;
+    background-color: #222;
+    border-color: #444;
   }
   
   .calendar-nav-btn {
-    background: transparent;
-    border: none;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #5f6368;
-    transition: background-color 0.2s;
+    background: #333;
+    color: #eee;
   }
   
   .calendar-nav-btn:hover {
-    background-color: rgba(9, 186, 133, 0.1);
-  }
-  
-  .weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    font-size: 12px;
-    font-weight: 500;
-    color: #5f6368;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #eaeaea;
-  }
-  
-  .weekdays div {
-    padding: 8px 0;
-  }
-  
-  .calendar-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    padding: 4px 8px;
-  }
-  
-  .calendar-day {
-    position: relative;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 13px;
-    color: #3c4043;
-    border-radius: 50%;
-    margin: 2px auto;
+    background: #444;
   }
   
   .calendar-day:hover {
-    background-color: rgba(9, 186, 133, 0.1);
+    background-color: #333;
   }
   
   .calendar-day.today {
-    font-weight: bold;
     background-color: #09BA85;
     color: white;
   }
   
-  .calendar-day.other-month {
-    color: #bdc1c6;
+  .calendar-day.selected {
+    background-color: #3367d6;
+    color: #fff;
   }
+}
+  </style>
   
-  .calendar-day.has-data::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    width: 4px;
-    height: 4px;
-    background-color: #09BA85;
-    border-radius: 50%;
-  }
-  
-  .calendar-day a {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    color: inherit;
-  }
-  
-  /* 土曜日の色 - 月曜始まりでは7n-1が土曜日 */
-  .calendar-days .calendar-day:nth-child(7n-1) {
-    color: #4285f4;
-  }
-  
-  /* 日曜日の色 - 月曜始まりでは7nが日曜日 */
-  .calendar-days .calendar-day:nth-child(7n) {
-    color: #ea4335;
-  }
-  
-  /* 他の月の日曜・土曜日 */
-  .calendar-days .calendar-day.other-month:nth-child(7n-1),
-  .calendar-days .calendar-day.other-month:nth-child(7n) {
-    color: #bdc1c6;
-  }
+  <!-- カレンダー用CSS（内包） -->
+  <style>
+    /* カレンダー表示用のスタイル */
+    .current-date {
+      display: inline-block;
+      padding: 5px 10px;
+      margin-left: 15px;
+      font-size: 0.85em;
+      color: #555;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .last-updated {
+      margin-top: 10px;
+      font-size: 0.8em;
+      color: #888;
+      text-align: right;
+      font-style: italic;
+    }
+    
+    /* カレンダーアイコン */
+    .calendar-icon {
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    
+    /* 注釈エリアのスタイル調整 */
+    .note {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    /* ダークモード対応 */
+    @media (prefers-color-scheme: dark) {
+      .current-date {
+        background-color: #333;
+        color: #eee;
+        box-shadow: 0 1px 2px rgba(255,255,255,0.05);
+      }
+      
+      .last-updated {
+        color: #aaa;
+      }
+    }
   </style>
   
   <style>
@@ -889,7 +1046,7 @@ h1 {
   <header class="main-header">
     <div class="header-content">
       <div class="header-left">
-        <button id="menu-toggle" class="menu-toggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="drawer-menu">
+        <button id="menu-toggle" class="menu-toggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="drawer-menu" onclick="toggleDrawer()">
           <svg class="menu-icon" viewBox="0 0 24 24" width="24" height="24">
             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
           </svg>
@@ -949,7 +1106,7 @@ h1 {
                         <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </button>
-                    <div id="current-month" class="current-month"></div>
+                    <span id="current-month" class="current-month">2025年 5月</span>
                     <button id="next-month" class="calendar-nav-btn">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -966,7 +1123,42 @@ h1 {
                     <div>日</div>
                   </div>
                   <div id="calendar-days" class="calendar-days">
-                    <!-- 日付はJavaScriptで動的に生成されます -->
+                    <!-- デフォルトの静的な日付カレンダー（JavaScriptが動かない場合の代替） -->
+                    <div class="calendar-day other-month">28</div>
+                    <div class="calendar-day other-month">29</div>
+                    <div class="calendar-day other-month">30</div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250501.html">1</a></div>
+                    <div class="calendar-day">2</div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250503.html">3</a></div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250504.html">4</a></div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250505.html">5</a></div>
+                    <div class="calendar-day">6</div>
+                    <div class="calendar-day">7</div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250508.html">8</a></div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250509.html">9</a></div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250510.html">10</a></div>
+                    <div class="calendar-day">11</div>
+                    <div class="calendar-day">12</div>
+                    <div class="calendar-day">13</div>
+                    <div class="calendar-day">14</div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250515.html">15</a></div>
+                    <div class="calendar-day">16</div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250517.html">17</a></div>
+                    <div class="calendar-day today">18</div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250519.html">19</a></div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250520.html">20</a></div>
+                    <div class="calendar-day">21</div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250522.html">22</a></div>
+                    <div class="calendar-day">23</div>
+                    <div class="calendar-day">24</div>
+                    <div class="calendar-day has-data"><a href="https://storage.googleapis.com/your-bucket/reports/20250525.html">25</a></div>
+                    <div class="calendar-day">26</div>
+                    <div class="calendar-day">27</div>
+                    <div class="calendar-day">28</div>
+                    <div class="calendar-day">29</div>
+                    <div class="calendar-day">30</div>
+                    <div class="calendar-day">31</div>
+                    <div class="calendar-day other-month">1</div>
                   </div>
                 </div>
               </div>
@@ -1093,7 +1285,7 @@ h1 {
     </li><li class="operator">+</li>
     <li>
       <div class="node" id="node-ruyfyg">
-        <span class="node-text" title="課金率（長い文字列の表示テスト。あああああああああああああああああああああああああ）" data-text-default="課金率（長い文字列の表示テスト。あああああああああああああああああああああああああ）">課金率（長い文字列の表示テスト。あああああああああああああああああああああああああ）</span><div class="value" title="=sample!C11" data-value-daily="=sample!C11" data-value-monthly="=sample!D11" data-diff-daily="=sample!E11" data-diff-monthly="=sample!F11">=sample!C11</div><div class="diff-value" title="前日比: =sample!E11" data-diff-daily="=sample!E11" data-diff-monthly="=sample!F11">
+        <span class="node-text" title="課金率（長い文字列の表示テスト。あああああああああああああああああああああああああ）" data-text-default="課金率（長い文字列の表示テスト。あああああああああああああああああああああああああ）">課金率（長い文字列の表示テスト。あああああああああああああああああああああああああ）</span><div class="text-en" title="Conversion Rate (長い文字列の表示テスト。あああああああああああああああああああああああああ)">Conversion Rate (長い文字列の表示テスト。あああああああああああああああああああああああああ)</div><div class="value" title="=sample!C11" data-value-daily="=sample!C11" data-value-monthly="=sample!D11" data-diff-daily="=sample!E11" data-diff-monthly="=sample!F11">=sample!C11</div><div class="diff-value" title="前日比: =sample!E11" data-diff-daily="=sample!E11" data-diff-monthly="=sample!F11">
           <span class="diff-label">前日比: </span>
           <span class="diff-number">=sample!E11</span>
         </div>
@@ -3109,136 +3301,341 @@ function addHighlightStyle() {
 
 </script>
   
-  <!-- カレンダースクリプト（内包化） -->
+  <!-- ハンバーガーメニューはcore.jsで制御 -->
+
+  <!-- カレンダー用のJavaScript -->
   <script>
-  /**
-   * カレンダーUI機能
-   * 日付をクリックすると該当日付のHTMLにリンク
-   */
-  document.addEventListener('DOMContentLoaded', function() {
-    // カレンダー要素
-    const prevMonthBtn = document.getElementById('prev-month');
-    const nextMonthBtn = document.getElementById('next-month');
-    const currentMonthEl = document.getElementById('current-month');
-    const calendarDaysEl = document.getElementById('calendar-days');
+    // カレンダー関連の変数
+    const calCurrentDate = new Date();
+    let calCurrentMonth = calCurrentDate.getMonth();
+    let calCurrentYear = calCurrentDate.getFullYear();
     
-    // 現在の日付
-    let currentDate = new Date();
-    let currentMonth = currentDate.getMonth();
-    let currentYear = currentDate.getFullYear();
-    
-    // 月の名前（日本語）
-    const monthNames = [
-      '1月', '2月', '3月', '4月', '5月', '6月',
-      '7月', '8月', '9月', '10月', '11月', '12月'
+    // データがある日付のリストを直接埋め込む
+    // calendar-data.jsonのデータを直接コードに埋め込みます
+    const calDatesWithData = [
+      '2025-05-01', '2025-05-03', '2025-05-04', '2025-05-05', '2025-05-08', 
+      '2025-05-09', '2025-05-10', '2025-05-15', '2025-05-17', '2025-05-19', 
+      '2025-05-20', '2025-05-22', '2025-05-25'
     ];
     
-    // 前月ボタン
-    prevMonthBtn.addEventListener('click', function() {
-      currentMonth--;
-      if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-      }
-      renderCalendar();
-    });
-    
-    // 翌月ボタン
-    nextMonthBtn.addEventListener('click', function() {
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-      renderCalendar();
-    });
-    
-    // カレンダー描画関数
-    function renderCalendar() {
-      // 月表示の更新
-      currentMonthEl.textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
-      
-      // カレンダーをクリア
-      calendarDaysEl.innerHTML = '';
-      
-      // 月初めの日
-      const firstDay = new Date(currentYear, currentMonth, 1);
-      // 月末の日
-      const lastDay = new Date(currentYear, currentMonth + 1, 0);
-      
-      // 前月の最終日
-      const prevLastDay = new Date(currentYear, currentMonth, 0);
-      const prevDays = prevLastDay.getDate();
-      
-      // 月初めの曜日（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
-      // 月曜始まりに調整（日曜日の場合は6、それ以外は前日-1）
-      const firstDayIndex = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-      
-      // 月末の曜日（月曜始まりに調整）
-      const lastDayIndex = lastDay.getDay() === 0 ? 6 : lastDay.getDay() - 1;
-      
-      // 翌月の日数（カレンダーの最後の行を埋めるため）
-      const nextDays = 7 - lastDayIndex - 1;
-      
-      // 今日の日付
-      const today = new Date();
-      
-      // データがある日（仮のダミーデータ）
-      const hasDataDays = [5, 10, 15, 20, 25];
-      
-      // 前月の日を表示
-      for (let x = firstDayIndex; x > 0; x--) {
-        const day = prevDays - x + 1;
-        const dayEl = document.createElement('div');
-        dayEl.className = 'calendar-day other-month';
-        dayEl.textContent = day;
-        calendarDaysEl.appendChild(dayEl);
-      }
-      
-      // 当月の日を表示
-      for (let i = 1; i <= lastDay.getDate(); i++) {
-        const dayEl = document.createElement('div');
-        dayEl.className = 'calendar-day';
-        
-        // データがある日付にはマーカーを表示
-        if (hasDataDays.includes(i)) {
-          dayEl.classList.add('has-data');
-        }
-        
-        // 今日の日付にはスタイルを適用
-        if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
-          dayEl.classList.add('today');
-        }
-        
-        // 日付ごとのリンクを作成（ダミーURL）
-        const dateLink = document.createElement('a');
-        // YYYY-MM-DD 形式
-        const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        // GCSのダミーURL
-        dateLink.href = `https://storage.googleapis.com/kpi-tree-data/${formattedDate}.html`;
-        dateLink.textContent = i;
-        
-        // 実際のデータがあるかどうかを確認してスタイルを適用（この例ではランダム）
-        if (Math.random() > 0.7) {
-          dayEl.classList.add('has-data');
-        }
-        
-        dayEl.appendChild(dateLink);
-        calendarDaysEl.appendChild(dayEl);
-      }
-      
-      // 翌月の日を表示
-      for (let j = 1; j <= nextDays; j++) {
-        const dayEl = document.createElement('div');
-        dayEl.className = 'calendar-day other-month';
-        dayEl.textContent = j;
-        calendarDaysEl.appendChild(dayEl);
+    // DOMの読み込みが完了しているかをチェックする関数
+    function isDOMReady() {
+      return document.readyState === 'complete' || document.readyState === 'interactive';
+    }
+
+    // カレンダーデータをロードする関数
+    function loadCalendarData() {
+      console.log('カレンダーデータ読み込み完了');
+      console.log('データがある日付:', calDatesWithData);
+
+      // 即度カレンダーを再レンダリング
+      if (isDOMReady()) {
+        setTimeout(function() {
+          calRenderCalendar(calCurrentMonth, calCurrentYear);
+        }, 50);
       }
     }
     
-    // 初期カレンダーを描画
-    renderCalendar();
-  });
+    // カレンダー関数の定義
+    function calInitCalendar() {
+      // まずカレンダーを初期レンダリング
+      calRenderCalendar(calCurrentMonth, calCurrentYear);
+      // その後、データを非同期で読み込む
+      loadCalendarData();
+    }
+    
+    function calChangeMonth(step) {
+      calCurrentMonth += step;
+      
+      if (calCurrentMonth > 11) {
+        calCurrentMonth = 0;
+        calCurrentYear++;
+      } else if (calCurrentMonth < 0) {
+        calCurrentMonth = 11;
+        calCurrentYear--;
+      }
+      
+      calRenderCalendar(calCurrentMonth, calCurrentYear);
+    }
+    
+    function calRenderCalendar(month, year) {
+      console.log('カレンダーレンダリング開始:', year + '年' + (month + 1) + '月');
+      
+      try {
+        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+        const currentMonthElement = document.getElementById('current-month');
+        if (!currentMonthElement) {
+          console.error('current-month要素が見つかりません');
+          return;
+        }
+        
+        currentMonthElement.textContent = year + '年 ' + monthNames[month];
+        
+        const calendarDays = document.getElementById('calendar-days');
+        if (!calendarDays) {
+          console.error('calendar-days要素が見つかりません');
+          return;
+        }
+        
+        calendarDays.innerHTML = '';
+        
+        const today = new Date();
+        const todayDate = today.getDate();
+        const todayMonth = today.getMonth();
+        const todayYear = today.getFullYear();
+        
+        // 月の最初の日の曜日と月の最終日を取得
+        let firstDay = new Date(year, month, 1).getDay();
+        // 月曜始まりに調整（0＝日、月曜始まりでは日曜日は6になる）
+        firstDay = firstDay === 0 ? 6 : firstDay - 1;
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        
+        console.log('カレンダー情報:', {
+          year: year,
+          month: month,
+          firstDay: firstDay,
+          lastDate: lastDate
+        });
+        
+        // 前月の余白を追加
+        const prevMonthLastDate = new Date(year, month, 0).getDate();
+        for (let i = 0; i < firstDay; i++) {
+          const dayElement = document.createElement('div');
+          dayElement.classList.add('calendar-day', 'other-month');
+          dayElement.textContent = prevMonthLastDate - firstDay + i + 1;
+          calendarDays.appendChild(dayElement);
+        }
+        
+        // 現在の月の日付を追加
+        for (let i = 1; i <= lastDate; i++) {
+          const dayElement = document.createElement('div');
+          dayElement.classList.add('calendar-day');
+          
+          // 今日の日付かどうかをチェック
+          if (i === todayDate && month === todayMonth && year === todayYear) {
+            dayElement.classList.add('today');
+          }
+          
+          // データがあるかチェック
+          const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+          if (calDatesWithData.includes(dateString)) {
+            dayElement.classList.add('has-data');
+            
+            // リンクを追加(データがある日付のみ)
+            const linkElement = document.createElement('a');
+            
+            // YAMLで定義されたpublic_urlを使用
+            let baseUrl = '';
+            if (typeof window._publicBaseUrl !== 'undefined') {
+              // URLの最後のスラッシュまでの部分を取得
+              const urlParts = window._publicBaseUrl.split('/');
+              urlParts.pop(); // 最後のファイル名を除去
+              baseUrl = urlParts.join('/') + '/';
+            } else {
+              baseUrl = 'https://storage.googleapis.com/your-bucket/';
+            }
+            
+            // YYYY-MM-DD形式をYYYYMMDD形式に変換
+            const dateParts = dateString.split('-');
+            const dateFormatted = dateParts.join('');
+            
+            linkElement.href = `${baseUrl}reports.${dateFormatted}.html`;
+            linkElement.textContent = i;
+            dayElement.appendChild(linkElement);
+          } else {
+            // データがない日付はリンクなしでテキスト表示のみ
+            dayElement.textContent = i;
+          }
+          
+          calendarDays.appendChild(dayElement);
+        }
+        
+        // 翌月の余白を追加
+        const totalCells = Math.ceil((firstDay + lastDate) / 7) * 7;
+        const nextMonthDays = totalCells - (firstDay + lastDate);
+        for (let i = 1; i <= nextMonthDays; i++) {
+          const dayElement = document.createElement('div');
+          dayElement.classList.add('calendar-day', 'other-month');
+          dayElement.textContent = i;
+          calendarDays.appendChild(dayElement);
+        }
+        
+      } catch(error) {
+        console.error('カレンダーレンダリングエラー:', error);
+      }
+      
+      // 前月の余白を追加
+      const prevMonthLastDate = new Date(year, month, 0).getDate();
+      for (let i = 0; i < firstDay; i++) {
+        const dayElement = document.createElement('div');
+        dayElement.classList.add('calendar-day', 'other-month');
+        dayElement.textContent = prevMonthLastDate - firstDay + i + 1;
+        calendarDays.appendChild(dayElement);
+      }
+      
+      // 現在の月の日付を追加
+      for (let i = 1; i <= lastDate; i++) {
+        const dayElement = document.createElement('div');
+        dayElement.classList.add('calendar-day');
+        
+        // 今日の日付かどうかをチェック
+        if (i === todayDate && month === todayMonth && year === todayYear) {
+          dayElement.classList.add('today');
+        }
+        
+        // データがあるかチェック
+        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        if (calDatesWithData.includes(dateString)) {
+          dayElement.classList.add('has-data');
+        }
+        
+        // 日付の表示を追加
+        // 緑ポチがある日付（データあり）のみリンクを追加
+        if (calDatesWithData.includes(dateString)) {
+          // リンクを追加
+          const linkElement = document.createElement('a');
+          
+          // YAMLで定義されたpublic_urlを使用
+          // グローバルに定義された_publicBaseUrlからベースURLを取得
+          let baseUrl = '';
+          if (typeof window._publicBaseUrl !== 'undefined') {
+            // URLの最後のスラッシュまでの部分を取得
+            const urlParts = window._publicBaseUrl.split('/');
+            urlParts.pop(); // 最後のファイル名を除去
+            baseUrl = urlParts.join('/') + '/';
+          } else {
+            // フォールバック
+            baseUrl = 'https://storage.googleapis.com/your-bucket/';
+          }
+          
+          // YYYY-MM-DD形式をYYYYMMDD形式に変換
+          const dateParts = dateString.split('-');
+          const dateFormatted = dateParts.join('');
+          
+          linkElement.href = `${baseUrl}reports.${dateFormatted}.html`;
+          linkElement.textContent = i;
+          dayElement.appendChild(linkElement);
+        } else {
+          // データがない日付はリンクなしでテキスト表示のみ
+          dayElement.textContent = i;
+        }
+        
+        calendarDays.appendChild(dayElement);
+      }
+      
+      // 翌月の余白を追加
+      const totalCells = Math.ceil((firstDay + lastDate) / 7) * 7;
+      const nextMonthDays = totalCells - (firstDay + lastDate);
+      for (let i = 1; i <= nextMonthDays; i++) {
+        const dayElement = document.createElement('div');
+        dayElement.classList.add('calendar-day', 'other-month');
+        dayElement.textContent = i;
+        calendarDays.appendChild(dayElement);
+      }
+    }
+
+    // ページが読み込まれたらカレンダーを初期化
+    function initializeCalendar() {
+      try {
+        console.log('カレンダー初期化開始');
+        
+        // カレンダーの要素が存在するか確認
+        const calendarContainer = document.getElementById('calendar-days');
+        
+        if (!calendarContainer) {
+          console.error('カレンダー要素が見つかりません');
+          return;
+        }
+        
+        // カレンダー初期化
+        calInitCalendar();
+        
+        // 最初のレンダリングが失敗する場合のために再試行
+        setTimeout(function() {
+          calRenderCalendar(calCurrentMonth, calCurrentYear);
+        }, 100);
+
+        // イベントリスナーを設定
+        document.getElementById('prev-month').addEventListener('click', function() {
+          calChangeMonth(-1);
+        });
+
+        document.getElementById('next-month').addEventListener('click', function() {
+          calChangeMonth(1);
+        });
+        
+        console.log('カレンダー初期化完了');
+      } catch (error) {
+        console.error('カレンダー初期化エラー:', error);
+      }
+    }
+    
+    // DOMContentLoadedイベント発生時にカレンダーを初期化
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeCalendar();
+    });
+    
+    // 即時実行関数でカレンダーを描画（DOMContentLoadedを待たずに実行）
+    (function() {
+      // DOMが準備できているか確認
+      if (document.readyState === 'loading') {
+        // まだ読み込み中なら、DOMContentLoadedを待つ
+        return;
+      }
+      
+      // DOMがすでに準備できている場合は、直接初期化を実行
+      initializeCalendar();
+      
+      // すでにDOMが準備完了している場合は直接初期化
+      setTimeout(function() {
+        // 少し遅延させて実行（他のスクリプトの読み込みを待つため）
+        if (document.getElementById('calendar-days')) {
+          calInitCalendar();
+        }
+      }, 500);
+    })();
+  </script>
+
+  <script>
+    /**
+     * カレンダー機能スクリプト
+     * KPIツリーの日付関連機能を担当
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('カレンダー機能を初期化しました');
+      
+      // 現在の日付を取得
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      
+      // ヘッダータイトルの横に日付表示を追加
+      const dateDisplay = document.createElement('div');
+      dateDisplay.className = 'current-date';
+      dateDisplay.innerHTML = `現在のデータ: ${year}年${month}月${day}日`;
+      dateDisplay.style.cssText = 'margin-left: 15px; font-size: 0.9em; color: #777;';
+      
+      // ページタイトルの後に挿入
+      const pageTitle = document.querySelector('.page-title');
+      if (pageTitle && pageTitle.parentNode) {
+        pageTitle.parentNode.insertBefore(dateDisplay, pageTitle.nextSibling);
+      }
+      
+      // データの最終更新日も表示
+      const lastUpdated = document.createElement('div');
+      lastUpdated.className = 'last-updated';
+      lastUpdated.innerHTML = `最終更新: ${year}年${month}月${day}日`;
+      lastUpdated.style.cssText = 'margin-top: 10px; font-size: 0.8em; color: #999; text-align: right;';
+      
+      // 注釈エリアに追加
+      const noteContainer = document.querySelector('.note');
+      if (noteContainer) {
+        noteContainer.appendChild(lastUpdated);
+      }
+      
+      console.log('日付表示を追加しました');
+    });
   </script>
 
 </body>
