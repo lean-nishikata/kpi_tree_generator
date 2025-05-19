@@ -3,30 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales KPI Tree</title>
-  <link rel="icon" href="https://example.com/favicon.ico" type="image/x-icon">
-  <script>
-    // リダイレクト環境で動作するPUBLIC_URL設定 - GCS対応強化版
-    (function() {
-      // 強制的にYAMLで設定した公開URLを使用
-      var FIXED_PUBLIC_URL = "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/sales.html";
-      
-      // キャッシュバスティング用タイムスタンプ
-      var CACHE_BUSTER = new Date().getTime();
-      
-      // 常にグローバルに利用可能な形で公開URLを設定
-      window.PUBLIC_URL = FIXED_PUBLIC_URL;
-      window._publicBaseUrl = FIXED_PUBLIC_URL;
-      
-      console.log('キャッシュ対策タイムスタンプ:', CACHE_BUSTER);
-      console.log('強制的に設定した公開URL:', FIXED_PUBLIC_URL);
-      
-      // GCSリダイレクトを検出しても上書きしない
-      if (window.location.href.includes('googleusercontent.com')) {
-        console.log('リダイレクト先を検出しましたが、YAML設定の公開URLを優先します: ' + FIXED_PUBLIC_URL);
-      }
-    })();
-    </script>
+  <title>KPI Tree - Vertical Example</title>
+  
+  
   <style>
     /* 埋め込みCSS */
     /* General styles */
@@ -1109,7 +1088,7 @@ h1 {
     }
   </style>
 </head>
-<body data-theme="blue">
+<body data-theme="red">
   <!-- メインコンテンツヘッダーにハンバーガーボタンを配置 - 左上配置 -->
   <header class="main-header">
     <div class="header-content">
@@ -1120,7 +1099,7 @@ h1 {
           </svg>
         </button>
         <div class="page-title-container">
-          <h1 class="page-title">Sales KPI Tree</h1>
+          <h1 class="page-title">KPI Tree - Vertical Example</h1>
           <span class="data-date">現在のデータ: 2025年05月19日</span>
         </div>
       </div>
@@ -1221,7 +1200,7 @@ h1 {
   <!-- メインコンテンツ -->
   <div class="main-content">
     <div class="direction-horizontal">
-    <div class="kpi-tree-container theme-blue">
+    <div class="kpi-tree-container theme-red">
       <div class="note">
         <ul>
           <li>金銭信託運用、その他の一部の数値は月次のみ手動掲載のため、営業収益合計は正確でない場合があります</li>
@@ -1231,43 +1210,43 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-4sbfrq">
-        <span class="node-text" title="Total Sales (¥M)" data-text-default="Total Sales (¥M)">Total Sales (¥M)</span><div class="value" title="1200" data-value-default="1200">1200</div>
+      <div class="node" id="node-tccaez">
+        <a href="https://example.com/revenue" target="_blank" class="node-text" title="Revenue (¥100M)" data-text-default="Revenue (¥100M)">Revenue (¥100M)</a><div class="value" title="500" data-value-default="500">500</div>
       </div>
-      <button class="toggle-btn" data-target="node-4sbfrq-children"></button>
-      <ul id="node-4sbfrq-children" class="children">
+      <button class="toggle-btn" data-target="node-tccaez-children"></button>
+      <ul id="node-tccaez-children" class="children">
     <li>
-      <div class="node" id="node-6u2czv">
-        <span class="node-text" title="Online" data-text-default="Online">Online</span><div class="value" title="700" data-value-default="700">700</div>
+      <div class="node" id="node-9i25r8">
+        <span class="node-text" title="Product A" data-text-default="Product A">Product A</span><div class="value" title="300" data-value-default="300">300</div>
       </div>
-      <button class="toggle-btn" data-target="node-6u2czv-children"></button>
-      <ul id="node-6u2czv-children" class="children">
+      <button class="toggle-btn" data-target="node-9i25r8-children"></button>
+      <ul id="node-9i25r8-children" class="children">
     <li>
-      <div class="node" id="node-6fvs32">
-        <span class="node-text" title="Desktop" data-text-default="Desktop">Desktop</span><div class="value" title="400" data-value-default="400">400</div>
+      <div class="node" id="node-nc6tk5">
+        <span class="node-text" title="Direct Sales" data-text-default="Direct Sales">Direct Sales</span><div class="value" title="200" data-value-default="200">200</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-ke2jwy">
-        <span class="node-text" title="Mobile" data-text-default="Mobile">Mobile</span><div class="value" title="300" data-value-default="300">300</div>
+      <div class="node" id="node-osgyo2">
+        <span class="node-text" title="Partner Sales" data-text-default="Partner Sales">Partner Sales</span><div class="value" title="100" data-value-default="100">100</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-aefu1k">
-        <span class="node-text" title="Offline" data-text-default="Offline">Offline</span><div class="value" title="500" data-value-default="500">500</div>
+      <div class="node" id="node-447i3n">
+        <span class="node-text" title="Product B" data-text-default="Product B">Product B</span><div class="value" title="200" data-value-default="200">200</div>
       </div>
-      <button class="toggle-btn" data-target="node-aefu1k-children"></button>
-      <ul id="node-aefu1k-children" class="children">
+      <button class="toggle-btn" data-target="node-447i3n-children"></button>
+      <ul id="node-447i3n-children" class="children">
     <li>
-      <div class="node" id="node-lsbknu">
-        <span class="node-text" title="Retail Stores" data-text-default="Retail Stores">Retail Stores</span><div class="value" title="350" data-value-default="350">350</div>
+      <div class="node" id="node-8yigig">
+        <span class="node-text" title="Region X" data-text-default="Region X">Region X</span><div class="value" title="120" data-value-default="120">120</div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-wfab5f">
-        <span class="node-text" title="Partners" data-text-default="Partners">Partners</span><div class="value" title="150" data-value-default="150">150</div>
+      <div class="node" id="node-c4upsx">
+        <span class="node-text" title="Region Y" data-text-default="Region Y">Region Y</span><div class="value" title="80" data-value-default="80">80</div>
       </div>
     </li>
       </ul>

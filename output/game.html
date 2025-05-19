@@ -9,7 +9,7 @@
     // リダイレクト環境で動作するPUBLIC_URL設定 - GCS対応強化版
     (function() {
       // 強制的にYAMLで設定した公開URLを使用
-      var FIXED_PUBLIC_URL = "https://storage.googleapis.com/kpi-tree-data/game.html";
+      var FIXED_PUBLIC_URL = "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/game.html";
       
       // キャッシュバスティング用タイムスタンプ
       var CACHE_BUSTER = new Date().getTime();
@@ -744,12 +744,15 @@ h1 {
 
 /* カレンダースタイル */
 .calendar-container {
-  max-width: 800px;
-  margin: 20px auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 10px 0;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 16px;
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .calendar-header {
@@ -782,38 +785,130 @@ h1 {
   font-weight: bold;
 }
 
-.calendar-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  text-align: center;
+/* カレンダーグリッドの共通設定 - レイアウトを完全に統一 */
+.calendar-days,
+.weekdays {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  text-align: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
+/* 曜日ヘッダー・日付グリッドの間隔調整 */
+.weekdays {
+  margin-bottom: 0 !important;
+  border-bottom: 2px solid #f0f0f0 !important;
+}
+
+/* 曜日ヘッダーの共通設定 */
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 3px;
   text-align: center;
   font-weight: bold;
-  margin-bottom: 8px;
 }
 
-.calendar-weekdays div {
-  padding: 6px;
+/* 土曜日と日曜日の色設定 */
+.calendar-days .calendar-day:nth-child(7n-1) {
+  color: #4285f4 !important; /* 土曜日 */
+}
+
+.calendar-days .calendar-day:nth-child(7n) {
+  color: #ea4335 !important; /* 日曜日 */
+}
+
+/* 他の月の日付の色 */
+.calendar-days .calendar-day.other-month:nth-child(7n-1),
+.calendar-days .calendar-day.other-month:nth-child(7n) {
+  color: #bdc1c6 !important;
+}
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0 0 8px 0;
+}
+
+.calendar-weekdays div,
+.weekdays div {
+  padding: 6px 0;
   font-size: 14px;
   color: #666;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* 曜日ヘッダーの土曜日（6番目の要素）の色 */
+.calendar-weekdays div:nth-child(6),
+.weekdays div:nth-child(6) {
+  color: #4285f4; /* 青色 */
+}
+
+/* 曜日ヘッダーの日曜日（7番目の要素）の色 */
+.calendar-weekdays div:nth-child(7),
+.weekdays div:nth-child(7) {
+  color: #ea4335; /* 赤色 */
+}
+
+.weekdays div {
+  height: 28px;
+  line-height: 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  padding: 0;
+  overflow: hidden;
 }
 
 .calendar-day {
   position: relative;
-  height: 40px;
-  line-height: 40px;
+  height: 28px;
+  line-height: 28px;
   border-radius: 4px;
-  font-size: 16px;
+  font-size: 14px;
+  overflow: hidden;
 }
 
 .calendar-day.other-month {
   color: #ccc;
+}
+
+/* 土曜日の色 - 実際のHTML構造では6番目が土曜日 */
+.calendar-days .calendar-day:nth-child(7n+6),
+.calendar-day:nth-child(7n+6) {
+  color: #4285f4 !important; /* 青色、優先順位を高くする */
+}
+
+/* 緑ポチがない土曜日の色を薄く */
+.calendar-days .calendar-day:not(.has-data):nth-child(7n+6) a,
+.calendar-day:not(.has-data):nth-child(7n+6) {
+  color: #84aef9 !important; /* より薄い青色 */
+}
+
+/* 日曜日の色 - 実際のHTML構造では7番目が日曜日 */
+.calendar-days .calendar-day:nth-child(7n),
+.calendar-day:nth-child(7n) {
+  color: #ea4335 !important; /* 赤色、優先順位を高くする */
+}
+
+/* 緑ポチがない日曜日の色を薄く */
+.calendar-days .calendar-day:not(.has-data):nth-child(7n) a,
+.calendar-day:not(.has-data):nth-child(7n) {
+  color: #f2928a !important; /* より薄い赤色 */
+}
+
+/* 他の月の日でも土日の色を保持（グレーにならないようにする） */
+.calendar-days .calendar-day.other-month:nth-child(7n+6),
+.calendar-day.other-month:nth-child(7n+6) {
+  color: #a5c0f7 !important; /* 薄い青色 */
+}
+
+.calendar-days .calendar-day.other-month:nth-child(7n),
+.calendar-day.other-month:nth-child(7n) {
+  color: #f5b6b3 !important; /* 薄い赤色 */
 }
 
 .calendar-day.today {
@@ -900,23 +995,32 @@ h1 {
   .weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
     text-align: center;
     font-size: 12px;
     font-weight: 500;
     color: #5f6368;
     background-color: #f8f9fa;
     border-bottom: 1px solid #eaeaea;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 0;
+    border-bottom: 2px solid #f0f0f0;
   }
   
   .weekdays div {
-    padding: 8px 0;
+    padding: 0;
+    margin: 0;
+    height: 28px;
+    line-height: 28px;
   }
   
   .calendar-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    padding: 4px 8px;
+    gap: 2px;
+    padding: 4px 0;
+    margin: 0;
   }
   
   .calendar-day {
@@ -1017,7 +1121,7 @@ h1 {
         </button>
         <div class="page-title-container">
           <h1 class="page-title">Game KPIs</h1>
-          <span class="data-date">現在のデータ: 2025年05月18日</span>
+          <span class="data-date">現在のデータ: 2025年05月19日 / DAU:=sample!C8</span>
         </div>
       </div>
       <div class="header-controls">
@@ -1121,7 +1225,7 @@ h1 {
       <div class="note">
         <ul>
           <li>金銭信託運用、その他の一部の数値は月次のみ手動掲載のため、営業収益合計は正確でない場合があります</li>
-          <li>情報ソースは<a href="https://docs.google.com/spreadsheets/d/1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U/edit?usp=sharing" target="_blank">こちら</a>、数値に関してのお問い合わせは <a href="https://coincheck.enterprise.slack.com/archives/C069WL5UH3L" target="_blank">#req-data-platform</a> @data-platform-admin まで</li>
+          <li>データソースは<a href="https://docs.google.com/spreadsheets/d/1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U/edit?usp=sharing" target="_blank">こちら</a>、数値に関してのお問い合わせは <a href="https://coincheck.enterprise.slack.com/archives/C069WL5UH3L" target="_blank">#req-data-platform</a> @data-platform-admin まで</li>
         </ul>
       </div>
       <ul class="kpi-tree">
@@ -1584,9 +1688,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 前日比・前月比の色を初期状態で適用
   applyInitialDiffStyles();
-  
-  // 初期化処理の実行
-  initializeApplication();
   
   // 全ノードの値を更新
   updateAllNodeValues();
@@ -3238,26 +3339,116 @@ function addHighlightStyle() {
  * データがある日付には緑のマーカーを表示
  */
 document.addEventListener('DOMContentLoaded', function() {
-  // 既存リンクの修正処理（遅延実行してレンダリング後に適用）
-  setTimeout(function() {
-    const oldLinks = document.querySelectorAll('a[href*="kpi-tree-data/2025-"]');
-    console.log('値修正処理中: 古い形式のリンクを探して修正します', oldLinks.length);
-    
-    oldLinks.forEach(link => {
-      const href = link.getAttribute('href');
-      if (href && href.includes('/kpi-tree-data/') && !href.includes('/reports/')) {
-        const dateMatch = href.match(/\d{4}-\d{2}-\d{2}/);
-        if (dateMatch) {
-          const date = dateMatch[0];
-          const dateParts = date.split('-');
-          const formattedDate = dateParts.join('');
-          const newUrl = `https://storage.googleapis.com/kpi-tree-data/reports/${formattedDate}.html`;
-          link.setAttribute('href', newUrl);
-          console.log(`リンク修正: ${href} → ${newUrl}`);
+  // リンク修正関数 - 再利用可能なユーティリティ関数
+  function fixOldLinks(delay) {
+    setTimeout(function() {
+      // 可能な限り多くのパターンを対象にする広範なセレクタ
+      // カレンダー内の全てのリンクを対象に
+      const allLinks = document.querySelectorAll('a');
+      console.log(`リンク修正処理[${delay}ms]: 全てのリンクをチェックします (${allLinks.length}個)`);
+      
+      let fixedCount = 0;
+      
+      allLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        // リンクがない場合やreportsを既に含むものはスキップ
+        if (!href || href.includes('/reports/')) {
+          return;
         }
+        
+        // GCSやkpi-tree-dataを含むリンクを検出
+        if (href.includes('storage.googleapis.com') || href.includes('kpi-tree-data')) {
+          fixedCount++;
+          console.log(`修正対象リンク: ${href}`);
+          
+          // 両方の日付形式 (YYYY-MM-DD と YYYYMMDD) を検出する強化された正規表現
+          const dateMatch = href.match(/\d{4}-\d{2}-\d{2}|\d{8}/);
+          if (dateMatch) {
+            let formattedDate = dateMatch[0];
+            
+            // YYYY-MM-DD 形式の場合、YYYYMMDD形式に変換
+            if (formattedDate.includes('-')) {
+              const dateParts = formattedDate.split('-');
+              formattedDate = dateParts.join('');
+            }
+            
+            console.log(`検出した日付: ${dateMatch[0]}, 変換後: ${formattedDate}`);
+            
+            // ベースURLを取得
+            let baseUrlForLinks = window.PUBLIC_URL || '';
+            console.log(`PUBLIC_URL: ${baseUrlForLinks}`);
+            baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, ''); // 末尾のファイル名を削除
+            console.log(`ベースURL: ${baseUrlForLinks}`);
+            
+            // 新しいリンク形式
+            let newUrl = '';
+            if (baseUrlForLinks) {
+              if (baseUrlForLinks.endsWith('/')) {
+                newUrl = `${baseUrlForLinks}reports/${formattedDate}.html`;
+              } else {
+                newUrl = `${baseUrlForLinks}/reports/${formattedDate}.html`;
+              }
+            } else {
+              // フォールバック
+              newUrl = `/reports/${formattedDate}.html`;
+            }
+            
+            link.setAttribute('href', newUrl);
+            console.log(`リンク修正: ${href} → ${newUrl}`);
+          } else {
+            console.log(`日付パターンが見つからないリンク: ${href}`);
+          }
+        }
+      });
+      
+      console.log(`修正完了: ${fixedCount}個のリンクを処理しました`);
+      
+      // カレンダー内のリンクが存在し、修正対象があった場合は別のアプローチも適用
+      if (document.querySelector('.calendar-day a') && fixedCount === 0) {
+        // 直接カレンダー内のすべてのリンクを修正
+        console.log('カレンダー内のリンクを直接修正します');
+        const calendarLinks = document.querySelectorAll('.calendar-day a');
+        
+        calendarLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          // GCSのURLかどうかをチェック
+          if (href && href.includes('storage.googleapis.com')) {
+            // 日付を検出
+            const month = currentMonth + 1;
+            const day = link.textContent.trim();
+            if (day && !isNaN(parseInt(day))) {
+              // 日付を整形
+              const dateForUrl = `${currentYear}${String(month).padStart(2, '0')}${String(parseInt(day)).padStart(2, '0')}`;
+              
+              // 新しいURLを生成
+              let baseUrlForLinks = window.PUBLIC_URL || '';
+              baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, '');
+              
+              let newUrl = '';
+              if (baseUrlForLinks) {
+                if (baseUrlForLinks.endsWith('/')) {
+                  newUrl = `${baseUrlForLinks}reports/${dateForUrl}.html`;
+                } else {
+                  newUrl = `${baseUrlForLinks}/reports/${dateForUrl}.html`;
+                }
+              } else {
+                newUrl = `/reports/${dateForUrl}.html`;
+              }
+              
+              link.setAttribute('href', newUrl);
+              console.log(`カレンダーリンク修正: ${href} → ${newUrl}`);
+            }
+          }
+        });
       }
-    });
-  }, 500);
+    }, delay || 0);
+  }
+  
+  // 初回のリンク修正（ページロード直後）
+  fixOldLinks(100);
+  
+  // 第2回のリンク修正（少し待ってから）
+  fixOldLinks(500);
   
   // カレンダー要素
   const prevMonthBtn = document.getElementById('prev-month');
@@ -3325,17 +3516,10 @@ document.addEventListener('DOMContentLoaded', function() {
       baseUrl = baseUrl.replace(/\/[^\/]*\.html$/, ''); // 末尾のHTML名を削除
     }
     
-    // 日付データをJSONファイルから取得 (無効なパスを修正)
-    // デバッグ用にハードコードしたデータ - JSONからの正確な日付一覧
+    // 日付データをJSONファイルから取得
+    // フォールバックとして空のデータを使用
     const fallbackData = {
-      datesWithData: [
-        "2025-04-01", "2025-04-03", "2025-04-05", "2025-04-08", "2025-04-10", "2025-04-15", 
-        "2025-04-17", "2025-04-20", "2025-04-22", "2025-04-25",
-        "2025-05-01", "2025-05-03", "2025-05-04", "2025-05-05", "2025-05-08", "2025-05-09", 
-        "2025-05-10", "2025-05-15", "2025-05-17", "2025-05-19", "2025-05-20", "2025-05-22", "2025-05-25",
-        "2025-06-01", "2025-06-03", "2025-06-05", "2025-06-08", "2025-06-10", "2025-06-15", 
-        "2025-06-17", "2025-06-20", "2025-06-22", "2025-06-25"
-      ]
+      datesWithData: []
     };
     
     // データ処理関数
@@ -3375,24 +3559,50 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // 複数のパスを試す
-    const paths = [
+    // 検索パス
+    // public_urlに基づいて外部カレンダーデータのURLを生成
+    let externalCalendarUrl = '';
+    if (baseUrl) {
+      const baseUrlWithoutFile = baseUrl.replace(/\/[^\/]*\.html$/, '');
+      if (baseUrlWithoutFile.endsWith('/')) {
+        externalCalendarUrl = `${baseUrlWithoutFile}static/calendar-data.json`;
+      } else {
+        externalCalendarUrl = `${baseUrlWithoutFile}/static/calendar-data.json`;
+      }
+    }
+    
+    // ローカルバックアップパス
+    const localPaths = [
       './static/calendar-data.json',
       '/static/calendar-data.json',
       'calendar-data.json'
     ];
     
-    // データ取得試行
-    fetch(paths[0])
-      .catch(() => fetch(paths[1]))
-      .catch(() => fetch(paths[2]))
+    // キャッシュを回避するためのタイムスタンプパラメータを追加
+    const timestamp = new Date().getTime();
+    const urlWithCache = externalCalendarUrl ? `${externalCalendarUrl}?t=${timestamp}` : '';
+    
+    // まず外部URLから取得を試みる（URLが設定されている場合）
+    const initialFetch = externalCalendarUrl 
+      ? fetch(urlWithCache)
+      : Promise.reject(new Error('外部URLが設定されていません'));
+      
+    // 外部URLから取得を試みる、失敗したらローカルパスを試す
+    initialFetch
       .catch(() => {
-        console.warn('カレンダーデータの取得に失敗しました。フォールバックデータを使用します。');
-        // 全てのパスで失敗した場合はフォールバックを返す
-        return { 
-          ok: true,
-          json: () => Promise.resolve(fallbackData)
-        };
+        console.warn('外部URLからのカレンダーデータ取得に失敗しました。ローカルのパスを試します。');
+        // 外部URLから失敗した場合、ローカルのパスを順に試す
+        return fetch(localPaths[0])
+          .catch(() => fetch(localPaths[1]))
+          .catch(() => fetch(localPaths[2]))
+          .catch(() => {
+            console.warn('すべてのパスでカレンダーデータの取得に失敗しました。フォールバックデータを使用します。');
+            // 全てのパスで失敗した場合はフォールバックを返す
+            return { 
+              ok: true,
+              json: () => Promise.resolve(fallbackData)
+            };
+          });
       })
       .then(response => {
         if (!response.ok && response.ok !== undefined) {
@@ -3403,6 +3613,11 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .then(data => {
         console.log('カレンダーデータを取得しました', data);
+        // 空のJSONファイルの場合も適切に処理
+        if (!data || !data.datesWithData || !Array.isArray(data.datesWithData)) {
+          console.warn('カレンダーデータが正しい形式ではありません。空のデータを使用します。');
+          return processJsonData(fallbackData);
+        }
         processJsonData(data);
       })
       .catch(error => {
@@ -3520,39 +3735,27 @@ document.addEventListener('DOMContentLoaded', function() {
       // リンク先を生成（YAMLのpublic_urlに基づく）
       let reportUrl = '';
       if (baseUrl) {
-        // baseURLのドメイン部分とパスを取得（別の例: https://storage.googleapis.com/your-bucket)
-        const urlParts = baseUrl.match(/^(https?:\/\/[^/]+)(\/.*)?$/);
-        if (urlParts) {
-          const domain = urlParts[1]; // 例: https://storage.googleapis.com
-          const path = urlParts[2] || ''; // 例: /your-bucket
-          
-          // ドメインを抽出（例：kpi-tree-data）
-          const bucketMatch = path.match(/\/([^\/]+)/);
-          const bucket = bucketMatch ? bucketMatch[1] : '';
-          
-          // 必ずこの形式に強制する（https://storage.googleapis.com/kpi-tree-data/reports/20250515.html）
-          // バケット名とパスをハードコードして確実に生成
-          reportUrl = `${domain}/kpi-tree-data/reports/${dateForUrl}.html`;
+        // baseUrlからindex.htmlなどのファイル名を削除
+        const baseUrlWithoutFile = baseUrl.replace(/\/[^\/]*\.html$/, '');
+        
+        // reports/YYYYMMDD.html 形式のURLを生成
+        if (baseUrlWithoutFile.endsWith('/')) {
+          reportUrl = `${baseUrlWithoutFile}reports/${dateForUrl}.html`;
         } else {
-          // 他のパターンでもreportsディレクトリを含める
-          if (baseUrl.endsWith('/')) {
-            reportUrl = `${baseUrl}reports/${dateForUrl}.html`;
-          } else {
-            reportUrl = `${baseUrl}/reports/${dateForUrl}.html`;
-          }
+          reportUrl = `${baseUrlWithoutFile}/reports/${dateForUrl}.html`;
         }
       } else {
-        // フォールバック - この場合も必たreportsディレクトリを含める
+        // フォールバック
         reportUrl = `/reports/${dateForUrl}.html`;
       }
       
-      // データがある場合のみリンクを有効に
+      // すべての日付に対してリンクを有効にする
+      dateLink.href = reportUrl;
+      dateLink.title = `${formattedDate}のレポートを表示`;
+      
+      // データがある日付には特別なクラスを追加（スタイリング用）
       if (hasDataForDate(currentYear, currentMonth, i)) {
-        dateLink.href = reportUrl;
-        dateLink.title = `${formattedDate}のレポートを表示`;
-      } else {
-        dateLink.classList.add('no-data');
-        dateLink.title = `${formattedDate}のデータはありません`;
+        dateLink.classList.add('has-data');
       }
       
       dateLink.textContent = i;
@@ -3571,6 +3774,31 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 初期データの読み込みとカレンダー描画
   fetchCalendarData();
+  
+  // カレンダー描画時のフック関数を上書き
+  const originalRenderCalendar = renderCalendar;
+  renderCalendar = function() {
+    // 元の描画関数を呼び出し
+    originalRenderCalendar.apply(this, arguments);
+    
+    // カレンダー描画後にリンク修正を実行（遅延付き）
+    console.log('カレンダー描画後のリンク修正をスケジュール');
+    fixOldLinks(50);  // カレンダー描画直後
+    fixOldLinks(300); // 少し待ってから
+  };
+  
+  //月切り替えボタンのクリック時にも修正を適用
+  const originalPrevMonthClick = prevMonthBtn.onclick || function(){};
+  prevMonthBtn.onclick = function(e) {
+    originalPrevMonthClick.call(this, e);
+    fixOldLinks(100);
+  };
+  
+  const originalNextMonthClick = nextMonthBtn.onclick || function(){};
+  nextMonthBtn.onclick = function(e) {
+    originalNextMonthClick.call(this, e);
+    fixOldLinks(100);
+  };
 });
 
 
@@ -3683,7 +3911,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // YYYY-MM-DD 形式
         const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         // GCSのダミーURL
-        dateLink.href = `https://storage.googleapis.com/kpi-tree-data/${formattedDate}.html`;
+        // 最初から正しいCloud Run URLを使用
+        const baseUrlForCalendar = window.PUBLIC_URL || '';
+        const baseWithoutFile = baseUrlForCalendar.replace(/\/[^\/]*\.html$/, '');
+        
+        // YYYYMMDD形式に変換
+        const dateParts = formattedDate.split('-');
+        const dateForUrl = dateParts.join('');
+        
+        // 正しいURLを生成
+        let reportUrl = '';
+        if (baseWithoutFile) {
+          if (baseWithoutFile.endsWith('/')) {
+            reportUrl = `${baseWithoutFile}reports/${dateForUrl}.html`;
+          } else {
+            reportUrl = `${baseWithoutFile}/reports/${dateForUrl}.html`;
+          }
+        } else {
+          reportUrl = `/reports/${dateForUrl}.html`;
+        }
+        
+        dateLink.href = reportUrl;
         dateLink.textContent = i;
         
         // 実際のデータがあるかどうかを確認してスタイルを適用（この例ではランダム）

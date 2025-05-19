@@ -345,9 +345,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // 前日比・前月比の色を初期状態で適用
   applyInitialDiffStyles();
   
-  // 初期化処理の実行
-  initializeApplication();
-  
   // 全ノードの値を更新
   updateAllNodeValues();
   
@@ -640,6 +637,11 @@ function applyInitialDiffStyles() {
         displayValue = displayValue + '%';
       }
       
+      // プラスの値には「+」を付けるようにする
+      if (numValue > 100 && !displayValue.toString().startsWith('+')) {
+        displayValue = '+' + displayValue;
+      }
+      
       // HTML再構築
       element.innerHTML = `
         <span class="diff-label">前月比: </span>
@@ -725,6 +727,11 @@ function updateAllNodeValues() {
         // パーセントがない場合は付ける
         if (!displayValue.toString().endsWith('%')) {
           displayValue = displayValue + '%';
+        }
+        
+        // プラスの値には「+」を付けるようにする
+        if (numValue > 100 && !displayValue.toString().startsWith('+')) {
+          displayValue = '+' + displayValue;
         }
         
         // HTMLを再構築
