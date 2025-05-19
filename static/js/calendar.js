@@ -217,11 +217,20 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // 次月ボタンを制御
       const nextMonth = new Date(currentYear, currentMonth + 1, 1);
-      const canGoToNextMonth = nextMonth <= new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+      
+      // 今日の月を取得
+      const today = new Date();
+      const currentMonthFirst = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      // 昨日の月までしか行けないようにする（今日の月より先の月には進めない）
+      // 昨日の月 = 今日と同じ月
+      const canGoToNextMonth = nextMonth <= currentMonthFirst;
       
       // ボタンの表示/非表示を切り替え
       prevMonthBtn.style.visibility = canGoToPrevMonth ? 'visible' : 'hidden';
       nextMonthBtn.style.visibility = canGoToNextMonth ? 'visible' : 'hidden';
+      
+      console.log('ナビゲーションボタン更新: 前月=', canGoToPrevMonth, '次月=', canGoToNextMonth);
     }
   }
   
