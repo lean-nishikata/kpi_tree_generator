@@ -1981,6 +1981,19 @@ function applyInitialDiffStyles() {
         displayValue = displayValue + '%';
       }
       
+      // プラスの値には「+」を、マイナスの値には「-」を付けるようにする
+      if (numValue > 100 && !displayValue.toString().startsWith('+')) {
+        displayValue = '+' + displayValue;
+      } else if (numValue < 100 && !displayValue.toString().startsWith('-')) {
+        // パーセント値を一時的に取り外す
+        let tempValue = displayValue;
+        if (tempValue.endsWith('%')) {
+          tempValue = tempValue.slice(0, -1);
+        }
+        // マイナス記号を追加して再度パーセント記号を付ける
+        displayValue = '-' + tempValue + '%';
+      }
+      
       // HTML再構築
       element.innerHTML = `
         <span class="diff-label">前月比: </span>
@@ -2066,6 +2079,19 @@ function updateAllNodeValues() {
         // パーセントがない場合は付ける
         if (!displayValue.toString().endsWith('%')) {
           displayValue = displayValue + '%';
+        }
+        
+        // プラスの値には「+」を、マイナスの値には「-」を付けるようにする
+        if (numValue > 100 && !displayValue.toString().startsWith('+')) {
+          displayValue = '+' + displayValue;
+        } else if (numValue < 100 && !displayValue.toString().startsWith('-')) {
+          // パーセント値を一時的に取り外す
+          let tempValue = displayValue;
+          if (tempValue.endsWith('%')) {
+            tempValue = tempValue.slice(0, -1);
+          }
+          // マイナス記号を追加して再度パーセント記号を付ける
+          displayValue = '-' + tempValue + '%';
         }
         
         // HTMLを再構築
@@ -3339,116 +3365,9 @@ function addHighlightStyle() {
  * データがある日付には緑のマーカーを表示
  */
 document.addEventListener('DOMContentLoaded', function() {
-  // リンク修正関数 - 再利用可能なユーティリティ関数
-  function fixOldLinks(delay) {
-    setTimeout(function() {
-      // 可能な限り多くのパターンを対象にする広範なセレクタ
-      // カレンダー内の全てのリンクを対象に
-      const allLinks = document.querySelectorAll('a');
-      console.log(`リンク修正処理[${delay}ms]: 全てのリンクをチェックします (${allLinks.length}個)`);
-      
-      let fixedCount = 0;
-      
-      allLinks.forEach(link => {
-        const href = link.getAttribute('href');
-        // リンクがない場合やreportsを既に含むものはスキップ
-        if (!href || href.includes('/reports/')) {
-          return;
-        }
-        
-        // GCSやkpi-tree-dataを含むリンクを検出
-        if (href.includes('storage.googleapis.com') || href.includes('kpi-tree-data')) {
-          fixedCount++;
-          console.log(`修正対象リンク: ${href}`);
-          
-          // 両方の日付形式 (YYYY-MM-DD と YYYYMMDD) を検出する強化された正規表現
-          const dateMatch = href.match(/\d{4}-\d{2}-\d{2}|\d{8}/);
-          if (dateMatch) {
-            let formattedDate = dateMatch[0];
-            
-            // YYYY-MM-DD 形式の場合、YYYYMMDD形式に変換
-            if (formattedDate.includes('-')) {
-              const dateParts = formattedDate.split('-');
-              formattedDate = dateParts.join('');
-            }
-            
-            console.log(`検出した日付: ${dateMatch[0]}, 変換後: ${formattedDate}`);
-            
-            // ベースURLを取得
-            let baseUrlForLinks = window.PUBLIC_URL || '';
-            console.log(`PUBLIC_URL: ${baseUrlForLinks}`);
-            baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, ''); // 末尾のファイル名を削除
-            console.log(`ベースURL: ${baseUrlForLinks}`);
-            
-            // 新しいリンク形式
-            let newUrl = '';
-            if (baseUrlForLinks) {
-              if (baseUrlForLinks.endsWith('/')) {
-                newUrl = `${baseUrlForLinks}reports/${formattedDate}.html`;
-              } else {
-                newUrl = `${baseUrlForLinks}/reports/${formattedDate}.html`;
-              }
-            } else {
-              // フォールバック
-              newUrl = `/reports/${formattedDate}.html`;
-            }
-            
-            link.setAttribute('href', newUrl);
-            console.log(`リンク修正: ${href} → ${newUrl}`);
-          } else {
-            console.log(`日付パターンが見つからないリンク: ${href}`);
-          }
-        }
-      });
-      
-      console.log(`修正完了: ${fixedCount}個のリンクを処理しました`);
-      
-      // カレンダー内のリンクが存在し、修正対象があった場合は別のアプローチも適用
-      if (document.querySelector('.calendar-day a') && fixedCount === 0) {
-        // 直接カレンダー内のすべてのリンクを修正
-        console.log('カレンダー内のリンクを直接修正します');
-        const calendarLinks = document.querySelectorAll('.calendar-day a');
-        
-        calendarLinks.forEach(link => {
-          const href = link.getAttribute('href');
-          // GCSのURLかどうかをチェック
-          if (href && href.includes('storage.googleapis.com')) {
-            // 日付を検出
-            const month = currentMonth + 1;
-            const day = link.textContent.trim();
-            if (day && !isNaN(parseInt(day))) {
-              // 日付を整形
-              const dateForUrl = `${currentYear}${String(month).padStart(2, '0')}${String(parseInt(day)).padStart(2, '0')}`;
-              
-              // 新しいURLを生成
-              let baseUrlForLinks = window.PUBLIC_URL || '';
-              baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, '');
-              
-              let newUrl = '';
-              if (baseUrlForLinks) {
-                if (baseUrlForLinks.endsWith('/')) {
-                  newUrl = `${baseUrlForLinks}reports/${dateForUrl}.html`;
-                } else {
-                  newUrl = `${baseUrlForLinks}/reports/${dateForUrl}.html`;
-                }
-              } else {
-                newUrl = `/reports/${dateForUrl}.html`;
-              }
-              
-              link.setAttribute('href', newUrl);
-              console.log(`カレンダーリンク修正: ${href} → ${newUrl}`);
-            }
-          }
-        });
-      }
-    }, delay || 0);
-  }
-  
-  // 初回のリンク修正（ページロード直後）
-  fixOldLinks(100);
-  
-  // 第2回のリンク修正（少し待ってから）
-  fixOldLinks(500);
+  // 全てのリンクが適切に生成されるようになったので、
+  // 古いGCS URLパターン修正は不要になりました。
+  // (yyyy/mm/dd 古いURL修正コードを削除しました)
   
   // カレンダー要素
   const prevMonthBtn = document.getElementById('prev-month');
@@ -3775,30 +3694,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // 初期データの読み込みとカレンダー描画
   fetchCalendarData();
   
-  // カレンダー描画時のフック関数を上書き
-  const originalRenderCalendar = renderCalendar;
-  renderCalendar = function() {
-    // 元の描画関数を呼び出し
-    originalRenderCalendar.apply(this, arguments);
-    
-    // カレンダー描画後にリンク修正を実行（遅延付き）
-    console.log('カレンダー描画後のリンク修正をスケジュール');
-    fixOldLinks(50);  // カレンダー描画直後
-    fixOldLinks(300); // 少し待ってから
-  };
-  
-  //月切り替えボタンのクリック時にも修正を適用
-  const originalPrevMonthClick = prevMonthBtn.onclick || function(){};
-  prevMonthBtn.onclick = function(e) {
-    originalPrevMonthClick.call(this, e);
-    fixOldLinks(100);
-  };
-  
-  const originalNextMonthClick = nextMonthBtn.onclick || function(){};
-  nextMonthBtn.onclick = function(e) {
-    originalNextMonthClick.call(this, e);
-    fixOldLinks(100);
-  };
+  // リンク修正関数が不要になったため、フックも削除しました
+  // 必要に応じて後で再実装することができます
 });
 
 
