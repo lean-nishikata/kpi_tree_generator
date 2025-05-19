@@ -289,7 +289,7 @@
       <div class="note">
         <ul>
           <li>金銭信託運用、その他の一部の数値は月次のみ手動掲載のため、営業収益合計は正確でない場合があります</li>
-          <li>情報ソースは<a href="https://docs.google.com/spreadsheets/d/1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U/edit?usp=sharing" target="_blank">こちら</a>、数値に関してのお問い合わせは <a href="https://coincheck.enterprise.slack.com/archives/C069WL5UH3L" target="_blank">#req-data-platform</a> @data-platform-admin まで</li>
+          <li>データソースは<a href="https://docs.google.com/spreadsheets/d/1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U/edit?usp=sharing" target="_blank">こちら</a>、数値に関してのお問い合わせは <a href="https://coincheck.enterprise.slack.com/archives/C069WL5UH3L" target="_blank">#req-data-platform</a> @data-platform-admin まで</li>
         </ul>
       </div>
       <ul class="kpi-tree">
@@ -407,7 +407,27 @@
         // YYYY-MM-DD 形式
         const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         // GCSのダミーURL
-        dateLink.href = `https://storage.googleapis.com/kpi-tree-data/${formattedDate}.html`;
+        // 最初から正しいCloud Run URLを使用
+        const baseUrlForCalendar = window.PUBLIC_URL || '';
+        const baseWithoutFile = baseUrlForCalendar.replace(/\/[^\/]*\.html$/, '');
+        
+        // YYYYMMDD形式に変換
+        const dateParts = formattedDate.split('-');
+        const dateForUrl = dateParts.join('');
+        
+        // 正しいURLを生成
+        let reportUrl = '';
+        if (baseWithoutFile) {
+          if (baseWithoutFile.endsWith('/')) {
+            reportUrl = `${baseWithoutFile}reports/${dateForUrl}.html`;
+          } else {
+            reportUrl = `${baseWithoutFile}/reports/${dateForUrl}.html`;
+          }
+        } else {
+          reportUrl = `/reports/${dateForUrl}.html`;
+        }
+        
+        dateLink.href = reportUrl;
         dateLink.textContent = i;
         
         // 実際のデータがあるかどうかを確認してスタイルを適用（この例ではランダム）

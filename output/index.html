@@ -4431,7 +4431,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // YYYY-MM-DD 形式
         const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         // GCSのダミーURL
-        dateLink.href = `https://storage.googleapis.com/kpi-tree-data/${formattedDate}.html`;
+        // 最初から正しいCloud Run URLを使用
+        const baseUrlForCalendar = window.PUBLIC_URL || '';
+        const baseWithoutFile = baseUrlForCalendar.replace(/\/[^\/]*\.html$/, '');
+        
+        // YYYYMMDD形式に変換
+        const dateParts = formattedDate.split('-');
+        const dateForUrl = dateParts.join('');
+        
+        // 正しいURLを生成
+        let reportUrl = '';
+        if (baseWithoutFile) {
+          if (baseWithoutFile.endsWith('/')) {
+            reportUrl = `${baseWithoutFile}reports/${dateForUrl}.html`;
+          } else {
+            reportUrl = `${baseWithoutFile}/reports/${dateForUrl}.html`;
+          }
+        } else {
+          reportUrl = `/reports/${dateForUrl}.html`;
+        }
+        
+        dateLink.href = reportUrl;
         dateLink.textContent = i;
         
         // 実際のデータがあるかどうかを確認してスタイルを適用（この例ではランダム）
