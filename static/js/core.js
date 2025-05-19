@@ -637,9 +637,17 @@ function applyInitialDiffStyles() {
         displayValue = displayValue + '%';
       }
       
-      // プラスの値には「+」を付けるようにする
+      // プラスの値には「+」を、マイナスの値には「-」を付けるようにする
       if (numValue > 100 && !displayValue.toString().startsWith('+')) {
         displayValue = '+' + displayValue;
+      } else if (numValue < 100 && !displayValue.toString().startsWith('-')) {
+        // パーセント値を一時的に取り外す
+        let tempValue = displayValue;
+        if (tempValue.endsWith('%')) {
+          tempValue = tempValue.slice(0, -1);
+        }
+        // マイナス記号を追加して再度パーセント記号を付ける
+        displayValue = '-' + tempValue + '%';
       }
       
       // HTML再構築
@@ -729,9 +737,17 @@ function updateAllNodeValues() {
           displayValue = displayValue + '%';
         }
         
-        // プラスの値には「+」を付けるようにする
+        // プラスの値には「+」を、マイナスの値には「-」を付けるようにする
         if (numValue > 100 && !displayValue.toString().startsWith('+')) {
           displayValue = '+' + displayValue;
+        } else if (numValue < 100 && !displayValue.toString().startsWith('-')) {
+          // パーセント値を一時的に取り外す
+          let tempValue = displayValue;
+          if (tempValue.endsWith('%')) {
+            tempValue = tempValue.slice(0, -1);
+          }
+          // マイナス記号を追加して再度パーセント記号を付ける
+          displayValue = '-' + tempValue + '%';
         }
         
         // HTMLを再構築
