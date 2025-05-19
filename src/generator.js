@@ -216,13 +216,16 @@ async function generateKPITree() {
             console.warn('警告: YAMLファイルのルートレベルにスプレッドシートIDが設定されていません');
           }
           
-          // 環境変数からIDを設定する場合
-          if (process.env.KPI_TREE_SPREADSHEET_ID) {
-            console.log(`環境変数からスプレッドシートIDを設定します: ${process.env.KPI_TREE_SPREADSHEET_ID}`);
+          // 環境変数からIDを設定する場合（YAMLに指定がない場合のみ）
+          if (process.env.KPI_TREE_SPREADSHEET_ID && 
+              (!global.kpiTreeConfig.spreadsheet || !global.kpiTreeConfig.spreadsheet.id)) {
+            console.log(`YAMLに指定がないため、環境変数からスプレッドシートIDを設定します: ${process.env.KPI_TREE_SPREADSHEET_ID}`);
             if (!global.kpiTreeConfig.spreadsheet) {
               global.kpiTreeConfig.spreadsheet = {};
             }
             global.kpiTreeConfig.spreadsheet.id = process.env.KPI_TREE_SPREADSHEET_ID;
+          } else if (global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
+            console.log(`YAMLの設定を優先し、スプレッドシートID: ${global.kpiTreeConfig.spreadsheet.id} を使用します`);
           }
           
           // スプレッドシート参照を解決
@@ -294,33 +297,26 @@ async function generateKPITree() {
           console.log(`前日比・前月比の参照解決が完了しました`);
           
         } else {
-          // スプレッドシート参照を持つノードのvalueを"ERROR"に置き換える関数
-          const markSpreadsheetRefAsError = (node) => {
+          // スプレッドシート参照を持つノードについて、元の参照値をそのまま表示する関数
+          const markSpreadsheetRefAsOriginal = (node) => {
             if (!node) return node;
             
-            // valueがスプレッドシート参照の場合
-            if (node.value && typeof node.value === 'object' && node.value.spreadsheet) {
-              node.value = 'ERROR';
-            }
-            
-            // 文字列形式のスプレッドシート参照
-            if (node.value && typeof node.value === 'string' && node.value.startsWith('=spreadsheet:')) {
-              node.value = 'ERROR';
-            }
+            // valueがスプレッドシート参照の場合は、元の参照値をそのまま使用
+            // 何も変更しない
             
             // 子ノードも再帰的に処理
             if (node.children && Array.isArray(node.children)) {
               // null/undefinedのノードをフィルタリングして安全に処理
               node.children = node.children
                 .filter(child => child !== null && child !== undefined)
-                .map(child => markSpreadsheetRefAsError(child));
+                .map(child => markSpreadsheetRefAsOriginal(child));
             }
             
             return node;
           };
           
-          // ツリー全体のスプレッドシート参照をERRORに置き換え
-          config.root = markSpreadsheetRefAsError(config.root);
+          // ツリー全体のスプレッドシート参照をそのまま使用
+          config.root = markSpreadsheetRefAsOriginal(config.root);
         }
       } catch (error) {
         // エラーは抑制して処理を続行
@@ -406,7 +402,11 @@ async function generateKPITree() {
                                config.header_info.value.spreadsheet.id || 
                                process.env.KPI_TREE_SPREADSHEET_ID;
           
-          if (spreadsheetId && config.header_info.value.spreadsheet.range) {
+          // サービスアカウントキーの存在を確認
+          const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
+          const keyExists = keyPath && fs.existsSync(keyPath);
+          
+          if (spreadsheetId && config.header_info.value.spreadsheet.range && keyExists) {
             try {
               console.log(`ヘッダー情報をスプレッドシートから取得します: ${spreadsheetId}, ${config.header_info.value.spreadsheet.range}`);
               // すでにシートが読み込まれているならそのキャッシュを使用
@@ -429,6 +429,10 @@ async function generateKPITree() {
               // エラー時はスプレッドシートの参照文字列をそのまま表示
               headerValue = config.header_info.value.spreadsheet.range;
             }
+          } else if (spreadsheetId && config.header_info.value.spreadsheet.range) {
+            // キーファイルが存在しない場合は参照文字列をそのまま表示
+            console.log(`キーファイルが存在しないため、参照文字列をそのまま使用: ${config.header_info.value.spreadsheet.range}`);
+            headerValue = config.header_info.value.spreadsheet.range;
           } else {
             headerValue = '未設定';
           }
@@ -437,7 +441,11 @@ async function generateKPITree() {
         else if (config.header_info.value && typeof config.header_info.value === 'string' && config.header_info.value.startsWith('=')) {
           try {
             const spreadsheetId = global.kpiTreeConfig?.spreadsheet?.id || process.env.KPI_TREE_SPREADSHEET_ID;
-            if (spreadsheetId) {
+            // サービスアカウントキーの存在を確認
+            const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
+            const keyExists = keyPath && fs.existsSync(keyPath);
+            
+            if (spreadsheetId && keyExists) {
               // "="を除去した位置指定データを取得
               const cleanRange = config.header_info.value.substring(1);
               console.log(`ヘッダー情報をスプレッドシートから取得します (文字列形式): ${spreadsheetId}, ${cleanRange}`);
@@ -451,7 +459,8 @@ async function generateKPITree() {
                 headerValue = config.header_info.value;
               }
             } else {
-              // スプレッドシートIDがない場合は参照文字列をそのまま表示
+              // キーファイルが存在しない場合は参照文字列をそのまま表示
+              console.log(`キーファイルが存在しないため、参照文字列をそのまま使用: ${config.header_info.value}`);
               headerValue = config.header_info.value;
             }
           } catch (err) {

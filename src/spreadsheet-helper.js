@@ -215,20 +215,20 @@ async function resolveSpreadsheetReferences(rootNode) {
   // スプレッドシートIDを取得（ノード、グローバル設定、環境変数の順で確認）
   let spreadsheetId = null;
   
-  // ノードに直接指定されたID
+  // ノードに直接指定されたID（最優先）
   if (rootNode.spreadsheet && rootNode.spreadsheet.id) {
     spreadsheetId = rootNode.spreadsheet.id;
-    console.log(`ルートレベルのスプレッドシートIDを使用: ${spreadsheetId}`);
+    console.log(`ノードに直接指定されたスプレッドシートIDを使用: ${spreadsheetId}`);
   }
-  // グローバル設定からID
+  // グローバル設定からID（YAMLファイルのルートレベル設定）
   else if (global.kpiTreeConfig && global.kpiTreeConfig.spreadsheet && global.kpiTreeConfig.spreadsheet.id) {
     spreadsheetId = global.kpiTreeConfig.spreadsheet.id;
-    console.log(`グローバル設定からスプレッドシートIDを使用: ${spreadsheetId}`);
+    console.log(`YAMLファイル設定からスプレッドシートIDを使用: ${spreadsheetId}`);
   }
-  // 環境変数からID
+  // 環境変数からID（最後の選択肢）
   else if (process.env.KPI_TREE_SPREADSHEET_ID) {
     spreadsheetId = process.env.KPI_TREE_SPREADSHEET_ID;
-    console.log(`環境変数からスプレッドシートIDを使用: ${spreadsheetId}`);
+    console.log(`YAMLに指定がないため、環境変数からスプレッドシートIDを使用: ${spreadsheetId}`);
   }
   
   if (!spreadsheetId) {
