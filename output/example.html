@@ -916,7 +916,7 @@ h1 {
   font-weight: bold;
 }
 
-.calendar-day.has-data::after {
+.calendar-day a.has-data::after {
   content: "";
   position: absolute;
   bottom: 4px;
@@ -926,6 +926,7 @@ h1 {
   height: 8px;
   border-radius: 50%;
   background-color: #4caf50; /* 緑色のマーカー */
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3); /* 影を追加して目立たせる */
 }
 
 .calendar-day a {
@@ -936,9 +937,15 @@ h1 {
   color: inherit;
 }
 
-.calendar-day a.no-data {
+.calendar-day .no-data {
   cursor: default;
   color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  opacity: 0.6;
 }
 
 .calendar-day a:hover:not(.no-data) {
@@ -1121,7 +1128,7 @@ h1 {
         </button>
         <div class="page-title-container">
           <h1 class="page-title">KPI Tree Example</h1>
-          <span class="data-date">現在のデータ: 2025年05月19日</span>
+          <span class="data-date">現在のデータ: 2025年05月14日</span>
         </div>
       </div>
       <div class="header-controls">
@@ -3395,7 +3402,12 @@ document.addEventListener('DOMContentLoaded', function() {
           minDate = parseDate(datesWithData[0]);
           maxDate = parseDate(datesWithData[datesWithData.length - 1]);
           
+          // 最小月と最大月を計算
+          const minMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+          const maxMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+          
           console.log('日付範囲:', minDate, maxDate);
+          console.log('月範囲:', minMonth, maxMonth);
           
           // 現在の表示月を、最小日付と最大日付の間にある今日の月、
           // または単に最小日付の月に設定
@@ -3490,17 +3502,23 @@ document.addEventListener('DOMContentLoaded', function() {
   // ナビゲーションボタンの表示/非表示を更新
   function updateNavigationButtons() {
     if (minDate && maxDate) {
-      // 前月ボタンを制御
+      // 前月ボタンを制御（最小日付の月より前には移動できない）
       const prevMonth = new Date(currentYear, currentMonth - 1, 1);
       const canGoToPrevMonth = prevMonth >= new Date(minDate.getFullYear(), minDate.getMonth(), 1);
       
-      // 次月ボタンを制御
+      // 次月ボタンを制御（最大日付の月より後には移動できない）
       const nextMonth = new Date(currentYear, currentMonth + 1, 1);
       const canGoToNextMonth = nextMonth <= new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
       
-      // ボタンの表示/非表示を切り替え
+      // ボタンの表示/非表示とアクセシビリティを設定
       prevMonthBtn.style.visibility = canGoToPrevMonth ? 'visible' : 'hidden';
       nextMonthBtn.style.visibility = canGoToNextMonth ? 'visible' : 'hidden';
+      prevMonthBtn.disabled = !canGoToPrevMonth;
+      nextMonthBtn.disabled = !canGoToNextMonth;
+      
+      console.log('ナビゲーションボタン更新:', 
+                 '前月=', canGoToPrevMonth ? '表示' : '非表示', 
+                 '次月=', canGoToNextMonth ? '表示' : '非表示');
     }
   }
   
@@ -3616,10 +3634,15 @@ document.addEventListener('DOMContentLoaded', function() {
       // データがある日付には特別なクラスを追加（スタイリング用）
       if (hasDataForDate(currentYear, currentMonth, i)) {
         dateLink.classList.add('has-data');
+        dayEl.appendChild(dateLink);
+      } else {
+        // データがない日付の場合はリンクなしで数字だけ表示
+        const noDataSpan = document.createElement('span');
+        noDataSpan.textContent = i;
+        noDataSpan.classList.add('no-data');
+        noDataSpan.title = `${formattedDate}のデータはありません`;
+        dayEl.appendChild(noDataSpan);
       }
-      
-      dateLink.textContent = i;
-      dayEl.appendChild(dateLink);
       calendarDaysEl.appendChild(dayEl);
     }
     

@@ -19,25 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentMonth = currentDate.getMonth();
   let currentYear = currentDate.getFullYear();
   
-  // 現在開いているページの日付を取得（YYYYMMDD.html または reports/YYYYMMDD.html）
-  let currentPageDate = null;
-  try {
-    const currentPath = window.location.pathname;
-    // reports/YYYYMMDD.html または YYYYMMDD.html パターンを検出
-    const dateMatch = currentPath.match(/\/(\d{8})\.html$/) || currentPath.match(/\/reports\/(\d{8})\.html$/);
-    if (dateMatch && dateMatch[1]) {
-      // YYYYMMDD形式を解析
-      const dateStr = dateMatch[1];
-      const year = parseInt(dateStr.substring(0, 4));
-      const month = parseInt(dateStr.substring(4, 6)) - 1; // 0-11
-      const day = parseInt(dateStr.substring(6, 8));
-      currentPageDate = new Date(year, month, day);
-      console.log('現在のページ日付を検出:', currentPageDate);
-    }
-  } catch (e) {
-    console.error('ページ日付の解析エラー:', e);
-  }
-  
   // 月の名前（日本語）
   const monthNames = [
     '1月', '2月', '3月', '4月', '5月', '6月',
@@ -110,13 +91,14 @@ document.addEventListener('DOMContentLoaded', function() {
           // 日付を昇順でソート
           datesWithData.sort();
           minDate = parseDate(datesWithData[0]);
+          maxDate = parseDate(datesWithData[datesWithData.length - 1]);
           
-          // 昨日の日付を最大日付として設定
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          maxDate = yesterday;
+          // 最小月と最大月を計算
+          const minMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+          const maxMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
           
-          console.log('日付範囲:', minDate, maxDate, '(昨日までに制限)');
+          console.log('日付範囲:', minDate, maxDate);
+          console.log('月範囲:', minMonth, maxMonth);
           
           // 現在の表示月を、最小日付と最大日付の間にある今日の月、
           // または単に最小日付の月に設定
@@ -211,43 +193,23 @@ document.addEventListener('DOMContentLoaded', function() {
   // ナビゲーションボタンの表示/非表示を更新
   function updateNavigationButtons() {
     if (minDate && maxDate) {
-      // 前月ボタンを制御
+      // 前月ボタンを制御（最小日付の月より前には移動できない）
       const prevMonth = new Date(currentYear, currentMonth - 1, 1);
       const canGoToPrevMonth = prevMonth >= new Date(minDate.getFullYear(), minDate.getMonth(), 1);
       
-      // 次月ボタンを制御
+      // 次月ボタンを制御（最大日付の月より後には移動できない）
       const nextMonth = new Date(currentYear, currentMonth + 1, 1);
+      const canGoToNextMonth = nextMonth <= new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
       
-      // 今日の月を取得
-      const today = new Date();
-      const todayMonth = today.getMonth();
-      const todayYear = today.getFullYear();
-      const currentMonthFirst = new Date(today.getFullYear(), today.getMonth(), 1);
-      
-      // 次月ボタンを完全に無効化: 現在表示している月が今月の場合または次の月が今月より後の場合
-      let canGoToNextMonth = false;
-      if (currentMonth === todayMonth && currentYear === todayYear) {
-        // 今月を表示している場合は次月に進めない
-        canGoToNextMonth = false;
-      } else {
-        // 今月以外の月を表示している場合、次の月が今月以下ならOK
-        const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
-        canGoToNextMonth = nextMonthDate <= new Date(todayYear, todayMonth, 1);
-      }
-
-      // ボタンの表示/非表示を切り替え
+      // ボタンの表示/非表示とアクセシビリティを設定
       prevMonthBtn.style.visibility = canGoToPrevMonth ? 'visible' : 'hidden';
       nextMonthBtn.style.visibility = canGoToNextMonth ? 'visible' : 'hidden';
+      prevMonthBtn.disabled = !canGoToPrevMonth;
       nextMonthBtn.disabled = !canGoToNextMonth;
       
-      // 今月表示中の場合は強制的に次月ボタンを無効化
-      if (currentMonth === todayMonth && currentYear === todayYear) {
-        nextMonthBtn.style.visibility = 'hidden';
-        nextMonthBtn.disabled = true;
-      }
-      
-      console.log('ナビゲーションボタン更新: 今月=', (currentMonth === todayMonth && currentYear === todayYear),
-                  '前月=', canGoToPrevMonth, '次月=', canGoToNextMonth);
+      console.log('ナビゲーションボタン更新:', 
+                 '前月=', canGoToPrevMonth ? '表示' : '非表示', 
+                 '次月=', canGoToNextMonth ? '表示' : '非表示');
     }
   }
   
@@ -268,46 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // 翌月ボタン
   nextMonthBtn.addEventListener('click', function() {
     if (this.disabled) return;
-    if (this.style.visibility === 'hidden') return;
     
-    // 現在の日付を取得
-    const today = new Date();
-    const todayMonth = today.getMonth();
-    const todayYear = today.getFullYear();
-    
-    // 厳格なチェック: 現在表示中の月が今月なら何もしない
-    if (currentMonth === todayMonth && currentYear === todayYear) {
-      console.log('現在の月が今月なので次の月には移動できません');
-      return;
-    }
-    
-    // 次の月が今月以下の場合だけ移動可能
-    let nextMonth = currentMonth + 1;
-    let nextYear = currentYear;
-    if (nextMonth > 11) {
-      nextMonth = 0;
-      nextYear++;
-    }
-    
-    // 日付比較（次の月が今月より後は移動不可）
-    if (nextYear > todayYear || (nextYear === todayYear && nextMonth > todayMonth)) {
-      console.log('未来の月には移動できません');
-      return;
-    }
-    
-    // 条件を通過した場合のみ月を進める
     currentMonth++;
     if (currentMonth > 11) {
       currentMonth = 0;
       currentYear++;
-    }
-    
-    // 再度確認: 進めた後の月が今月以下かチェック
-    if (currentYear > todayYear || (currentYear === todayYear && currentMonth > todayMonth)) {
-      // 間違って未来に進んでしまった場合は今月に戻す
-      console.log('未来の月に移動してしまったので今月に戻します');
-      currentMonth = todayMonth;
-      currentYear = todayYear;
     }
     
     updateNavigationButtons();
@@ -367,24 +294,12 @@ document.addEventListener('DOMContentLoaded', function() {
         dayEl.classList.add('today');
       }
       
-      // 現在のページ日付があれば、その日付にハイライトを適用
-      if (currentPageDate && i === currentPageDate.getDate() && 
-          currentMonth === currentPageDate.getMonth() && 
-          currentYear === currentPageDate.getFullYear()) {
-        dayEl.classList.add('current-page-date');
-      }
-      
       // 日付ごとのリンクを作成
       const dateLink = document.createElement('a');
       // YYYY-MM-DD 形式
       const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       // YYYYMMDD形式（URLパス用）
       const dateForUrl = formatDateYYYYMMDD(new Date(currentYear, currentMonth, i));
-      
-      // 対象の日付
-      const dateObj = new Date(currentYear, currentMonth, i);
-      // 昨日までの日付かどうかをチェック
-      const isDateAvailable = dateObj <= maxDate;
       
       // リンク先を生成（YAMLのpublic_urlに基づく）
       let reportUrl = '';
@@ -403,23 +318,22 @@ document.addEventListener('DOMContentLoaded', function() {
         reportUrl = `/reports/${dateForUrl}.html`;
       }
       
-      // 昨日までの日付に対してのみリンクを有効にする
-      if (isDateAvailable) {
-        dateLink.href = reportUrl;
-        dateLink.title = `${formattedDate}のレポートを表示`;
-        
-        // データがある日付には特別なクラスを追加（スタイリング用）
-        if (hasDataForDate(currentYear, currentMonth, i)) {
-          dateLink.classList.add('has-data');
-        }
-      } else {
-        // 将来の日付の場合は無効なリンクにする
-        dateLink.classList.add('no-data');
-        dateLink.title = `${formattedDate}のデータはまだ利用できません`;
-      }
+      // すべての日付に対してリンクを有効にする
+      dateLink.href = reportUrl;
+      dateLink.title = `${formattedDate}のレポートを表示`;
       
-      dateLink.textContent = i;
-      dayEl.appendChild(dateLink);
+      // データがある日付には特別なクラスを追加（スタイリング用）
+      if (hasDataForDate(currentYear, currentMonth, i)) {
+        dateLink.classList.add('has-data');
+        dayEl.appendChild(dateLink);
+      } else {
+        // データがない日付の場合はリンクなしで数字だけ表示
+        const noDataSpan = document.createElement('span');
+        noDataSpan.textContent = i;
+        noDataSpan.classList.add('no-data');
+        noDataSpan.title = `${formattedDate}のデータはありません`;
+        dayEl.appendChild(noDataSpan);
+      }
       calendarDaysEl.appendChild(dayEl);
     }
     
