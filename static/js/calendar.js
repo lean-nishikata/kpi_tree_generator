@@ -91,9 +91,13 @@ document.addEventListener('DOMContentLoaded', function() {
           // 日付を昇順でソート
           datesWithData.sort();
           minDate = parseDate(datesWithData[0]);
-          maxDate = parseDate(datesWithData[datesWithData.length - 1]);
           
-          console.log('日付範囲:', minDate, maxDate);
+          // 昨日の日付を最大日付として設定
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          maxDate = yesterday;
+          
+          console.log('日付範囲:', minDate, maxDate, '(昨日までに制限)');
           
           // 現在の表示月を、最小日付と最大日付の間にある今日の月、
           // または単に最小日付の月に設定
@@ -290,6 +294,11 @@ document.addEventListener('DOMContentLoaded', function() {
       // YYYYMMDD形式（URLパス用）
       const dateForUrl = formatDateYYYYMMDD(new Date(currentYear, currentMonth, i));
       
+      // 対象の日付
+      const dateObj = new Date(currentYear, currentMonth, i);
+      // 昨日までの日付かどうかをチェック
+      const isDateAvailable = dateObj <= maxDate;
+      
       // リンク先を生成（YAMLのpublic_urlに基づく）
       let reportUrl = '';
       if (baseUrl) {
@@ -307,13 +316,19 @@ document.addEventListener('DOMContentLoaded', function() {
         reportUrl = `/reports/${dateForUrl}.html`;
       }
       
-      // すべての日付に対してリンクを有効にする
-      dateLink.href = reportUrl;
-      dateLink.title = `${formattedDate}のレポートを表示`;
-      
-      // データがある日付には特別なクラスを追加（スタイリング用）
-      if (hasDataForDate(currentYear, currentMonth, i)) {
-        dateLink.classList.add('has-data');
+      // 昨日までの日付に対してのみリンクを有効にする
+      if (isDateAvailable) {
+        dateLink.href = reportUrl;
+        dateLink.title = `${formattedDate}のレポートを表示`;
+        
+        // データがある日付には特別なクラスを追加（スタイリング用）
+        if (hasDataForDate(currentYear, currentMonth, i)) {
+          dateLink.classList.add('has-data');
+        }
+      } else {
+        // 将来の日付の場合は無効なリンクにする
+        dateLink.classList.add('no-data');
+        dateLink.title = `${formattedDate}のデータはまだ利用できません`;
       }
       
       dateLink.textContent = i;

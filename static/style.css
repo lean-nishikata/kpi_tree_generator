@@ -908,6 +908,8 @@ h1 {
 .calendar-day a.no-data {
   cursor: default;
   color: #999;
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 
 .calendar-day a:hover:not(.no-data) {
