@@ -226,9 +226,18 @@ document.addEventListener('DOMContentLoaded', function() {
       // 昨日の月 = 今日と同じ月
       const canGoToNextMonth = nextMonth <= currentMonthFirst;
       
+      // 先月ボタンの表示/非表示はそのまま処理
+      
       // ボタンの表示/非表示を切り替え
       prevMonthBtn.style.visibility = canGoToPrevMonth ? 'visible' : 'hidden';
-      nextMonthBtn.style.visibility = canGoToNextMonth ? 'visible' : 'hidden';
+      
+      // 今月の場合は強制非表示、それ以外の場合は条件に基づいて表示/非表示
+      if (currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+        // display:noneではなくvisibility:hiddenを使用して要素の配置を維持
+        nextMonthBtn.style.visibility = 'hidden';
+      } else {
+        nextMonthBtn.style.visibility = canGoToNextMonth ? 'visible' : 'hidden';
+      }
       
       console.log('ナビゲーションボタン更新: 前月=', canGoToPrevMonth, '次月=', canGoToNextMonth);
     }
@@ -252,6 +261,26 @@ document.addEventListener('DOMContentLoaded', function() {
   nextMonthBtn.addEventListener('click', function() {
     if (this.disabled) return;
     
+    // 現在の日付を取得
+    const today = new Date();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+    
+    // 次の月が今月以下の場合だけ移動可能
+    let nextMonth = currentMonth + 1;
+    let nextYear = currentYear;
+    if (nextMonth > 11) {
+      nextMonth = 0;
+      nextYear++;
+    }
+    
+    // 日付比較（次の月が今月より後は移動不可）
+    if (nextYear > todayYear || (nextYear === todayYear && nextMonth > todayMonth)) {
+      console.log('未来の月には移動できません');
+      return;
+    }
+    
+    // 条件を通過した場合のみ月を進める
     currentMonth++;
     if (currentMonth > 11) {
       currentMonth = 0;
