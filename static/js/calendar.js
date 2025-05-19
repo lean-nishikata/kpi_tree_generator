@@ -19,6 +19,25 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentMonth = currentDate.getMonth();
   let currentYear = currentDate.getFullYear();
   
+  // 現在開いているページの日付を取得（YYYYMMDD.html または reports/YYYYMMDD.html）
+  let currentPageDate = null;
+  try {
+    const currentPath = window.location.pathname;
+    // reports/YYYYMMDD.html または YYYYMMDD.html パターンを検出
+    const dateMatch = currentPath.match(/\/(\d{8})\.html$/) || currentPath.match(/\/reports\/(\d{8})\.html$/);
+    if (dateMatch && dateMatch[1]) {
+      // YYYYMMDD形式を解析
+      const dateStr = dateMatch[1];
+      const year = parseInt(dateStr.substring(0, 4));
+      const month = parseInt(dateStr.substring(4, 6)) - 1; // 0-11
+      const day = parseInt(dateStr.substring(6, 8));
+      currentPageDate = new Date(year, month, day);
+      console.log('現在のページ日付を検出:', currentPageDate);
+    }
+  } catch (e) {
+    console.error('ページ日付の解析エラー:', e);
+  }
+  
   // 月の名前（日本語）
   const monthNames = [
     '1月', '2月', '3月', '4月', '5月', '6月',
@@ -285,6 +304,13 @@ document.addEventListener('DOMContentLoaded', function() {
       // 今日の日付にはスタイルを適用
       if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
         dayEl.classList.add('today');
+      }
+      
+      // 現在のページ日付があれば、その日付にハイライトを適用
+      if (currentPageDate && i === currentPageDate.getDate() && 
+          currentMonth === currentPageDate.getMonth() && 
+          currentYear === currentPageDate.getFullYear()) {
+        dayEl.classList.add('current-page-date');
       }
       
       // 日付ごとのリンクを作成
