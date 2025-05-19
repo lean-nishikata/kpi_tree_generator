@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>利益KPIツリー</title>
+  <title>コインチェック 収益KPIツリー</title>
+  <link rel="icon" href="https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/b9c95f718640eab6.png" type="image/x-icon">
   <script>
     // リダイレクト環境で動作するPUBLIC_URL設定 - GCS対応強化版
     (function() {
       // 強制的にYAMLで設定した公開URLを使用
-      var FIXED_PUBLIC_URL = "https://storage.cloud.google.com/cc-data-platform-kpi-tree-viewer-prod/index.html";
+      var FIXED_PUBLIC_URL = "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/index.html";
       
       // キャッシュバスティング用タイムスタンプ
       var CACHE_BUSTER = new Date().getTime();
@@ -34,12 +35,331 @@ body {
   margin: 0;
   padding: 0;
   background-color: #f5f5f5;
+  overflow-x: hidden; /* スクロールバーを防止 */
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+/* メインヘッダー - Claudeスタイル */
+.main-header {
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000; /* ドロワーよりも上に表示するため増やす */
+  padding: 0;
+  width: 100%;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  max-width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+}
+
+.page-title-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+}
+
+.data-date {
+  font-size: 14px;
+  color: #666;
+  margin-top: 3px;
+}
+
+/* ハンバーガーメニューボタン */
+.menu-toggle {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background-color: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  padding: 6px;
+  margin-left: 8px;
+}
+
+.menu-icon {
+  fill: #5f6368;
+}
+
+.menu-toggle:hover {
+  background-color: rgba(95, 99, 104, 0.1);
+}
+
+.hamburger-icon {
+  position: relative;
+  width: 20px;
+  height: 2px;
+  background-color: #3c4043;
+  transition: all 0.3s ease;
+}
+
+.hamburger-icon::before,
+.hamburger-icon::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background-color: #3c4043;
+  transition: all 0.3s ease;
+}
+
+.hamburger-icon::before {
+  transform: translateY(-6px);
+}
+
+.hamburger-icon::after {
+  transform: translateY(6px);
+}
+
+/* ハンバーガーアイコンの変形アニメーション（オープン状態） */
+.menu-toggle.open .hamburger-icon {
+  background-color: transparent;
+}
+
+.menu-toggle.open .hamburger-icon::before {
+  transform: rotate(45deg);
+}
+
+.menu-toggle.open .hamburger-icon::after {
+  transform: rotate(-45deg);
+}
+
+/* ドロワーメニュー */
+.drawer {
+  position: fixed;
+  top: 56px; /* ヘッダーの高さを考慮して下に配置 */
+  left: -320px; /* 初期状態は画面外 */
+  width: 320px;
+  height: calc(100% - 56px); /* ヘッダー高さを引いた高さ */
+  background-color: #fff;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  z-index: 999;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+}
+
+.drawer.open {
+  left: 0; /* 画面内に表示 */
+  margin-left: 0; /* ドロワーが開いた状態の位置を調整 */
+}
+
+/* ドロワーメニューのヘッダー */
+.drawer-header {
+  padding: 0;
+  background-color: white;
+  color: #3c4043;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  border-bottom: 1px solid #dadce0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+
+.drawer-header-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 12px 0 16px;
+}
+
+.drawer-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+}
+
+.drawer-icon {
+  width: 28px;
+  height: 28px;
+  background-color: #09BA85;
+  color: white;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.drawer-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 400;
+  color: #3c4043;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 閉じるボタン */
+.drawer-close {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  padding: 0;
+}
+
+.drawer-close:hover {
+  background-color: rgba(255,255,255,0.2);
+}
+
+.close-icon {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+
+.close-icon::before,
+.close-icon::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 2px;
+  background-color: white;
+  top: 7px;
+  left: 0;
+}
+
+.close-icon::before {
+  transform: rotate(45deg);
+}
+
+.close-icon::after {
+  transform: rotate(-45deg);
+}
+
+/* ドロワーメニューのコンテンツ */
+.drawer-content {
+  padding: 0;
+  overflow-y: auto;
+  height: calc(100% - 64px);
+}
+
+.drawer-nav {
+  padding: 0;
+}
+
+.drawer-section-group {
+  border-bottom: 1px solid #dadce0;
+}
+
+.drawer-section {
+  padding: 0;
+}
+
+.drawer-section.active {
+  background-color: #f1f3f4;
+}
+
+.drawer-section-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #dadce0;
+}
+
+.drawer-section-header h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3c4043;
+  margin: 0;
+}
+
+.drawer-section-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #dadce0;
+}
+
+.drawer-item-header {
+  margin-bottom: 8px;
+}
+
+.drawer-item-header h4 {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  margin: 0;
+}
+
+.drawer-item-content {
+  padding: 4px 0;
+}
+
+/* ドロワーオーバーレイ */
+.drawer-overlay {
+  position: fixed;
+  top: 56px; /* ヘッダー高さの下から配置 */
+  left: 0;
+  width: 100%;
+  height: calc(100% - 56px); /* ヘッダーの高さを引いた高さ */
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 500;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.drawer-overlay.visible {
+  display: block;
+  opacity: 1;
+}
+
+/* メインコンテンツエリア */
+.main-content {
+  transition: margin-left 0.3s ease;
+  width: 100%;
+}
+
+@media (min-width: 769px) {
+  /* PCサイズの場合はコンテンツをオフセット */
+  .main-content.drawer-open {
+    margin-left: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* モバイルサイズの場合はオーバーレイ表示 */
+  .drawer {
+    z-index: 1001;
+  }
+  
+  .main-content.drawer-open {
+    margin-left: 0; /* コンテンツは動かさない */
+  }
 }
 
 h1 {
@@ -52,6 +372,7 @@ h1 {
   overflow: auto;
   padding: 20px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .kpi-tree {
@@ -72,63 +393,95 @@ h1 {
   max-width: 100%; /* 親要素の幅を超えないようにする */
 }
 
-/* 日次/月次切り替えトグルスイッチ - 改善版 */
-.time-period-control {
-  display: inline-flex;
+/* コントロールパネル */
+.controls {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-left: 10px;
-  vertical-align: middle;
-  height: 30px;
-}
-
-.toggle-switch {
-  display: inline-flex;
-  position: relative;
-  height: 30px;
-  border-radius: 15px;
-  background: #e0e0e0;
-  overflow: visible;
+  margin: 20px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  min-width: 150px; /* 幅を固定 */
 }
 
-.toggle-option {
-  width: 75px;
+/* 日次/月次切り替えボタン */
+.view-mode-switch {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 0;
-  margin: 0;
-  color: #666;
-  z-index: 1;
-  transition: color 0.3s ease;
-  overflow: visible;
-  white-space: nowrap;
-  min-width: 50%;
-  text-align: center;
 }
 
-.toggle-option.active {
+.mode-options {
+  display: flex;
+  position: relative;
+  width: 140px;
+  height: 36px;
+  background-color: #e0e0e0;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  z-index: 2;
+  transition: color 0.3s ease;
+  padding: 0 10px;
+}
+
+.mode-btn.active {
   color: white;
 }
 
-.toggle-slider {
+.mode-indicator {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  height: 26px;
-  width: 50%;
-  border-radius: 13px;
-  background: #4285F4;
+  top: 3px;
+  left: 3px;
+  width: 67px;
+  height: 30px;
+  background-color: #09BA85;
+  border-radius: 15px;
   transition: transform 0.3s ease;
+  z-index: 1;
 }
 
-.toggle-option.monthly.active ~ .toggle-slider {
-  transform: translateX(100%);
+/* 月次モードの時のインジケーター位置 */
+#monthly-mode-btn.active ~ .mode-indicator {
+  transform: translateX(67px);
+}
+
+/* URLコピーボタン */
+.url-copy-container {
+  display: flex;
+  align-items: center;
+}
+
+.copy-url-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 14px;
+  background-color: #09BA85;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.copy-url-btn:hover {
+  background-color: #3367d6;
+}
+
+.copy-url-btn svg {
+  margin-right: 6px;
 }
 
 /* 月次テキストの位置調整 */
@@ -136,10 +489,14 @@ h1 {
   left: 0;
 }
 
-
-
-
 /* Horizontal direction styles */
+.direction-horizontal {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
 .direction-horizontal .kpi-tree {
   display: flex;
   align-items: center;
@@ -157,7 +514,6 @@ h1 {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  margin: 3px 0; /* 上下の余白をさらに詰める（15pxから3pxに） */
 }
 
 .direction-horizontal .kpi-tree ul::before {
@@ -169,29 +525,34 @@ h1 {
   height: 100%;
 }
 
-.direction-horizontal .children > li::before {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  border-top: 2px solid #ccc;
-  width: 20px;
-  transform: translateY(-50%);
+.direction-horizontal .kpi-tree li.operator {
+  margin: 0 0 10px 0;
 }
 
 .direction-horizontal .operator {
+  vertical-align: middle;
+  height: 45px;
+  line-height: 45px;
+  text-align: center;
+  font-size: 32px;
   margin: 0 10px;
 }
 
 .direction-horizontal .toggle-btn {
-  margin: 0 10px;
+  margin: 0 10px 0 0;
 }
 
 /* Node styles */
 .node {
-  width: 180px; /* 横幅を固定 */
-  height: 80px; /* 縦幅を固定 */
-  padding: 10px;
+  /* 20250517-iwase-MEMO 横幅固定しなくて良い */
+  /* width: 180px !important; /* 横幅を固定、上書き防止 */
+  /* max-width: 180px !important; /* 最大幅も固定 */
+  /* margin-bottom: 5px; */
+  /* box-sizing: border-box !important; /* ボックスサイズ計算を固定 */
+  min-width: 180px !important; /* 最小幅も固定 */
+  min-height: 100px; /* 最低の高さ */
+  height: auto; /* 内容に応じて高さを自動調整 */
+  padding: 8px;
   background-color: #fff;
   border: 2px solid #666;
   border-radius: 8px;
@@ -201,17 +562,21 @@ h1 {
   flex-direction: column;
   justify-content: center;
   position: relative;
-  overflow: hidden; /* はみ出した部分を非表示 */
+  margin-bottom: auto;
+  margin-right: 10px;
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
 }
 
 .node a {
   color: #0066cc;
   text-decoration: none;
-  white-space: nowrap; /* 改行しない */
-  overflow: hidden; /* はみ出した部分を非表示 */
-  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
+  overflow: visible; /* はみ出した部分も表示 */
   display: block; /* ブロック要素にする */
-  max-width: 100%; /* 親要素の幅を超えないようにする */
+  /* 20250517-iwase-MEMO */ 横幅固定しなくて良い
+  /* max-width: 100%; */ /* 親要素の幅を超えないようにする */
+  /* white-space: normal; */ /* テキストを折り返す */
+  /* word-wrap: break-word; */ /* 長い単語も折り返す */
 }
 
 .node a:hover {
@@ -220,22 +585,65 @@ h1 {
 
 .node .value {
   font-weight: bold;
-  margin-top: 5px;
+  margin-top: 10px;
   color: #333;
-  white-space: nowrap; /* 改行しない */
-  overflow: hidden; /* はみ出した部分を非表示 */
-  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
+  overflow: visible; /* はみ出した部分も表示 */
   display: block; /* ブロック要素にする */
-  max-width: 100%; /* 親要素の幅を超えないようにする */
+  /* 20250517-iwase-MEMO */ 横幅固定しなくて良い
+  /* max-width: 100%; */ /* 親要素の幅を超えないようにする */
+  /* white-space: normal; */ /* テキストを折り返す */
+  /* word-wrap: break-word; */ /* 長い単語も折り返す */
+}
+
+/* 前日比・前月比のスタイル */
+.diff-value {
+  font-size: 0.85em;
+  margin-top: 5px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+/* 前日比・前月比のラベル部分 */
+.diff-label {
+  color: #333; /* 通常色 */
+  margin-right: 4px;
+}
+
+/* 前日比・前月比の値部分 */
+.diff-number {
+  font-weight: bold;
+}
+
+/* プラス値の場合の色 */
+.diff-positive .diff-number {
+  color: #28a745;
+}
+
+/* マイナス値の場合の色 */
+.diff-negative .diff-number {
+  color: #dc3545;
+}
+
+/* 変化なしの場合の色 */
+.diff-neutral .diff-number {
+  color: #6c757d;
 }
 
 /* ノード内のテキスト要素用スタイル */
 .node-text {
-  white-space: nowrap; /* 改行しない */
-  overflow: hidden; /* はみ出した部分を非表示 */
-  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
-  display: block; /* ブロック要素にする */
-  max-width: 100%; /* 親要素の幅を超えないようにする */
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
+  /* 20250517-iwase-MEMO */ 横幅固定しなくて良い
+  /* white-space: normal; */ /* テキストを折り返す */
+  /* word-wrap: break-word; */ /* 長い単語も折り返す */
+  // overflow: visible; /* はみ出した部分も表示 */
+  // display: block; /* ブロック要素にする */
+  /* max-width: 100%; */ /* 親要素の幅を超えないようにする */
 }
 
 /* Operator styles */
@@ -245,6 +653,7 @@ h1 {
   color: #666; /* 元の色に戻す */
   width: 45px; /* 幅を大きく */
   height: 45px; /* 高さを大きく */
+  line-height: 45px; /* height と揃える */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -253,6 +662,7 @@ h1 {
   z-index: 10; /* 前面に表示 */
   box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
   border: 2px solid #ddd; /* 境界線色を元に近い色に調整 */
+  margin-bottom: 10px;
 }
 
 /* Toggle button styles */
@@ -269,6 +679,7 @@ h1 {
   position: relative;
   font-size: 0;
   z-index: 2;
+  margin: 0px 10px;
 }
 
 .toggle-btn::before {
@@ -301,13 +712,393 @@ h1 {
   border-color: #d32f2f;
   background-color: #ffebee;
 }
-    
+
+.note {
+  margin-top: 16px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background-color: #e8f4fd; /* 淡い青 */
+  border-left: 4px solid #2196f3; /* Google系の青 */
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: #333;
+}
+
+.note ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.note li {
+  margin-bottom: 4px;
+}
+
+.note a {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.note a:hover {
+  text-decoration: none;
+}
+
+/* カレンダースタイル */
+.calendar-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 10px 0;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.calendar-btn {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.calendar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.calendar-btn:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+#current-month {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* カレンダーグリッドの共通設定 - レイアウトを完全に統一 */
+.calendar-days,
+.weekdays {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  text-align: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 曜日ヘッダー・日付グリッドの間隔調整 */
+.weekdays {
+  margin-bottom: 0 !important;
+  border-bottom: 2px solid #f0f0f0 !important;
+}
+
+/* 曜日ヘッダーの共通設定 */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* 土曜日と日曜日の色設定 */
+.calendar-days .calendar-day:nth-child(7n-1) {
+  color: #4285f4 !important; /* 土曜日 */
+}
+
+.calendar-days .calendar-day:nth-child(7n) {
+  color: #ea4335 !important; /* 日曜日 */
+}
+
+/* 他の月の日付の色 */
+.calendar-days .calendar-day.other-month:nth-child(7n-1),
+.calendar-days .calendar-day.other-month:nth-child(7n) {
+  color: #bdc1c6 !important;
+}
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0 0 8px 0;
+}
+
+.calendar-weekdays div,
+.weekdays div {
+  padding: 6px 0;
+  font-size: 14px;
+  color: #666;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* 曜日ヘッダーの土曜日（6番目の要素）の色 */
+.calendar-weekdays div:nth-child(6),
+.weekdays div:nth-child(6) {
+  color: #4285f4; /* 青色 */
+}
+
+/* 曜日ヘッダーの日曜日（7番目の要素）の色 */
+.calendar-weekdays div:nth-child(7),
+.weekdays div:nth-child(7) {
+  color: #ea4335; /* 赤色 */
+}
+
+.weekdays div {
+  height: 28px;
+  line-height: 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.calendar-day {
+  position: relative;
+  height: 28px;
+  line-height: 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.calendar-day.other-month {
+  color: #ccc;
+}
+
+/* 土曜日の色 - 実際のHTML構造では6番目が土曜日 */
+.calendar-days .calendar-day:nth-child(7n+6),
+.calendar-day:nth-child(7n+6) {
+  color: #4285f4 !important; /* 青色、優先順位を高くする */
+}
+
+/* 緑ポチがない土曜日の色を薄く */
+.calendar-days .calendar-day:not(.has-data):nth-child(7n+6) a,
+.calendar-day:not(.has-data):nth-child(7n+6) {
+  color: #84aef9 !important; /* より薄い青色 */
+}
+
+/* 日曜日の色 - 実際のHTML構造では7番目が日曜日 */
+.calendar-days .calendar-day:nth-child(7n),
+.calendar-day:nth-child(7n) {
+  color: #ea4335 !important; /* 赤色、優先順位を高くする */
+}
+
+/* 緑ポチがない日曜日の色を薄く */
+.calendar-days .calendar-day:not(.has-data):nth-child(7n) a,
+.calendar-day:not(.has-data):nth-child(7n) {
+  color: #f2928a !important; /* より薄い赤色 */
+}
+
+/* 他の月の日でも土日の色を保持（グレーにならないようにする） */
+.calendar-days .calendar-day.other-month:nth-child(7n+6),
+.calendar-day.other-month:nth-child(7n+6) {
+  color: #a5c0f7 !important; /* 薄い青色 */
+}
+
+.calendar-days .calendar-day.other-month:nth-child(7n),
+.calendar-day.other-month:nth-child(7n) {
+  color: #f5b6b3 !important; /* 薄い赤色 */
+}
+
+.calendar-day.today {
+  background-color: #e3f2fd;
+  font-weight: bold;
+}
+
+.calendar-day.has-data::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4caf50; /* 緑色のマーカー */
+}
+
+.calendar-day a {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.calendar-day a.no-data {
+  cursor: default;
+  color: #999;
+}
+
+.calendar-day a:hover:not(.no-data) {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+  </style>
+  
+  <!-- カレンダー用CSS（内包化） -->
+  <style>
+  /* カレンダー用CSS */
+  .calendar-container {
+    width: 100%;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+  }
+  
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .current-month {
+    font-weight: 500;
+    color: #3c4043;
+    font-size: 14px;
+  }
+  
+  .calendar-nav-btn {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #5f6368;
+    transition: background-color 0.2s;
+  }
+  
+  .calendar-nav-btn:hover {
+    background-color: rgba(9, 186, 133, 0.1);
+  }
+  
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5f6368;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 0;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  
+  .weekdays div {
+    padding: 0;
+    margin: 0;
+    height: 28px;
+    line-height: 28px;
+  }
+  
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    padding: 4px 0;
+    margin: 0;
+  }
+  
+  .calendar-day {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: #3c4043;
+    border-radius: 50%;
+    margin: 2px auto;
+  }
+  
+  .calendar-day:hover {
+    background-color: rgba(9, 186, 133, 0.1);
+  }
+  
+  .calendar-day.today {
+    font-weight: bold;
+    background-color: #09BA85;
+    color: white;
+  }
+  
+  .calendar-day.other-month {
+    color: #bdc1c6;
+  }
+  
+  .calendar-day.has-data::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+    background-color: #09BA85;
+    border-radius: 50%;
+  }
+  
+  .calendar-day a {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  /* 土曜日の色 - 月曜始まりでは7n-1が土曜日 */
+  .calendar-days .calendar-day:nth-child(7n-1) {
+    color: #4285f4;
+  }
+  
+  /* 日曜日の色 - 月曜始まりでは7nが日曜日 */
+  .calendar-days .calendar-day:nth-child(7n) {
+    color: #ea4335;
+  }
+  
+  /* 他の月の日曜・土曜日 */
+  .calendar-days .calendar-day.other-month:nth-child(7n-1),
+  .calendar-days .calendar-day.other-month:nth-child(7n) {
+    color: #bdc1c6;
+  }
+  </style>
+  
+  <style>
     /* 追加のカスタムスタイル - 水平レイアウト専用 */
+    body { margin: 0; }
+  </style>
+  
+  <style>
     .kpi-tree li {
       display: flex;
       flex-direction: row;
       align-items: flex-start !important;
-      margin: 3px 0;
+      margin: 0px 0px 10px 0px;
     }
     /* 縦方向表示は非表示にし、水平方向表示は表示する */
     .direction-vertical {
@@ -319,97 +1110,241 @@ h1 {
   </style>
 </head>
 <body data-theme="default">
-  <div class="container">
-    <h1>利益KPIツリー</h1>
+  <!-- メインコンテンツヘッダーにハンバーガーボタンを配置 - 左上配置 -->
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button id="menu-toggle" class="menu-toggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="drawer-menu">
+          <svg class="menu-icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+          </svg>
+        </button>
+        <div class="page-title-container">
+          <h1 class="page-title">コインチェック 収益KPIツリー</h1>
+          <span class="data-date">現在のデータ: 2025年05月19日 / 販売所以外収益/販売所収益:=for_generator!G70</span>
+        </div>
+      </div>
+      <div class="header-controls">
+        <!-- 将来的に必要なコントロールをここに追加 -->
+      </div>
+    </div>
+  </header>
+
+  <!-- ナビゲーションドロワー -->
+  <div id="drawer-menu" class="drawer" aria-hidden="true" role="navigation" aria-label="メインナビゲーション">
+    <div class="drawer-header">
+      <div class="drawer-header-title">
+
+        <h2>設定</h2>
+        <button id="drawer-close" class="drawer-close" aria-label="メニューを閉じる">
+          <span class="close-icon"></span>
+        </button>
+      </div>
+    </div>
+    <div class="drawer-content">
+      <div class="drawer-nav">
+        <!-- ナビゲーションセクション -->
+        <div class="drawer-section-group">
+          <div class="drawer-section active">
+
+            
+            <!-- 日次/月次切り替え -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>表示モード</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div class="view-mode-switch">
+                  <div class="mode-options">
+                    <button id="daily-mode-btn" class="mode-btn active" aria-pressed="true">日次</button>
+                    <button id="monthly-mode-btn" class="mode-btn" aria-pressed="false">月次</button>
+                    <span class="mode-indicator"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- カレンダー -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>カレンダー</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div class="calendar-container">
+                  <div class="calendar-header">
+                    <button id="prev-month" class="calendar-nav-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div id="current-month" class="current-month"></div>
+                    <button id="next-month" class="calendar-nav-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="weekdays">
+                    <div>月</div>
+                    <div>火</div>
+                    <div>水</div>
+                    <div>木</div>
+                    <div>金</div>
+                    <div>土</div>
+                    <div>日</div>
+                  </div>
+                  <div id="calendar-days" class="calendar-days">
+                    <!-- 日付はJavaScriptで動的に生成されます -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- URLコピーボタンはドロワー内に配置（共有ボタン） -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>共有</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div id="drawer-share-btn-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ドロワーオーバーレイ -->
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+
+  <!-- メインコンテンツ -->
+  <div class="main-content">
+    <div class="direction-horizontal">
     <div class="kpi-tree-container theme-default">
+      <div class="note">
+        <ul>
+          <li>金銭信託運用、その他の一部の数値は月次のみ手動掲載のため、営業収益合計は正確でない場合があります</li>
+          <li>データソースは<a href="https://docs.google.com/spreadsheets/d/1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U/edit?usp=sharing" target="_blank">こちら</a>、数値に関してのお問い合わせは <a href="https://coincheck.enterprise.slack.com/archives/C069WL5UH3L" target="_blank">#req-data-platform</a> @data-platform-admin まで</li>
+        </ul>
+      </div>
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-4gwrr1">
-        <a href="https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd" target="_blank" class="node-text" title="利益" data-text-default="利益">利益</a><div class="value" title="1000" data-value-daily="1000" data-value-monthly="4000">1000</div>
+      <div class="node" id="node-frauiz">
+        <a href="https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd" target="_blank" class="node-text" title="営業収益合計" data-text-default="営業収益合計">営業収益合計</a><div class="text-en" title="Revenue">Revenue</div><div class="value" title="=for_generator!G67" data-value-daily="=for_generator!G67" data-value-monthly="=for_generator!I67" data-diff-daily="=for_generator!L67" data-diff-monthly="=for_generator!M67">=for_generator!G67</div><div class="diff-value" title="前日比: =for_generator!L67" data-diff-daily="=for_generator!L67" data-diff-monthly="=for_generator!M67">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L67</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-4gwrr1-children"></button>
-      <ul id="node-4gwrr1-children" class="children">
+      <button class="toggle-btn" data-target="node-frauiz-children"></button>
+      <ul id="node-frauiz-children" class="children">
     <li>
-      <div class="node" id="node-bal4al">
-        <span class="node-text" title="売上" data-text-default="売上">売上</span><div class="value" title="1000" data-value-daily="1000" data-value-monthly="4000">1000</div>
+      <div class="node" id="node-yhbi54">
+        <a href="https://lookerstudio.google.com/u/0/reporting/bc9ee1e8-b5e5-4f02-bd33-a7a5da56229b/page/p_xsek8mmgrd" target="_blank" class="node-text" title="販売所収益" data-text-default="販売所収益">販売所収益</a><div class="text-en" title="Marketplace Revenue">Marketplace Revenue</div><div class="value" title="=for_generator!G2" data-value-daily="=for_generator!G2" data-value-monthly="=for_generator!I2" data-diff-daily="=for_generator!L2" data-diff-monthly="=for_generator!M2">=for_generator!G2</div><div class="diff-value" title="前日比: =for_generator!L2" data-diff-daily="=for_generator!L2" data-diff-monthly="=for_generator!M2">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L2</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-bal4al-children"></button>
-      <ul id="node-bal4al-children" class="children">
+      <button class="toggle-btn" data-target="node-yhbi54-children"></button>
+      <ul id="node-yhbi54-children" class="children">
     <li>
-      <div class="node" id="node-zddqkc">
-        <a href="https://lookerstudio.google.com/u/0/reporting/4565e709-4733-42d8-955a-e56dbbe8c332/page/p_xsek8mmgrd" target="_blank" class="node-text" title="販売所収益" data-text-default="販売所収益">販売所収益</a><div class="text-en" title="marketplace">marketplace</div><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-d511z3">
+        <a href="https://lookerstudio.google.com/u/0/reporting/bc9ee1e8-b5e5-4f02-bd33-a7a5da56229b/page/p_xsek8mmgrd" target="_blank" class="node-text" title="販売所" data-text-default="販売所">販売所</a><div class="text-en" title="Marketplace Revenue">Marketplace Revenue</div><div class="value" title="=for_generator!G3" data-value-daily="=for_generator!G3" data-value-monthly="=for_generator!I3" data-diff-daily="=for_generator!L3" data-diff-monthly="=for_generator!M3">=for_generator!G3</div><div class="diff-value" title="前日比: =for_generator!L3" data-diff-daily="=for_generator!L3" data-diff-monthly="=for_generator!M3">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L3</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-zddqkc-children"></button>
-      <ul id="node-zddqkc-children" class="children">
+      <button class="toggle-btn" data-target="node-d511z3-children"></button>
+      <ul id="node-d511z3-children" class="children">
     <li>
-      <div class="node" id="node-ssb9vk">
-        <span class="node-text" title="スプレッド" data-text-default="スプレッド">スプレッド</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-plplc8">
-        <span class="node-text" title="取引金額" data-text-default="取引金額">取引金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-plplc8-children"></button>
-      <ul id="node-plplc8-children" class="children">
-    <li>
-      <div class="node" id="node-rgc620">
-        <span class="node-text" title="取引単価" data-text-default="取引単価">取引単価</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-3gfczq">
-        <span class="node-text" title="取引ユーザー数" data-text-default="取引ユーザー数">取引ユーザー数</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-3gfczq-children"></button>
-      <ul id="node-3gfczq-children" class="children">
-    <li>
-      <div class="node" id="node-67disn">
-        <span class="node-text" title="既存顧客のうち取引ユーザー" data-text-default="既存顧客のうち取引ユーザー">既存顧客のうち取引ユーザー</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-67disn-children"></button>
-      <ul id="node-67disn-children" class="children">
-    <li>
-      <div class="node" id="node-kdopp3">
-        <span class="node-text" title="月末本人確認済既存口座数" data-text-default="月末本人確認済既存口座数">月末本人確認済既存口座数</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-lb4hdr">
+        <span class="node-text" title="スプレッド" data-text-default="スプレッド">スプレッド</span><div class="text-en" title="Exchange Spread">Exchange Spread</div><div class="value" title="=for_generator!G4" data-value-daily="=for_generator!G4" data-value-monthly="=for_generator!I4" data-diff-daily="=for_generator!L4" data-diff-monthly="=for_generator!M4">=for_generator!G4</div><div class="diff-value" title="前日比: =for_generator!L4" data-diff-daily="=for_generator!L4" data-diff-monthly="=for_generator!M4">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L4</span>
+        </div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-e1f2qa">
-        <span class="node-text" title="既存ユーザー取引率" data-text-default="既存ユーザー取引率">既存ユーザー取引率</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-8wsumf">
+        <span class="node-text" title="取引金額" data-text-default="取引金額">取引金額</span><div class="text-en" title="Trading Volume">Trading Volume</div><div class="value" title="=for_generator!G5" data-value-daily="=for_generator!G5" data-value-monthly="=for_generator!I5" data-diff-daily="=for_generator!L5" data-diff-monthly="=for_generator!M5">=for_generator!G5</div><div class="diff-value" title="前日比: =for_generator!L5" data-diff-daily="=for_generator!L5" data-diff-monthly="=for_generator!M5">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L5</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-8wsumf-children"></button>
+      <ul id="node-8wsumf-children" class="children">
+    <li>
+      <div class="node" id="node-x28209">
+        <span class="node-text" title="取引単価" data-text-default="取引単価">取引単価</span><div class="text-en" title="Average Trade Size">Average Trade Size</div><div class="value" title="=for_generator!G6" data-value-daily="=for_generator!G6" data-value-monthly="=for_generator!I6" data-diff-daily="=for_generator!L6" data-diff-monthly="=for_generator!M6">=for_generator!G6</div><div class="diff-value" title="前日比: =for_generator!L6" data-diff-daily="=for_generator!L6" data-diff-monthly="=for_generator!M6">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L6</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-uyp1fp">
+        <span class="node-text" title="取引ユーザー数" data-text-default="取引ユーザー数">取引ユーザー数</span><div class="text-en" title="Number of Trading Users">Number of Trading Users</div><div class="value" title="=for_generator!G7" data-value-daily="=for_generator!G7" data-value-monthly="=for_generator!I7" data-diff-daily="=for_generator!L7" data-diff-monthly="=for_generator!M7">=for_generator!G7</div><div class="diff-value" title="前日比: =for_generator!L7" data-diff-daily="=for_generator!L7" data-diff-monthly="=for_generator!M7">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L7</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-uyp1fp-children"></button>
+      <ul id="node-uyp1fp-children" class="children">
+    <li>
+      <div class="node" id="node-ae5gge">
+        <span class="node-text" title="既存取引ユーザー数" data-text-default="既存取引ユーザー数">既存取引ユーザー数</span><div class="text-en" title="Trading Existing Customers">Trading Existing Customers</div><div class="value" title="=for_generator!G9" data-value-daily="=for_generator!G9" data-value-monthly="=for_generator!I9" data-diff-daily="=for_generator!L9" data-diff-monthly="=for_generator!M9">=for_generator!G9</div><div class="diff-value" title="前日比: =for_generator!L9" data-diff-daily="=for_generator!L9" data-diff-monthly="=for_generator!M9">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L9</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ae5gge-children"></button>
+      <ul id="node-ae5gge-children" class="children">
+    <li>
+      <div class="node" id="node-3sapsf">
+        <span class="node-text" title="月末本人確認済既存口座数" data-text-default="月末本人確認済既存口座数">月末本人確認済既存口座数</span><div class="text-en" title="Number of Verified Existing Accounts at Month-End">Number of Verified Existing Accounts at Month-End</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-ubkwku">
+        <span class="node-text" title="既存ユーザー取引率" data-text-default="既存ユーザー取引率">既存ユーザー取引率</span><div class="text-en" title="Trading Rate of Existing Users">Trading Rate of Existing Users</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-v3fqcf">
-        <span class="node-text" title="新規顧客のうち取引ユーザー" data-text-default="新規顧客のうち取引ユーザー">新規顧客のうち取引ユーザー</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-whu42y">
+        <span class="node-text" title="新規取引ユーザー数" data-text-default="新規取引ユーザー数">新規取引ユーザー数</span><div class="text-en" title="Trading New Customers">Trading New Customers</div><div class="value" title="=for_generator!G8" data-value-daily="=for_generator!G8" data-value-monthly="=for_generator!I8" data-diff-daily="=for_generator!L8" data-diff-monthly="=for_generator!M8">=for_generator!G8</div><div class="diff-value" title="前日比: =for_generator!L8" data-diff-daily="=for_generator!L8" data-diff-monthly="=for_generator!M8">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L8</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-v3fqcf-children"></button>
-      <ul id="node-v3fqcf-children" class="children">
+      <button class="toggle-btn" data-target="node-whu42y-children"></button>
+      <ul id="node-whu42y-children" class="children">
     <li>
-      <div class="node" id="node-micj6l">
-        <span class="node-text" title="新規口座開設数" data-text-default="新規口座開設数">新規口座開設数</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-1l34ex">
+        <span class="node-text" title="新規口座開設数" data-text-default="新規口座開設数">新規口座開設数</span><div class="text-en" title="Number of New Accounts Opened">Number of New Accounts Opened</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
-      <button class="toggle-btn" data-target="node-micj6l-children"></button>
-      <ul id="node-micj6l-children" class="children">
+      <button class="toggle-btn" data-target="node-1l34ex-children"></button>
+      <ul id="node-1l34ex-children" class="children">
     <li>
-      <div class="node" id="node-pag6y3">
-        <span class="node-text" title="広告宣伝費" data-text-default="広告宣伝費">広告宣伝費</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-hsr7sj">
+        <span class="node-text" title="広告宣伝費" data-text-default="広告宣伝費">広告宣伝費</span><div class="text-en" title="Advertising Expense Transfers">Advertising Expense Transfers</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-lo2z1c">
-        <span class="node-text" title="Blended CPA" data-text-default="Blended CPA">Blended CPA</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-5x6k">
+        <span class="node-text" title="Blended CPA" data-text-default="Blended CPA">Blended CPA</span><div class="value" title="-" data-value-default="-">-</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-7syyqi">
-        <span class="node-text" title="新規ユーザー取引率" data-text-default="新規ユーザー取引率">新規ユーザー取引率</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-je19co">
+        <span class="node-text" title="新規ユーザー取引率" data-text-default="新規ユーザー取引率">新規ユーザー取引率</span><div class="text-en" title="Trading Rate of New Users">Trading Rate of New Users</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
+    </li>
+      </ul>
     </li>
       </ul>
     </li>
@@ -420,368 +1355,497 @@ h1 {
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-9k0dgy">
-        <a href="https://lookerstudio.google.com/u/0/reporting/f2d1fa3c-f6cc-47bd-832b-5935c4f206e9/page/p_xsek8mmgrd" target="_blank" class="node-text" title="販売所以外収益" data-text-default="販売所以外収益">販売所以外収益</a><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-ujr88a">
+        <a href="https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd" target="_blank" class="node-text" title="販売所以外収益" data-text-default="販売所以外収益">販売所以外収益</a><div class="text-en" title="Non-Marketplace Revenue">Non-Marketplace Revenue</div><div class="value" title="=for_generator!G10" data-value-daily="=for_generator!G10" data-value-monthly="=for_generator!I10" data-diff-daily="=for_generator!L10" data-diff-monthly="=for_generator!M10">=for_generator!G10</div><div class="diff-value" title="前日比: =for_generator!L10" data-diff-daily="=for_generator!L10" data-diff-monthly="=for_generator!M10">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L10</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-9k0dgy-children"></button>
-      <ul id="node-9k0dgy-children" class="children">
+      <button class="toggle-btn" data-target="node-ujr88a-children"></button>
+      <ul id="node-ujr88a-children" class="children">
     <li>
-      <div class="node" id="node-w0nv76">
-        <a href="https://lookerstudio.google.com/u/0/reporting/758085d1-c9d8-4e7e-898f-8a2d74904045/page/p_xsek8mmgrd" target="_blank" class="node-text" title="取引所" data-text-default="取引所">取引所</a><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-ywv5xg">
+        <a href="https://lookerstudio.google.com/u/0/reporting/a5869868-a23f-48f1-b98c-d5759ad578de/page/arSIF" target="_blank" class="node-text" title="ステーキング" data-text-default="ステーキング">ステーキング</a><div class="text-en" title="Staking">Staking</div><div class="value" title="=for_generator!G39" data-value-daily="=for_generator!G39" data-value-monthly="=for_generator!I39" data-diff-daily="=for_generator!L39" data-diff-monthly="=for_generator!M39">=for_generator!G39</div><div class="diff-value" title="前日比: =for_generator!L39" data-diff-daily="=for_generator!L39" data-diff-monthly="=for_generator!M39">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L39</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-w0nv76-children"></button>
-      <ul id="node-w0nv76-children" class="children">
+      <button class="toggle-btn" data-target="node-ywv5xg-children"></button>
+      <ul id="node-ywv5xg-children" class="children">
     <li>
-      <div class="node" id="node-fdmndp">
-        <span class="node-text" title="出来高" data-text-default="出来高">出来高</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-js57v1">
+        <span class="node-text" title="ETH保有金額" data-text-default="ETH保有金額">ETH保有金額</span><div class="text-en" title="ETH Balance">ETH Balance</div><div class="value" title="=for_generator!G40" data-value-daily="=for_generator!G40" data-value-monthly="=for_generator!I40" data-diff-daily="=for_generator!L40" data-diff-monthly="=for_generator!M40">=for_generator!G40</div><div class="diff-value" title="前日比: =for_generator!L40" data-diff-daily="=for_generator!L40" data-diff-monthly="=for_generator!M40">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L40</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-fdmndp-children"></button>
-      <ul id="node-fdmndp-children" class="children">
+      <button class="toggle-btn" data-target="node-js57v1-children"></button>
+      <ul id="node-js57v1-children" class="children">
     <li>
-      <div class="node" id="node-ru20c3">
-        <span class="node-text" title="DTU" data-text-daily="DTU" data-text-monthly="MTU">DTU</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-2xw4e3">
+        <span class="node-text" title="保有UU" data-text-default="保有UU">保有UU</span><div class="text-en" title="Number of ETH Holders">Number of ETH Holders</div><div class="value" title="=for_generator!G41" data-value-daily="=for_generator!G41" data-value-monthly="=for_generator!I41" data-diff-daily="=for_generator!L41" data-diff-monthly="=for_generator!M41">=for_generator!G41</div><div class="diff-value" title="前日比: =for_generator!L41" data-diff-daily="=for_generator!L41" data-diff-monthly="=for_generator!M41">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L41</span>
+        </div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-ze9hlc">
-        <span class="node-text" title="平均約定回数" data-text-default="平均約定回数">平均約定回数</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-3lvep0">
+        <span class="node-text" title="一人当たり保有金額" data-text-default="一人当たり保有金額">一人当たり保有金額</span><div class="value" title="=for_generator!G68" data-value-daily="=for_generator!G68" data-value-monthly="=for_generator!I68" data-diff-daily="=for_generator!L68" data-diff-monthly="=for_generator!M68">=for_generator!G68</div><div class="diff-value" title="前日比: =for_generator!L68" data-diff-daily="=for_generator!L68" data-diff-monthly="=for_generator!M68">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L68</span>
+        </div>
       </div>
     </li>
+      </ul>
+    </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-gv6dgb">
-        <span class="node-text" title="平均約定金額" data-text-default="平均約定金額">平均約定金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-aj93i8">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Staking Fee Rate">Staking Fee Rate</div><div class="value" title="=for_generator!G41" data-value-daily="=for_generator!G41" data-value-monthly="=for_generator!I41" data-diff-daily="=for_generator!L41" data-diff-monthly="=for_generator!M41">=for_generator!G41</div><div class="diff-value" title="前日比: =for_generator!L41" data-diff-daily="=for_generator!L41" data-diff-monthly="=for_generator!M41">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L41</span>
+        </div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-itkgyk">
-        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-oz4xcx">
+        <a href="https://lookerstudio.google.com/u/0/reporting/758085d1-c9d8-4e7e-898f-8a2d74904045/page/p_xsek8mmgrd" target="_blank" class="node-text" title="取引所（現物）" data-text-default="取引所（現物）">取引所（現物）</a><div class="text-en" title="Exchange Revenue">Exchange Revenue</div><div class="value" title="=for_generator!G11" data-value-daily="=for_generator!G11" data-value-monthly="=for_generator!I11" data-diff-daily="=for_generator!L11" data-diff-monthly="=for_generator!M11">=for_generator!G11</div><div class="diff-value" title="前日比: =for_generator!L11" data-diff-daily="=for_generator!L11" data-diff-monthly="=for_generator!M11">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L11</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-oz4xcx-children"></button>
+      <ul id="node-oz4xcx-children" class="children">
+    <li>
+      <div class="node" id="node-z5g1l2">
+        <span class="node-text" title="出来高" data-text-default="出来高">出来高</span><div class="text-en" title="Trading Amount">Trading Amount</div><div class="value" title="=for_generator!G12" data-value-daily="=for_generator!G12" data-value-monthly="=for_generator!I12" data-diff-daily="=for_generator!L12" data-diff-monthly="=for_generator!M12">=for_generator!G12</div><div class="diff-value" title="前日比: =for_generator!L12" data-diff-daily="=for_generator!L12" data-diff-monthly="=for_generator!M12">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L12</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-z5g1l2-children"></button>
+      <ul id="node-z5g1l2-children" class="children">
+    <li>
+      <div class="node" id="node-tiea8g">
+        <span class="node-text" title="DTU" data-text-daily="DTU" data-text-monthly="MTU">DTU</span><div class="text-en" title="Trading Users">Trading Users</div><div class="value" title="=for_generator!G13" data-value-daily="=for_generator!G13" data-value-monthly="=for_generator!I13" data-diff-daily="=for_generator!L13" data-diff-monthly="=for_generator!M13">=for_generator!G13</div><div class="diff-value" title="前日比: =for_generator!L13" data-diff-daily="=for_generator!L13" data-diff-monthly="=for_generator!M13">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L13</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-wqtqqb">
+        <span class="node-text" title="平均約定回数" data-text-default="平均約定回数">平均約定回数</span><div class="text-en" title="Avg. Trades per User">Avg. Trades per User</div><div class="value" title="=for_generator!G15" data-value-daily="=for_generator!G15" data-value-monthly="=for_generator!I15" data-diff-daily="=for_generator!L15" data-diff-monthly="=for_generator!M15">=for_generator!G15</div><div class="diff-value" title="前日比: =for_generator!L15" data-diff-daily="=for_generator!L15" data-diff-monthly="=for_generator!M15">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L15</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-94fsjc">
+        <span class="node-text" title="平均約定金額" data-text-default="平均約定金額">平均約定金額</span><div class="text-en" title="Average Trade Size">Average Trade Size</div><div class="value" title="=for_generator!G16" data-value-daily="=for_generator!G16" data-value-monthly="=for_generator!I16" data-diff-daily="=for_generator!L16" data-diff-monthly="=for_generator!M16">=for_generator!G16</div><div class="diff-value" title="前日比: =for_generator!L16" data-diff-daily="=for_generator!L16" data-diff-monthly="=for_generator!M16">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L16</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-aj92rj">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Trading Fee Rate">Trading Fee Rate</div><div class="value" title="=for_generator!G69" data-value-daily="=for_generator!G69" data-value-monthly="=for_generator!I69" data-diff-daily="=for_generator!L69" data-diff-monthly="=for_generator!M69">=for_generator!G69</div><div class="diff-value" title="前日比: =for_generator!L69" data-diff-daily="=for_generator!L69" data-diff-monthly="=for_generator!M69">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L69</span>
+        </div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-1giigg">
-        <a href="https://lookerstudio.google.com/u/0/reporting/e4ad8b3b-913a-4312-8ed1-3709a5b75956/page/p_9nnkwdngrd" target="_blank" class="node-text" title="つみたて" data-text-default="つみたて">つみたて</a><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-2tdwjx">
+        <a href="https://lookerstudio.google.com/u/0/reporting/e4ad8b3b-913a-4312-8ed1-3709a5b75956/page/p_9nnkwdngrd" target="_blank" class="node-text" title="つみたて" data-text-default="つみたて">つみたて</a><div class="text-en" title="Periodic Purchase">Periodic Purchase</div><div class="value" title="=for_generator!G17" data-value-daily="=for_generator!G17" data-value-monthly="=for_generator!I17" data-diff-daily="=for_generator!L17" data-diff-monthly="=for_generator!M17">=for_generator!G17</div><div class="diff-value" title="前日比: =for_generator!L17" data-diff-daily="=for_generator!L17" data-diff-monthly="=for_generator!M17">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L17</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-1giigg-children"></button>
-      <ul id="node-1giigg-children" class="children">
+      <button class="toggle-btn" data-target="node-2tdwjx-children"></button>
+      <ul id="node-2tdwjx-children" class="children">
     <li>
-      <div class="node" id="node-r73lf7">
-        <span class="node-text" title="つみたて件数" data-text-default="つみたて件数">つみたて件数</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-tdgziu">
+        <span class="node-text" title="つみたて件数" data-text-default="つみたて件数">つみたて件数</span><div class="text-en" title="Number of Periodic Purchases">Number of Periodic Purchases</div><div class="value" title="=for_generator!G18" data-value-daily="=for_generator!G18" data-value-monthly="=for_generator!I18" data-diff-daily="=for_generator!L18" data-diff-monthly="=for_generator!M18">=for_generator!G18</div><div class="diff-value" title="前日比: =for_generator!L18" data-diff-daily="=for_generator!L18" data-diff-monthly="=for_generator!M18">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L18</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-r73lf7-children"></button>
-      <ul id="node-r73lf7-children" class="children">
+      <button class="toggle-btn" data-target="node-tdgziu-children"></button>
+      <ul id="node-tdgziu-children" class="children">
     <li>
-      <div class="node" id="node-6uxs6r">
-        <span class="node-text" title="新規UU" data-text-default="新規UU">新規UU</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-dmg59s">
+        <span class="node-text" title="新規UU" data-text-default="新規UU">新規UU</span><div class="text-en" title="Number of New Periodic Purchase Users">Number of New Periodic Purchase Users</div><div class="value" title="=for_generator!G19" data-value-daily="=for_generator!G19" data-value-monthly="=for_generator!I19" data-diff-daily="=for_generator!L19" data-diff-monthly="=for_generator!M19">=for_generator!G19</div><div class="diff-value" title="前日比: =for_generator!L19" data-diff-daily="=for_generator!L19" data-diff-monthly="=for_generator!M19">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L19</span>
+        </div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-m9jd71">
-        <span class="node-text" title="再開UU" data-text-default="再開UU">再開UU</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-    <li>
-      <div class="node" id="node-wzw3w7">
-        <span class="node-text" title="継続UU" data-text-default="継続UU">継続UU</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-xjtlpm">
-        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-xjtlpm-children"></button>
-      <ul id="node-xjtlpm-children" class="children">
-    <li>
-      <div class="node" id="node-5012wn">
-        <span class="node-text" title="一人当たりつみたて金額" data-text-default="一人当たりつみたて金額">一人当たりつみたて金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-jmmuye">
-        <span class="node-text" title="スプレッド" data-text-default="スプレッド">スプレッド</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li>
-      </ul>
-    </li>
-    <li>
-      <div class="node" id="node-6wbhyf">
-        <span class="node-text" title="日本円入出金・暗号資産送金" data-text-default="日本円入出金・暗号資産送金">日本円入出金・暗号資産送金</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-6wbhyf-children"></button>
-      <ul id="node-6wbhyf-children" class="children">
-    <li>
-      <div class="node" id="node-bfx0i">
-        <span class="node-text" title="入金" data-text-default="入金">入金</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-bfx0i-children"></button>
-      <ul id="node-bfx0i-children" class="children">
-    <li>
-      <div class="node" id="node-avkhr1">
-        <span class="node-text" title="入金金額" data-text-default="入金金額">入金金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-gxq3gw">
+        <span class="node-text" title="再開UU" data-text-default="再開UU">再開UU</span><div class="text-en" title="Number of Reactivated Periodic Purchase Users">Number of Reactivated Periodic Purchase Users</div><div class="value" title="=for_generator!G20" data-value-daily="=for_generator!G20" data-value-monthly="=for_generator!I20" data-diff-daily="=for_generator!L20" data-diff-monthly="=for_generator!M20">=for_generator!G20</div><div class="diff-value" title="前日比: =for_generator!L20" data-diff-daily="=for_generator!L20" data-diff-monthly="=for_generator!M20">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L20</span>
+        </div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-plcutl">
-        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-n9wck4">
+        <span class="node-text" title="継続UU" data-text-default="継続UU">継続UU</span><div class="text-en" title="Number of Continuing Periodic Purchase Users">Number of Continuing Periodic Purchase Users</div><div class="value" title="=for_generator!G21" data-value-daily="=for_generator!G21" data-value-monthly="=for_generator!I21" data-diff-daily="=for_generator!L21" data-diff-monthly="=for_generator!M21">=for_generator!G21</div><div class="diff-value" title="前日比: =for_generator!L21" data-diff-daily="=for_generator!L21" data-diff-monthly="=for_generator!M21">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L21</span>
+        </div>
       </div>
     </li>
       </ul>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-dayx7a">
-        <span class="node-text" title="出金" data-text-default="出金">出金</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-ysxb65">
+        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="text-en" title="Average Revenue per Paying User (Periodic Purchase)">Average Revenue per Paying User (Periodic Purchase)</div><div class="value" title="=for_generator!G22" data-value-daily="=for_generator!G22" data-value-monthly="=for_generator!I22" data-diff-daily="=for_generator!L22" data-diff-monthly="=for_generator!M22">=for_generator!G22</div><div class="diff-value" title="前日比: =for_generator!L22" data-diff-daily="=for_generator!L22" data-diff-monthly="=for_generator!M22">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L22</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-dayx7a-children"></button>
-      <ul id="node-dayx7a-children" class="children">
+      <button class="toggle-btn" data-target="node-ysxb65-children"></button>
+      <ul id="node-ysxb65-children" class="children">
     <li>
-      <div class="node" id="node-c6fa1j">
-        <span class="node-text" title="出金金額" data-text-default="出金金額">出金金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-plcvka">
-        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li>
-    <li>
-      <div class="node" id="node-s1spds">
-        <span class="node-text" title="暗号資産送金" data-text-default="暗号資産送金">暗号資産送金</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-s1spds-children"></button>
-      <ul id="node-s1spds-children" class="children">
-    <li>
-      <div class="node" id="node-6v8s3n">
-        <span class="node-text" title="送金金額" data-text-default="送金金額">送金金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-6v8s3n-children"></button>
-      <ul id="node-6v8s3n-children" class="children">
-    <li>
-      <div class="node" id="node-bf2spi">
-        <span class="node-text" title="送金UU" data-text-default="送金UU">送金UU</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-sz3uro">
+        <span class="node-text" title="平均積立単価" data-text-default="平均積立単価">平均積立単価</span><div class="text-en" title="Average Periodic Purchase Amount per User">Average Periodic Purchase Amount per User</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-l0nmmz">
-        <span class="node-text" title="平均送金金額" data-text-default="平均送金金額">平均送金金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-plcwaz">
-        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-4jz6j8">
+        <span class="node-text" title="スプレッド" data-text-default="スプレッド">スプレッド</span><div class="text-en" title="Spread">Spread</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
     </li>
       </ul>
     </li>
       </ul>
-    </li>
+    </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-cl7p4b">
-        <span class="node-text" title="ステーキング" data-text-default="ステーキング">ステーキング</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-cl7p4b-children"></button>
-      <ul id="node-cl7p4b-children" class="children">
-    <li>
-      <div class="node" id="node-pb3a44">
-        <span class="node-text" title="ETH保有金額" data-text-default="ETH保有金額">ETH保有金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-pb3a44-children"></button>
-      <ul id="node-pb3a44-children" class="children">
-    <li>
-      <div class="node" id="node-bievha">
-        <span class="node-text" title="保有UU" data-text-default="保有UU">保有UU</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-tpimv1">
-        <span class="node-text" title="一人当たり保有金額" data-text-default="一人当たり保有金額">一人当たり保有金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-itkeqh">
-        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li>
-    <li>
-      <div class="node" id="node-dejub7">
-        <span class="node-text" title="NFT" data-text-default="NFT">NFT</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-dejub7-children"></button>
-      <ul id="node-dejub7-children" class="children">
-    <li>
-      <div class="node" id="node-9o7uth">
-        <span class="node-text" title="CC出品" data-text-default="CC出品">CC出品</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-ficram">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_91cjqm5lrd" target="_blank" class="node-text" title="大口OTC" data-text-default="大口OTC">大口OTC</a><div class="text-en" title="OTC Trade">OTC Trade</div><div class="value" title="=for_generator!G25" data-value-daily="=for_generator!G25" data-value-monthly="=for_generator!I25" data-diff-daily="=for_generator!L25" data-diff-monthly="=for_generator!M25">=for_generator!G25</div><div class="diff-value" title="前日比: =for_generator!L25" data-diff-daily="=for_generator!L25" data-diff-monthly="=for_generator!M25">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L25</span>
+        </div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-bvbdju">
-        <span class="node-text" title="CtoC" data-text-default="CtoC">CtoC</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-quaj3t">
+        <a href="https://lookerstudio.google.com/u/0/reporting/cce6430d-1bfa-4fc8-b4ae-6af4345572f2/page/p_7n6shcsgrd" target="_blank" class="node-text" title="暗号資産送金" data-text-default="暗号資産送金">暗号資産送金</a><div class="text-en" title="Remittance Fees Crypto Currency">Remittance Fees Crypto Currency</div><div class="value" title="=for_generator!G34" data-value-daily="=for_generator!G34" data-value-monthly="=for_generator!I34" data-diff-daily="=for_generator!L34" data-diff-monthly="=for_generator!M34">=for_generator!G34</div><div class="diff-value" title="前日比: =for_generator!L34" data-diff-daily="=for_generator!L34" data-diff-monthly="=for_generator!M34">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L34</span>
+        </div>
       </div>
-    </li>
+      <button class="toggle-btn" data-target="node-quaj3t-children"></button>
+      <ul id="node-quaj3t-children" class="children">
     <li>
-      <div class="node" id="node-zhjq5l">
-        <span class="node-text" title="発行体" data-text-default="発行体">発行体</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-    <li>
-      <div class="node" id="node-nahm9y">
-        <span class="node-text" title="出庫手数料" data-text-default="出庫手数料">出庫手数料</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li>
-    <li>
-      <div class="node" id="node-w1g4px">
-        <span class="node-text" title="IEO" data-text-default="IEO">IEO</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-w1g4px-children"></button>
-      <ul id="node-w1g4px-children" class="children">
-    <li>
-      <div class="node" id="node-cm2qlp">
-        <span class="node-text" title="PLT" data-text-default="PLT">PLT</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-37gofw">
+        <span class="node-text" title="送金金額" data-text-default="送金金額">送金金額</span><div class="text-en" title="Remitted Amount">Remitted Amount</div><div class="value" title="=for_generator!G35" data-value-daily="=for_generator!G35" data-value-monthly="=for_generator!I35" data-diff-daily="=for_generator!L35" data-diff-monthly="=for_generator!M35">=for_generator!G35</div><div class="diff-value" title="前日比: =for_generator!L35" data-diff-daily="=for_generator!L35" data-diff-monthly="=for_generator!M35">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L35</span>
+        </div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-jxs4oh">
-        <span class="node-text" title="FNCT" data-text-default="FNCT">FNCT</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-    <li>
-      <div class="node" id="node-d2db7a">
-        <span class="node-text" title="BRIL" data-text-default="BRIL">BRIL</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-hqqv85">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Remittance Fee Rate">Remittance Fee Rate</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
     </li>
       </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-jq4555">
+        <a href="https://lookerstudio.google.com/u/0/reporting/f94bfa99-67bf-420b-acd2-e6aa1d19917d/page/p_xsek8mmgrd" target="_blank" class="node-text" title="法定通貨入出金" data-text-default="法定通貨入出金">法定通貨入出金</a><div class="text-en" title="Deposit & Withdrawal Fees Fiat Currency">Deposit & Withdrawal Fees Fiat Currency</div><div class="value" title="=for_generator!G26" data-value-daily="=for_generator!G26" data-value-monthly="=for_generator!I26" data-diff-daily="=for_generator!L26" data-diff-monthly="=for_generator!M26">=for_generator!G26</div><div class="diff-value" title="前日比: =for_generator!L26" data-diff-daily="=for_generator!L26" data-diff-monthly="=for_generator!M26">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L26</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-jq4555-children"></button>
+      <ul id="node-jq4555-children" class="children">
+    <li>
+      <div class="node" id="node-zi4nxn">
+        <span class="node-text" title="入金手数料収益" data-text-default="入金手数料収益">入金手数料収益</span><div class="text-en" title="Deposit Fee Revenue">Deposit Fee Revenue</div><div class="value" title="=for_generator!G27" data-value-daily="=for_generator!G27" data-value-monthly="=for_generator!I27" data-diff-daily="=for_generator!L27" data-diff-monthly="=for_generator!M27">=for_generator!G27</div><div class="diff-value" title="前日比: =for_generator!L27" data-diff-daily="=for_generator!L27" data-diff-monthly="=for_generator!M27">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L27</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-zi4nxn-children"></button>
+      <ul id="node-zi4nxn-children" class="children">
+    <li>
+      <div class="node" id="node-8gdxry">
+        <span class="node-text" title="入金総額" data-text-default="入金総額">入金総額</span><div class="text-en" title="Total Deposit Amount">Total Deposit Amount</div><div class="value" title="=for_generator!G28" data-value-daily="=for_generator!G28" data-value-monthly="=for_generator!I28" data-diff-daily="=for_generator!L28" data-diff-monthly="=for_generator!M28">=for_generator!G28</div><div class="diff-value" title="前日比: =for_generator!L28" data-diff-daily="=for_generator!L28" data-diff-monthly="=for_generator!M28">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L28</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-xk08dk">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Deposit Fee Rate">Deposit Fee Rate</div><div class="value" title="=for_generator!G29" data-value-daily="=for_generator!G29" data-value-monthly="=for_generator!I29" data-diff-daily="=for_generator!L29" data-diff-monthly="=for_generator!M29">=for_generator!G29</div><div class="diff-value" title="前日比: =for_generator!L29" data-diff-daily="=for_generator!L29" data-diff-monthly="=for_generator!M29">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L29</span>
+        </div>
+      </div>
     </li>
+      </ul>
+    </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-2i6x3w">
-        <span class="node-text" title="OnRamp" data-text-default="OnRamp">OnRamp</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-ehii3v">
+        <span class="node-text" title="出金手数料収益" data-text-default="出金手数料収益">出金手数料収益</span><div class="text-en" title="Withdrawal Fee Revenue">Withdrawal Fee Revenue</div><div class="value" title="=for_generator!G30" data-value-daily="=for_generator!G30" data-value-monthly="=for_generator!I30" data-diff-daily="=for_generator!L30" data-diff-monthly="=for_generator!M30">=for_generator!G30</div><div class="diff-value" title="前日比: =for_generator!L30" data-diff-daily="=for_generator!L30" data-diff-monthly="=for_generator!M30">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L30</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-2i6x3w-children"></button>
-      <ul id="node-2i6x3w-children" class="children">
+      <button class="toggle-btn" data-target="node-ehii3v-children"></button>
+      <ul id="node-ehii3v-children" class="children">
     <li>
-      <div class="node" id="node-mwgru">
-        <span class="node-text" title="DTU" data-text-daily="DTU" data-text-monthly="MTU">DTU</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-mwgru-children"></button>
-      <ul id="node-mwgru-children" class="children">
-    <li>
-      <div class="node" id="node-rxcrw9">
-        <span class="node-text" title="DTUrate" data-text-daily="DTUrate" data-text-monthly="MTUrate">DTUrate</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-xgtl2u">
+        <span class="node-text" title="出金総額" data-text-default="出金総額">出金総額</span><div class="text-en" title="Total Withdrawal Amount">Total Withdrawal Amount</div><div class="value" title="=for_generator!G32" data-value-daily="=for_generator!G32" data-value-monthly="=for_generator!I32" data-diff-daily="=for_generator!L32" data-diff-monthly="=for_generator!M32">=for_generator!G32</div><div class="diff-value" title="前日比: =for_generator!L32" data-diff-daily="=for_generator!L32" data-diff-monthly="=for_generator!M32">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L32</span>
+        </div>
       </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-rxcrwa">
-        <span class="node-text" title="DAU" data-text-daily="DAU" data-text-monthly="MAU">DAU</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-xk0949">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Withdrawal Fee Rate">Withdrawal Fee Rate</div><div class="value" title="=for_generator!G33" data-value-daily="=for_generator!G33" data-value-monthly="=for_generator!I33" data-diff-daily="=for_generator!L33" data-diff-monthly="=for_generator!M33">=for_generator!G33</div><div class="diff-value" title="前日比: =for_generator!L33" data-diff-daily="=for_generator!L33" data-diff-monthly="=for_generator!M33">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L33</span>
+        </div>
       </div>
     </li>
       </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-cr9zjq">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_4ug3jdczrd" target="_blank" class="node-text" title="アセットロック" data-text-default="アセットロック">アセットロック</a><div class="text-en" title="Asset Lock">Asset Lock</div><div class="value" title="=for_generator!G66" data-value-daily="=for_generator!G66" data-value-monthly="=for_generator!I66" data-diff-daily="=for_generator!L66" data-diff-monthly="=for_generator!M66">=for_generator!G66</div><div class="diff-value" title="前日比: =for_generator!L66" data-diff-daily="=for_generator!L66" data-diff-monthly="=for_generator!M66">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L66</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-2li65">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_k4l83l5lrd" target="_blank" class="node-text" title="IEO" data-text-default="IEO">IEO</a><div class="text-en" title="Initial Exchange Offering">Initial Exchange Offering</div><div class="value" title="=for_generator!G49" data-value-daily="=for_generator!G49" data-value-monthly="=for_generator!I49" data-diff-daily="=for_generator!L49" data-diff-monthly="=for_generator!M49">=for_generator!G49</div><div class="diff-value" title="前日比: =for_generator!L49" data-diff-daily="=for_generator!L49" data-diff-monthly="=for_generator!M49">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L49</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-2li65-children"></button>
+      <ul id="node-2li65-children" class="children">
+    <li>
+      <div class="node" id="node-meg3ez">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_k4l83l5lrd" target="_blank" class="node-text" title="PLT" data-text-default="PLT">PLT</a><div class="text-en" title="Palette Token">Palette Token</div><div class="value" title="=for_generator!G50" data-value-daily="=for_generator!G50" data-value-monthly="=for_generator!I50" data-diff-daily="=for_generator!L50" data-diff-monthly="=for_generator!M50">=for_generator!G50</div><div class="diff-value" title="前日比: =for_generator!L50" data-diff-daily="=for_generator!L50" data-diff-monthly="=for_generator!M50">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L50</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-p02xpp">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_jtjj2l5lrd" target="_blank" class="node-text" title="FNCT" data-text-default="FNCT">FNCT</a><div class="text-en" title="FiNANCiE Token">FiNANCiE Token</div><div class="value" title="=for_generator!G51" data-value-daily="=for_generator!G51" data-value-monthly="=for_generator!I51" data-diff-daily="=for_generator!L51" data-diff-monthly="=for_generator!M51">=for_generator!G51</div><div class="diff-value" title="前日比: =for_generator!L51" data-diff-daily="=for_generator!L51" data-diff-monthly="=for_generator!M51">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L51</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-53f2p4">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_anp5qcsgrd" target="_blank" class="node-text" title="BRIL" data-text-default="BRIL">BRIL</a><div class="text-en" title="Brilliantcrypto Token">Brilliantcrypto Token</div><div class="value" title="=for_generator!G52" data-value-daily="=for_generator!G52" data-value-monthly="=for_generator!I52" data-diff-daily="=for_generator!L52" data-diff-monthly="=for_generator!M52">=for_generator!G52</div><div class="diff-value" title="前日比: =for_generator!L52" data-diff-daily="=for_generator!L52" data-diff-monthly="=for_generator!M52">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L52</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-tk1rs0">
+        <span class="node-text" title="金銭信託運用" data-text-default="金銭信託運用">金銭信託運用</span><div class="text-en" title="Interest Income">Interest Income</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-48mckp">
+        <span class="node-text" title="その他" data-text-default="その他">その他</span><div class="text-en" title="Others">Others</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+      <button class="toggle-btn" data-target="node-48mckp-children"></button>
+      <ul id="node-48mckp-children" class="children">
+    <li>
+      <div class="node" id="node-mpb98x">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_vt545k5lrd" target="_blank" class="node-text" title="NFT" data-text-default="NFT">NFT</a><div class="text-en" title="Non-Fungible Tokens">Non-Fungible Tokens</div><div class="value" title="=for_generator!G43" data-value-daily="=for_generator!G43" data-value-monthly="=for_generator!I43" data-diff-daily="=for_generator!L43" data-diff-monthly="=for_generator!M43">=for_generator!G43</div><div class="diff-value" title="前日比: =for_generator!L43" data-diff-daily="=for_generator!L43" data-diff-monthly="=for_generator!M43">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L43</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-mpb98x-children"></button>
+      <ul id="node-mpb98x-children" class="children">
+    <li>
+      <div class="node" id="node-an9nr3">
+        <span class="node-text" title="CC出品" data-text-default="CC出品">CC出品</span><div class="text-en" title="Coincheck Direct Listings">Coincheck Direct Listings</div><div class="value" title="=for_generator!G44" data-value-daily="=for_generator!G44" data-value-monthly="=for_generator!I44" data-diff-daily="=for_generator!L44" data-diff-monthly="=for_generator!M44">=for_generator!G44</div><div class="diff-value" title="前日比: =for_generator!L44" data-diff-daily="=for_generator!L44" data-diff-monthly="=for_generator!M44">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L44</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ip07z6">
+        <span class="node-text" title="CtoC" data-text-default="CtoC">CtoC</span><div class="text-en" title="Customer-to-Customer Transactions">Customer-to-Customer Transactions</div><div class="value" title="=for_generator!G45" data-value-daily="=for_generator!G45" data-value-monthly="=for_generator!I45" data-diff-daily="=for_generator!L45" data-diff-monthly="=for_generator!M45">=for_generator!G45</div><div class="diff-value" title="前日比: =for_generator!L45" data-diff-daily="=for_generator!L45" data-diff-monthly="=for_generator!M45">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L45</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-wiidqz">
+        <span class="node-text" title="発行体" data-text-default="発行体">発行体</span><div class="text-en" title="Issuer">Issuer</div><div class="value" title="=for_generator!G46" data-value-daily="=for_generator!G46" data-value-monthly="=for_generator!I46" data-diff-daily="=for_generator!L46" data-diff-monthly="=for_generator!M46">=for_generator!G46</div><div class="diff-value" title="前日比: =for_generator!L46" data-diff-daily="=for_generator!L46" data-diff-monthly="=for_generator!M46">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L46</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-uwar6l">
+        <span class="node-text" title="自社NFT" data-text-default="自社NFT">自社NFT</span><div class="text-en" title="Proprietary NFTs">Proprietary NFTs</div><div class="value" title="=for_generator!G47" data-value-daily="=for_generator!G47" data-value-monthly="=for_generator!I47" data-diff-daily="=for_generator!L47" data-diff-monthly="=for_generator!M47">=for_generator!G47</div><div class="diff-value" title="前日比: =for_generator!L47" data-diff-daily="=for_generator!L47" data-diff-monthly="=for_generator!M47">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L47</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-emx3y7">
+        <span class="node-text" title="出庫手数料" data-text-default="出庫手数料">出庫手数料</span><div class="text-en" title="NFT Withdrawal Fee">NFT Withdrawal Fee</div><div class="value" title="=for_generator!G48" data-value-daily="=for_generator!G48" data-value-monthly="=for_generator!I48" data-diff-daily="=for_generator!L48" data-diff-monthly="=for_generator!M48">=for_generator!G48</div><div class="diff-value" title="前日比: =for_generator!L48" data-diff-daily="=for_generator!L48" data-diff-monthly="=for_generator!M48">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L48</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-45ezvr">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_cf5wucsgrd" target="_blank" class="node-text" title="OnRamp" data-text-default="OnRamp">OnRamp</a><div class="text-en" title="Crypto OnRamp">Crypto OnRamp</div><div class="value" title="=for_generator!G53" data-value-daily="=for_generator!G53" data-value-monthly="=for_generator!I53" data-diff-daily="=for_generator!L53" data-diff-monthly="=for_generator!M53">=for_generator!G53</div><div class="diff-value" title="前日比: =for_generator!L53" data-diff-daily="=for_generator!L53" data-diff-monthly="=for_generator!M53">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L53</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-45ezvr-children"></button>
+      <ul id="node-45ezvr-children" class="children">
+    <li>
+      <div class="node" id="node-tmsnq1">
+        <span class="node-text" title="DTU" data-text-daily="DTU" data-text-monthly="MTU">DTU</span><div class="text-en" title="Trading User">Trading User</div><div class="value" title="=for_generator!G54" data-value-daily="=for_generator!G54" data-value-monthly="=for_generator!I54" data-diff-daily="=for_generator!L54" data-diff-monthly="=for_generator!M54">=for_generator!G54</div><div class="diff-value" title="前日比: =for_generator!L54" data-diff-daily="=for_generator!L54" data-diff-monthly="=for_generator!M54">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L54</span>
+        </div>
+      </div>
     </li><li class="operator">×</li>
     <li>
-      <div class="node" id="node-xjti05">
-        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-xjti05-children"></button>
-      <ul id="node-xjti05-children" class="children">
-    <li>
-      <div class="node" id="node-6mojup">
-        <span class="node-text" title="一人当たり売買金額" data-text-default="一人当たり売買金額">一人当たり売買金額</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-jjvvzl">
-        <span class="node-text" title="スプレッド" data-text-default="スプレッド">スプレッド</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-9ip8ri">
+        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="text-en" title="Average Revenue per Paying User (Periodic Purchase)">Average Revenue per Paying User (Periodic Purchase)</div><div class="value" title="=for_generator!G57" data-value-daily="=for_generator!G57" data-value-monthly="=for_generator!I57" data-diff-daily="=for_generator!L57" data-diff-monthly="=for_generator!M57">=for_generator!G57</div><div class="diff-value" title="前日比: =for_generator!L57" data-diff-daily="=for_generator!L57" data-diff-monthly="=for_generator!M57">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L57</span>
+        </div>
       </div>
     </li>
       </ul>
-    </li>
-      </ul>
-    </li>
+    </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-na1dm">
-        <span class="node-text" title="リワード" data-text-default="リワード">リワード</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-h9tt1l">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_7n6shcsgrd" target="_blank" class="node-text" title="リワード" data-text-default="リワード">リワード</a><div class="text-en" title="Rewards">Rewards</div><div class="value" title="=for_generator!G60" data-value-daily="=for_generator!G60" data-value-monthly="=for_generator!I60" data-diff-daily="=for_generator!L60" data-diff-monthly="=for_generator!M60">=for_generator!G60</div><div class="diff-value" title="前日比: =for_generator!L60" data-diff-daily="=for_generator!L60" data-diff-monthly="=for_generator!M60">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L60</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-na1dm-children"></button>
-      <ul id="node-na1dm-children" class="children">
+      <button class="toggle-btn" data-target="node-h9tt1l-children"></button>
+      <ul id="node-h9tt1l-children" class="children">
     <li>
-      <div class="node" id="node-nh3gq8">
-        <span class="node-text" title="案件クリアUU" data-text-default="案件クリアUU">案件クリアUU</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-2j2b3h">
+        <span class="node-text" title="広告費" data-text-default="広告費">広告費</span><div class="text-en" title="Advertising cost">Advertising cost</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
-    </li><li class="operator">×</li>
+    </li><li class="operator">-</li>
     <li>
-      <div class="node" id="node-mommlt">
-        <span class="node-text" title="CCが受け取る広告費" data-text-default="CCが受け取る広告費">CCが受け取る広告費</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li>
-    <li>
-      <div class="node" id="node-bo6nzj">
-        <span class="node-text" title="実現損益" data-text-default="実現損益">実現損益</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-bo6nzj-children"></button>
-      <ul id="node-bo6nzj-children" class="children">
-    <li>
-      <div class="node" id="node-8ppp6i">
-        <span class="node-text" title="有料会員登録UU" data-text-default="有料会員登録UU">有料会員登録UU</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-xjtgir">
-        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-46bki6">
+        <span class="node-text" title="付与したポイント" data-text-default="付与したポイント">付与したポイント</span><div class="text-en" title="Points awarded">Points awarded</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
     </li>
       </ul>
-    </li>
+    </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-fhyq3h">
-        <span class="node-text" title="でんき・ガス" data-text-default="でんき・ガス">でんき・ガス</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-gvqnrz">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_brc2lm5lrd" target="_blank" class="node-text" title="でんき・ガス" data-text-default="でんき・ガス">でんき・ガス</a><div class="text-en" title="CC Electricity & Gas">CC Electricity & Gas</div><div class="value" title="=for_generator!G63" data-value-daily="=for_generator!G63" data-value-monthly="=for_generator!I63" data-diff-daily="=for_generator!L63" data-diff-monthly="=for_generator!M63">=for_generator!G63</div><div class="diff-value" title="前日比: =for_generator!L63" data-diff-daily="=for_generator!L63" data-diff-monthly="=for_generator!M63">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L63</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-fhyq3h-children"></button>
-      <ul id="node-fhyq3h-children" class="children">
+      <button class="toggle-btn" data-target="node-gvqnrz-children"></button>
+      <ul id="node-gvqnrz-children" class="children">
     <li>
-      <div class="node" id="node-90cswc">
-        <span class="node-text" title="契約UU" data-text-default="契約UU">契約UU</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-gmtrvo">
+        <span class="node-text" title="でんき" data-text-default="でんき">でんき</span><div class="text-en" title="Electricity bill">Electricity bill</div><div class="value" title="=for_generator!G64" data-value-daily="=for_generator!G64" data-value-monthly="=for_generator!I64" data-diff-daily="=for_generator!L64" data-diff-monthly="=for_generator!M64">=for_generator!G64</div><div class="diff-value" title="前日比: =for_generator!L64" data-diff-daily="=for_generator!L64" data-diff-monthly="=for_generator!M64">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L64</span>
+        </div>
       </div>
-    </li><li class="operator">×</li>
+    </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-xjtfs2">
-        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li>
-      </ul>
-    </li>
-    <li>
-      <div class="node" id="node-fh2wlo">
-        <span class="node-text" title="Coincheck Prime" data-text-default="Coincheck Prime">Coincheck Prime</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-      <button class="toggle-btn" data-target="node-fh2wlo-children"></button>
-      <ul id="node-fh2wlo-children" class="children">
-    <li>
-      <div class="node" id="node-oipk5m">
-        <span class="node-text" title="アセットロック" data-text-default="アセットロック">アセットロック</span><div class="value" title="1000" data-value-default="1000">1000</div>
-      </div>
-    </li><li class="operator">×</li>
-    <li>
-      <div class="node" id="node-emd3r0">
-        <span class="node-text" title="大口OTC" data-text-default="大口OTC">大口OTC</span><div class="value" title="1000" data-value-default="1000">1000</div>
+      <div class="node" id="node-s9qu09">
+        <span class="node-text" title="ガス" data-text-default="ガス">ガス</span><div class="text-en" title="Gas Bill">Gas Bill</div><div class="value" title="=for_generator!G65" data-value-daily="=for_generator!G65" data-value-monthly="=for_generator!I65" data-diff-daily="=for_generator!L65" data-diff-monthly="=for_generator!M65">=for_generator!G65</div><div class="diff-value" title="前日比: =for_generator!L65" data-diff-daily="=for_generator!L65" data-diff-monthly="=for_generator!M65">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">=for_generator!L65</span>
+        </div>
       </div>
     </li>
       </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-515lzn">
+        <span class="node-text" title="クロス取引" data-text-default="クロス取引">クロス取引</span><div class="text-en" title="Cross Trade">Cross Trade</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-vaq0zm">
+        <span class="node-text" title="IEOモニタリング" data-text-default="IEOモニタリング">IEOモニタリング</span><div class="text-en" title="Monitoring Earnings (IEO)">Monitoring Earnings (IEO)</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-8jxza8">
+        <span class="node-text" title="リスティングフィー" data-text-default="リスティングフィー">リスティングフィー</span><div class="text-en" title="Listing Fees">Listing Fees</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-bgiiky">
+        <span class="node-text" title="退会手数料収益" data-text-default="退会手数料収益">退会手数料収益</span><div class="text-en" title="Account Cancellation Fee">Account Cancellation Fee</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-qt68yy">
+        <span class="node-text" title="不明入金" data-text-default="不明入金">不明入金</span><div class="text-en" title="Monetization Of Unclaimed Deposits">Monetization Of Unclaimed Deposits</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-riljjb">
+        <span class="node-text" title="その他トレーディング損益" data-text-default="その他トレーディング損益">その他トレーディング損益</span><div class="text-en" title="Unrealized Gain (Loss) On Own Position">Unrealized Gain (Loss) On Own Position</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-9jpl93">
+        <span class="node-text" title="Binanceリベート" data-text-default="Binanceリベート">Binanceリベート</span><div class="text-en" title="Rebate">Rebate</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-m9mq">
+        <span class="node-text" title="雑収入・雑費" data-text-default="雑収入・雑費">雑収入・雑費</span><div class="text-en" title="Miscellaneous Income And Expenses">Miscellaneous Income And Expenses</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
     </li>
       </ul>
     </li>
@@ -908,7 +1972,12 @@ function kpiTreeInit() {
   
   // 取得した状態をツリーに適用（開閉状態の復元）
   console.log('ツリー状態を適用します');
-  applyTreeState(state);
+  // applyTreeState(state);
+  if (state && Object.keys(state).length > 0) {
+    applyTreeState(state); // 取得した状態があればそれを適用
+  } else {
+    initAllNodes(); // 状態がなければ初期展開（3段目まで）
+  }
   
   // トグルボタンの機能を設定
   setupToggleButtons();
@@ -999,18 +2068,167 @@ function addHighlightStyle() {
   document.head.appendChild(style);
 }
 
+
+/**
+ * ナビゲーションドロワーの初期化とイベント設定
+ */
+function setupNavigationDrawer() {
+  const menuToggle = document.getElementById('menu-toggle');
+  const drawer = document.getElementById('drawer-menu');
+  const overlay = document.getElementById('drawer-overlay');
+  const mainContent = document.querySelector('.main-content');
+  const drawerClose = document.getElementById('drawer-close');
+  
+  // 要素が見つからない場合のエラーハンドリング
+  if (!menuToggle || !drawer) {
+    console.error('ナビゲーションドロワーの必要な要素が見つかりません');
+    return;
+  }
+  
+  // オーバーレイ要素がない場合は作成
+  let overlayElement = overlay;
+  if (!overlayElement) {
+    console.log('オーバーレイ要素を作成します');
+    overlayElement = document.createElement('div');
+    overlayElement.id = 'drawer-overlay';
+    overlayElement.className = 'drawer-overlay';
+    document.body.appendChild(overlayElement);
+  }
+  
+  // ドロワーを開く関数
+  function openDrawer() {
+    drawer.classList.add('open');
+    menuToggle.classList.add('open');
+    overlay.classList.add('visible');
+    mainContent.classList.add('drawer-open');
+    
+    // ARIA属性を更新
+    menuToggle.setAttribute('aria-expanded', 'true');
+    drawer.setAttribute('aria-hidden', 'false');
+    
+    // メニューボタンのラベルを更新
+    menuToggle.setAttribute('aria-label', 'メニューを閉じる');
+    
+    console.log('ドロワーを開きました');
+  }
+  
+  // ドロワーを閉じる関数
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    menuToggle.classList.remove('open');
+    overlay.classList.remove('visible');
+    mainContent.classList.remove('drawer-open');
+    
+    // ARIA属性を更新
+    menuToggle.setAttribute('aria-expanded', 'false');
+    drawer.setAttribute('aria-hidden', 'true');
+    
+    // メニューボタンのラベルを更新
+    menuToggle.setAttribute('aria-label', 'メニューを開く');
+    
+    console.log('ドロワーを閉じました');
+  }
+  
+  // メニューボタンのクリックイベント
+  menuToggle.addEventListener('click', function() {
+    if (drawer.classList.contains('open')) {
+      closeDrawer();
+    } else {
+      openDrawer();
+    }
+  });
+  
+  // ドロワー内の閉じるボタンのクリックイベント
+  if (drawerClose) {
+    drawerClose.addEventListener('click', closeDrawer);
+  }
+  
+  // オーバーレイのクリックイベント
+  overlayElement.addEventListener('click', closeDrawer);
+  
+  // ESCキーでドロワーを閉じる
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && drawer.classList.contains('open')) {
+      closeDrawer();
+    }
+  });
+  
+  // ドロワー内に共有ボタンを配置
+  moveShareButtonToDrawer();
+  
+  console.log('ナビゲーションドロワーの初期化完了');
+}
+
+/**
+ * 共有ボタンをドロワー内に移動する関数
+ */
+function moveShareButtonToDrawer() {
+  const shareButton = document.getElementById('shareButton');
+  const drawerShareContainer = document.getElementById('drawer-share-btn-container');
+  
+  // 共有ボタンが存在する場合はドロワー内に移動
+  if (shareButton && drawerShareContainer) {
+    // 元の親要素からボタンを削除
+    if (shareButton.parentNode) {
+      shareButton.parentNode.removeChild(shareButton);
+    }
+    
+    // ドロワー内のコンテナに追加
+    drawerShareContainer.appendChild(shareButton);
+    
+    // ドロワー内での表示にふさわしいスタイルに調整
+    shareButton.style.width = '100%';
+    shareButton.style.marginTop = '8px';
+    
+    console.log('共有ボタンをドロワーに移動しました');
+  } else {
+    console.warn('共有ボタンまたはドロワー内コンテナが見つかりません');
+  }
+}
+
 /**
  * アプリケーションのエントリーポイント
  * DOM読み込み完了時に実行されるメイン処理
  */
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM読み込み完了、KPIツリー初期化開始');
+  // ページ読み込み完了時に実行される初期化処理
+  console.log('ページ読み込み完了');
+
+  // 共有ボタンの追加
+  addShareButton();
+  
+  // 日次/月次切り替えボタンの設定
+  setupViewModeToggle();
+
+  // ツリーの開閉ボタンの初期化
+  setupToggleButtons();
+  
+  // ナビゲーションドロワーの設定
+  setupNavigationDrawer();
+  
+  // 前日比・前月比の色を初期状態で適用
+  applyInitialDiffStyles();
+  
+  // 全ノードの値を更新
+  updateAllNodeValues();
+  
+  // 初回読み込み時に前日比・前月比の色を適用
+  applyInitialDiffStyles();
+  
+  // 初期データ読み込み完了を通知
+  document.dispatchEvent(new Event('kpi-tree-loaded'));
   
   // URL変更の監視を開始
   monitorUrlChanges();
   
   // KPIツリーの初期化処理を実行
   kpiTreeInit();
+  
+  // 初回読み込み時に前日比・前月比の色を適用
+  applyInitialDiffStyles();
+  
+  // 日次/月次切り替えボタンのイベントリスナーを設定
+  setupViewModeToggle();
   
   console.log('KPIツリーの初期化完了');
 });
@@ -1117,7 +2335,190 @@ function switchViewMode(mode) {
 }
 
 /**
- * 全てのノードの値とテキストを現在のモードに応じて更新
+ * 差分値に応じて適切なスタイルを適用する
+ * @param {HTMLElement} element - スタイルを適用する要素
+ * @param {string} diffValue - 差分値
+ */
+function updateDiffStyle(element, diffValue) {
+  // まず既存のスタイルクラスを削除
+  element.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+  
+  if (!diffValue) return;
+  
+  // 日次モードか月次モードかを判定
+  const isMonthly = element.textContent.includes('前月比');
+  
+  // 数値化する前に文字列を整形
+  let valueStr = diffValue.toString().trim();
+  // 「+」記号が付いているかチェック
+  const isPositive = valueStr.startsWith('+');
+  
+  // 付いている場合は削除して値を取り出す
+  if (isPositive) {
+    valueStr = valueStr.substring(1);
+  }
+  
+  // パーセント値を取り扱う場合
+  const isPercent = valueStr.endsWith('%');
+  if (isPercent) {
+    valueStr = valueStr.replace('%', '');
+  }
+  
+  // 数値化して比較
+  const numValue = parseFloat(valueStr);
+  
+  if (isNaN(numValue)) {
+    // 数値でない場合はデフォルトスタイル
+    element.classList.add('diff-neutral');
+    return;
+  }
+  
+  // 月次モードと日次モードで条件を変える
+  if (isMonthly) {
+    // 月次モード: 100%以上なら緑、100%未満なら赤
+    if (numValue >= 100) {
+      element.classList.add('diff-positive');
+    } else {
+      element.classList.add('diff-negative');
+    }
+  } else {
+    // 日次モード: プラス値は緑、マイナス値は赤
+    if (isPositive || numValue > 0) {
+      element.classList.add('diff-positive');
+    } else if (numValue < 0) {
+      element.classList.add('diff-negative');
+    } else {
+      element.classList.add('diff-neutral');
+    }
+  }
+}
+
+/**
+ * 日次/月次切り替えボタンのイベントリスナーを設定する
+ */
+function setupViewModeToggle() {
+  // ボタン要素を取得
+  const dailyBtn = document.getElementById('daily-mode-btn');
+  const monthlyBtn = document.getElementById('monthly-mode-btn');
+  const modeIndicator = document.querySelector('.mode-indicator');
+  
+  if (!dailyBtn || !monthlyBtn || !modeIndicator) {
+    console.error('表示モード切り替え要素が見つかりません:', {
+      dailyBtn: !!dailyBtn,
+      monthlyBtn: !!monthlyBtn,
+      modeIndicator: !!modeIndicator
+    });
+    return;
+  }
+  
+  // 初期化時に正しいモードを選択状態にする
+  if (window._viewMode === 'daily') {
+    // 日次モードの場合
+    modeIndicator.style.transform = 'translateX(0)';
+    dailyBtn.classList.add('active');
+    monthlyBtn.classList.remove('active');
+  } else if (window._viewMode === 'monthly') {
+    // 月次モードの場合
+    modeIndicator.style.transform = 'translateX(67px)';
+    dailyBtn.classList.remove('active');
+    monthlyBtn.classList.add('active');
+  }
+  
+  console.log('現在のモード:', window._viewMode);
+  
+  // 日次ボタンのクリックイベント
+  dailyBtn.addEventListener('click', function() {
+    console.log('日次モードに切り替え');
+    modeIndicator.style.transform = 'translateX(0)';
+    dailyBtn.classList.add('active');
+    monthlyBtn.classList.remove('active');
+    switchViewMode('daily');
+  });
+  
+  // 月次ボタンのクリックイベント
+  monthlyBtn.addEventListener('click', function() {
+    console.log('月次モードに切り替え');
+    modeIndicator.style.transform = 'translateX(67px)';
+    dailyBtn.classList.remove('active');
+    monthlyBtn.classList.add('active');
+    switchViewMode('monthly');
+  });
+  
+  console.log('表示モード切り替えリスナーを設定しました');
+}
+
+/**
+ * 初回ページ読み込み時に前日比・前月比の色を適用する
+ */
+function applyInitialDiffStyles() {
+  // 現在のモードをグローバル変数から取得
+  const currentMode = window._viewMode || 'daily';
+  console.log('ページ読み込み時の表示モード:', currentMode);
+  
+  // 全ての差分表示要素を取得
+  const diffElements = document.querySelectorAll('.diff-value');
+  
+  diffElements.forEach(element => {
+    // 初期化前に既存のクラスを削除
+    element.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+    
+    // データ属性から値を取得
+    const diffDaily = element.getAttribute('data-diff-daily');
+    const diffMonthly = element.getAttribute('data-diff-monthly');
+    
+    // HTML構造を修正
+    if (currentMode === 'daily' && diffDaily) {
+      // 数値変換
+      let numValue = parseFloat(diffDaily);
+      let displayValue = diffDaily;
+      
+      // プラスの値に「+」を付ける
+      if (numValue > 0 && !displayValue.toString().startsWith('+')) {
+        displayValue = '+' + displayValue;
+      }
+      
+      // HTML再構築
+      element.innerHTML = `
+        <span class="diff-label">前日比: </span>
+        <span class="diff-number">${displayValue}</span>
+      `;
+      
+      // スタイルクラスを適用
+      if (numValue > 0) {
+        element.classList.add('diff-positive');
+      } else if (numValue < 0) {
+        element.classList.add('diff-negative');
+      } else {
+        element.classList.add('diff-neutral');
+      }
+    } else if (currentMode === 'monthly' && diffMonthly) {
+      // パーセント削除して数値化
+      let displayValue = diffMonthly;
+      let numValue = parseFloat(displayValue.toString().replace('%', ''));
+      
+      // パーセントがない場合は付ける
+      if (!displayValue.toString().endsWith('%')) {
+        displayValue = displayValue + '%';
+      }
+      
+      // HTML再構築
+      element.innerHTML = `
+        <span class="diff-label">前月比: </span>
+        <span class="diff-number">${displayValue}</span>
+      `;
+      
+      // スタイルクラスを適用
+      if (numValue >= 100) {
+        element.classList.add('diff-positive');
+      } else {
+        element.classList.add('diff-negative');
+      }
+    }
+  });
+}
+
+/**
+ * 全てのノードの値を現在のモードに応じて更新
  */
 function updateAllNodeValues() {
   // 現在の表示モードを確認
@@ -1132,39 +2533,76 @@ function updateAllNodeValues() {
   let changedNodes = 0;
   let missingValueNodes = 0;
   let unchangedFixedNodes = 0;
-  let changedTextNodes = 0;
   
   allNodes.forEach((node, index) => {
-    // テキスト要素の更新
-    const textElement = node.querySelector('.node-text');
-    if (textElement) {
-      // 各モードのテキストを取得
-      const dailyText = textElement.getAttribute('data-text-daily');
-      const monthlyText = textElement.getAttribute('data-text-monthly');
-      const defaultText = textElement.getAttribute('data-text-default');
-      
-      // 切り替え可能な場合のみ変更
-      let newText = textElement.textContent;
-      if (dailyText && monthlyText) {
-        if (window._viewMode === 'daily') {
-          newText = dailyText;
-        } else if (window._viewMode === 'monthly') {
-          newText = monthlyText;
-        }
-        
-        // 変更があれば反映
-        if (textElement.textContent !== newText) {
-          textElement.textContent = newText;
-          changedTextNodes++;
-        }
-      }
-    }
-    
     // 値を表示する要素を取得
     const valueElement = node.querySelector('.value');
     if (!valueElement) {
       // console.log(`ノード#${index}: .value要素が見つかりません`);
       return;
+    }
+    
+    // 前日比・前月比の要素を取得
+    const diffElement = node.querySelector('.diff-value');
+    if (diffElement) {
+      // 表示モードに応じて差分表示を切り替え
+      const diffDaily = diffElement.getAttribute('data-diff-daily');
+      const diffMonthly = diffElement.getAttribute('data-diff-monthly');
+      
+      if (currentMode === 'daily' && diffDaily) {
+        // 日次モードの場合は前日比を表示
+        let displayValue = diffDaily;
+        // 数値に変換
+        let numValue = parseFloat(displayValue);
+        
+        // プラスの値には「+」を付けるようにする
+        if (numValue > 0 && !displayValue.toString().startsWith('+')) {
+          displayValue = '+' + displayValue;
+        }
+        
+        // HTMLを再構築
+        diffElement.innerHTML = `
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">${displayValue}</span>
+        `;
+        diffElement.setAttribute('title', `前日比: ${displayValue}`);
+        
+        // 親要素にスタイルクラスを適用
+        diffElement.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+        if (numValue > 0) {
+          diffElement.classList.add('diff-positive');
+        } else if (numValue < 0) {
+          diffElement.classList.add('diff-negative');
+        } else {
+          diffElement.classList.add('diff-neutral');
+        }
+        
+      } else if (currentMode === 'monthly' && diffMonthly) {
+        // 月次モードの場合は前月比を表示
+        let displayValue = diffMonthly;
+        // パーセント文字を削除して数値化
+        let numValue = parseFloat(displayValue.toString().replace('%', ''));
+        
+        // パーセントがない場合は付ける
+        if (!displayValue.toString().endsWith('%')) {
+          displayValue = displayValue + '%';
+        }
+        
+        // HTMLを再構築
+        diffElement.innerHTML = `
+          <span class="diff-label">前月比: </span>
+          <span class="diff-number">${displayValue}</span>
+        `;
+        diffElement.setAttribute('title', `前月比: ${displayValue}`);
+        
+        // 100%を基準に色分け
+        diffElement.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+        if (numValue >= 100) {
+          diffElement.classList.add('diff-positive');
+        } else {
+          diffElement.classList.add('diff-negative');
+        }
+      }
     }
     
     // 各モードの値を取得 - .value要素から直接取得するように修正
@@ -1216,7 +2654,7 @@ function updateAllNodeValues() {
     }
   });
   
-  console.log(`値の更新完了: ${changedNodes}個の値を更新、${changedTextNodes}個のテキストを更新、${missingValueNodes}個のノードに属性なし、${unchangedFixedNodes}個は固定値`);
+  console.log(`値の更新完了: ${changedNodes}個のノードを更新、${missingValueNodes}個のノードに属性なし、${unchangedFixedNodes}個は固定値`);
 }
 
 
@@ -1310,7 +2748,6 @@ function loadTreeState() {
  * ツリー全体を展開状態に戻します
  */
 function resetAllNodes() {
-  // すべての子ノードを展開状態に設定
   document.querySelectorAll('.children').forEach(function(child) {
     child.classList.remove('collapsed');
   });
@@ -1319,6 +2756,49 @@ function resetAllNodes() {
   document.querySelectorAll('.toggle-btn').forEach(function(button) {
     button.classList.remove('collapsed');
   });
+}
+
+/**
+ * ノードの開閉状態を初期化（3階層目まで展開、それ以降は折りたたみ）
+ */
+function initAllNodes() {
+  document.querySelectorAll('.children').forEach(function(child) {
+    const depth = getNodeDepth(child);
+
+    const toggleBtn = document.querySelector('.toggle-btn[data-target="' + child.id + '"]');
+    if (depth <= 2) {
+      child.classList.remove('collapsed');
+      if (toggleBtn) toggleBtn.classList.remove('collapsed');
+    } else {
+      child.classList.add('collapsed');
+      if (toggleBtn) toggleBtn.classList.add('collapsed');
+    }
+  });
+}
+
+/**
+ * 指定されたノード (.children) の階層レベル（深さ）を取得
+ * これは、親要素が .node を持つ回数で判定することで、
+ * 視覚的に「親→子→孫→ひ孫…」の何段目かを返します。
+ *
+ * @param {HTMLElement} element - .children UL要素
+ * @returns {number} - ノードの階層の深さ（1階層目から始まる）
+ */
+function getNodeDepth(element) {
+  let depth = 0;
+  let current = element;
+
+  while (current && current !== document.body) {
+    if (current.classList.contains('children')) {
+      const parentLi = current.closest('li');
+      if (parentLi && parentLi.querySelector('.node')) {
+        depth++;
+      }
+    }
+    current = current.parentElement;
+  }
+
+  return depth;
 }
 
 /**
@@ -1934,7 +3414,7 @@ function addShareButton() {
   // ボタンスタイルの設定
   Object.assign(shareButton.style, {
     padding: '8px 15px',
-    backgroundColor: '#4285F4',
+    backgroundColor: '#09BA85',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -1947,10 +3427,10 @@ function addShareButton() {
   
   // ホバー効果
   shareButton.onmouseover = function() {
-    this.style.backgroundColor = '#3367D6'; // 濃い青
+    this.style.backgroundColor = '#078e66'; // 濃い緑
   };
   shareButton.onmouseout = function() {
-    this.style.backgroundColor = '#4285F4'; // 元の青
+    this.style.backgroundColor = '#09BA85'; // 元の緑
   };
   
   // ツールチップ要素の作成
@@ -1987,42 +3467,8 @@ function addShareButton() {
     copyToClipboard();
   };
   
-  // 日次/月次切り替えトグルを作成
-  var timePeriodControl = document.createElement('div');
-  timePeriodControl.className = 'time-period-control';
-  
-  var toggleSwitch = document.createElement('div');
-  toggleSwitch.className = 'toggle-switch';
-  
-  // 日次オプション
-  var dailyOption = document.createElement('div');
-  dailyOption.className = 'toggle-option daily active';
-  dailyOption.textContent = '日次';
-  dailyOption.onclick = function() {
-    switchViewMode('daily');
-  };
-  
-  // 月次オプション
-  var monthlyOption = document.createElement('div');
-  monthlyOption.className = 'toggle-option monthly';
-  monthlyOption.textContent = '月次';
-  monthlyOption.onclick = function() {
-    switchViewMode('monthly');
-  };
-  
-  // スライダー
-  var toggleSlider = document.createElement('div');
-  toggleSlider.className = 'toggle-slider';
-  
-  // トグル要素を組み立てる
-  toggleSwitch.appendChild(dailyOption);
-  toggleSwitch.appendChild(monthlyOption);
-  toggleSwitch.appendChild(toggleSlider);
-  timePeriodControl.appendChild(toggleSwitch);
-  
-  // DOMに追加
+  // 共有ボタンのみ追加（日次/月次切り替えは削除）
   shareDiv.appendChild(shareButton);
-  shareDiv.appendChild(timePeriodControl);
   document.body.appendChild(shareDiv);
 }
 
@@ -2406,7 +3852,610 @@ function addHighlightStyle() {
 }
 
 
+// calendar.js
+/**
+ * カレンダーUI機能
+ * 日付をクリックすると該当日付のHTMLにリンク
+ * データがある日付には緑のマーカーを表示
+ */
+document.addEventListener('DOMContentLoaded', function() {
+  // リンク修正関数 - 再利用可能なユーティリティ関数
+  function fixOldLinks(delay) {
+    setTimeout(function() {
+      // 可能な限り多くのパターンを対象にする広範なセレクタ
+      // カレンダー内の全てのリンクを対象に
+      const allLinks = document.querySelectorAll('a');
+      console.log(`リンク修正処理[${delay}ms]: 全てのリンクをチェックします (${allLinks.length}個)`);
+      
+      let fixedCount = 0;
+      
+      allLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        // リンクがない場合やreportsを既に含むものはスキップ
+        if (!href || href.includes('/reports/')) {
+          return;
+        }
+        
+        // GCSやkpi-tree-dataを含むリンクを検出
+        if (href.includes('storage.googleapis.com') || href.includes('kpi-tree-data')) {
+          fixedCount++;
+          console.log(`修正対象リンク: ${href}`);
+          
+          // 両方の日付形式 (YYYY-MM-DD と YYYYMMDD) を検出する強化された正規表現
+          const dateMatch = href.match(/\d{4}-\d{2}-\d{2}|\d{8}/);
+          if (dateMatch) {
+            let formattedDate = dateMatch[0];
+            
+            // YYYY-MM-DD 形式の場合、YYYYMMDD形式に変換
+            if (formattedDate.includes('-')) {
+              const dateParts = formattedDate.split('-');
+              formattedDate = dateParts.join('');
+            }
+            
+            console.log(`検出した日付: ${dateMatch[0]}, 変換後: ${formattedDate}`);
+            
+            // ベースURLを取得
+            let baseUrlForLinks = window.PUBLIC_URL || '';
+            console.log(`PUBLIC_URL: ${baseUrlForLinks}`);
+            baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, ''); // 末尾のファイル名を削除
+            console.log(`ベースURL: ${baseUrlForLinks}`);
+            
+            // 新しいリンク形式
+            let newUrl = '';
+            if (baseUrlForLinks) {
+              if (baseUrlForLinks.endsWith('/')) {
+                newUrl = `${baseUrlForLinks}reports/${formattedDate}.html`;
+              } else {
+                newUrl = `${baseUrlForLinks}/reports/${formattedDate}.html`;
+              }
+            } else {
+              // フォールバック
+              newUrl = `/reports/${formattedDate}.html`;
+            }
+            
+            link.setAttribute('href', newUrl);
+            console.log(`リンク修正: ${href} → ${newUrl}`);
+          } else {
+            console.log(`日付パターンが見つからないリンク: ${href}`);
+          }
+        }
+      });
+      
+      console.log(`修正完了: ${fixedCount}個のリンクを処理しました`);
+      
+      // カレンダー内のリンクが存在し、修正対象があった場合は別のアプローチも適用
+      if (document.querySelector('.calendar-day a') && fixedCount === 0) {
+        // 直接カレンダー内のすべてのリンクを修正
+        console.log('カレンダー内のリンクを直接修正します');
+        const calendarLinks = document.querySelectorAll('.calendar-day a');
+        
+        calendarLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          // GCSのURLかどうかをチェック
+          if (href && href.includes('storage.googleapis.com')) {
+            // 日付を検出
+            const month = currentMonth + 1;
+            const day = link.textContent.trim();
+            if (day && !isNaN(parseInt(day))) {
+              // 日付を整形
+              const dateForUrl = `${currentYear}${String(month).padStart(2, '0')}${String(parseInt(day)).padStart(2, '0')}`;
+              
+              // 新しいURLを生成
+              let baseUrlForLinks = window.PUBLIC_URL || '';
+              baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, '');
+              
+              let newUrl = '';
+              if (baseUrlForLinks) {
+                if (baseUrlForLinks.endsWith('/')) {
+                  newUrl = `${baseUrlForLinks}reports/${dateForUrl}.html`;
+                } else {
+                  newUrl = `${baseUrlForLinks}/reports/${dateForUrl}.html`;
+                }
+              } else {
+                newUrl = `/reports/${dateForUrl}.html`;
+              }
+              
+              link.setAttribute('href', newUrl);
+              console.log(`カレンダーリンク修正: ${href} → ${newUrl}`);
+            }
+          }
+        });
+      }
+    }, delay || 0);
+  }
+  
+  // 初回のリンク修正（ページロード直後）
+  fixOldLinks(100);
+  
+  // 第2回のリンク修正（少し待ってから）
+  fixOldLinks(500);
+  
+  // カレンダー要素
+  const prevMonthBtn = document.getElementById('prev-month');
+  const nextMonthBtn = document.getElementById('next-month');
+  const currentMonthEl = document.getElementById('current-month');
+  const calendarDaysEl = document.getElementById('calendar-days');
+  
+  // 現在の日付
+  let currentDate = new Date();
+  let currentMonth = currentDate.getMonth();
+  let currentYear = currentDate.getFullYear();
+  
+  // 月の名前（日本語）
+  const monthNames = [
+    '1月', '2月', '3月', '4月', '5月', '6月',
+    '7月', '8月', '9月', '10月', '11月', '12月'
+  ];
+  
+  // データがある日付の配列
+  let datesWithData = [];
+  // データの期間の境界（最小日付と最大日付）
+  let minDate = null;
+  let maxDate = null;
+  // ベースURL（YAMLから取得）
+  let baseUrl = '';
+  
+  // 日付を文字列からDateオブジェクトに変換する関数
+  function parseDate(dateString) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  
+  // 日付をYYYYMMDD形式の文字列に変換する関数
+  function formatDateYYYYMMDD(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+  }
+  
+  // 日付がデータがある日付かどうかをチェック
+  function hasDataForDate(year, month, day) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return datesWithData.includes(dateStr);
+  }
+  
+  // 日付がデータ期間内かどうかをチェック
+  function isDateInRange(year, month) {
+    if (!minDate || !maxDate) return true;
+    
+    const checkDate = new Date(year, month, 1);
+    const checkMonthEnd = new Date(year, month + 1, 0);
+    
+    return (
+      (checkDate >= new Date(minDate.getFullYear(), minDate.getMonth(), 1)) &&
+      (checkMonthEnd <= new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0))
+    );
+  }
+  
+  // YAMLからのベースURLとJSONからの日付データを取得
+  function fetchCalendarData() {
+    // baseURLをページのグローバル変数から取得
+    if (window.PUBLIC_URL) {
+      baseUrl = window.PUBLIC_URL;
+      baseUrl = baseUrl.replace(/\/[^\/]*\.html$/, ''); // 末尾のHTML名を削除
+    }
+    
+    // 日付データをJSONファイルから取得
+    // フォールバックとして空のデータを使用
+    const fallbackData = {
+      datesWithData: []
+    };
+    
+    // データ処理関数
+    function processJsonData(data) {
+      if (data && Array.isArray(data.datesWithData)) {
+        // 日付データを保存
+        datesWithData = data.datesWithData;
+        
+        // 最小日付と最大日付を取得
+        if (datesWithData.length > 0) {
+          // 日付を昇順でソート
+          datesWithData.sort();
+          minDate = parseDate(datesWithData[0]);
+          maxDate = parseDate(datesWithData[datesWithData.length - 1]);
+          
+          console.log('日付範囲:', minDate, maxDate);
+          
+          // 現在の表示月を、最小日付と最大日付の間にある今日の月、
+          // または単に最小日付の月に設定
+          const today = new Date();
+          if (
+            today >= new Date(minDate.getFullYear(), minDate.getMonth(), 1) &&
+            today <= new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0)
+          ) {
+            currentMonth = today.getMonth();
+            currentYear = today.getFullYear();
+          } else {
+            currentMonth = minDate.getMonth();
+            currentYear = minDate.getFullYear();
+          }
+          
+          // ボタンの有効/無効を更新
+          updateNavigationButtons();
+          // カレンダーを描画
+          renderCalendar();
+        }
+      }
+    }
+    
+    // 検索パス
+    // public_urlに基づいて外部カレンダーデータのURLを生成
+    let externalCalendarUrl = '';
+    if (baseUrl) {
+      const baseUrlWithoutFile = baseUrl.replace(/\/[^\/]*\.html$/, '');
+      if (baseUrlWithoutFile.endsWith('/')) {
+        externalCalendarUrl = `${baseUrlWithoutFile}static/calendar-data.json`;
+      } else {
+        externalCalendarUrl = `${baseUrlWithoutFile}/static/calendar-data.json`;
+      }
+    }
+    
+    // ローカルバックアップパス
+    const localPaths = [
+      './static/calendar-data.json',
+      '/static/calendar-data.json',
+      'calendar-data.json'
+    ];
+    
+    // キャッシュを回避するためのタイムスタンプパラメータを追加
+    const timestamp = new Date().getTime();
+    const urlWithCache = externalCalendarUrl ? `${externalCalendarUrl}?t=${timestamp}` : '';
+    
+    // まず外部URLから取得を試みる（URLが設定されている場合）
+    const initialFetch = externalCalendarUrl 
+      ? fetch(urlWithCache)
+      : Promise.reject(new Error('外部URLが設定されていません'));
+      
+    // 外部URLから取得を試みる、失敗したらローカルパスを試す
+    initialFetch
+      .catch(() => {
+        console.warn('外部URLからのカレンダーデータ取得に失敗しました。ローカルのパスを試します。');
+        // 外部URLから失敗した場合、ローカルのパスを順に試す
+        return fetch(localPaths[0])
+          .catch(() => fetch(localPaths[1]))
+          .catch(() => fetch(localPaths[2]))
+          .catch(() => {
+            console.warn('すべてのパスでカレンダーデータの取得に失敗しました。フォールバックデータを使用します。');
+            // 全てのパスで失敗した場合はフォールバックを返す
+            return { 
+              ok: true,
+              json: () => Promise.resolve(fallbackData)
+            };
+          });
+      })
+      .then(response => {
+        if (!response.ok && response.ok !== undefined) {
+          console.error('応答が正しくありません');
+          return Promise.resolve(fallbackData);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('カレンダーデータを取得しました', data);
+        // 空のJSONファイルの場合も適切に処理
+        if (!data || !data.datesWithData || !Array.isArray(data.datesWithData)) {
+          console.warn('カレンダーデータが正しい形式ではありません。空のデータを使用します。');
+          return processJsonData(fallbackData);
+        }
+        processJsonData(data);
+      })
+      .catch(error => {
+        console.error('日付データの読み込みエラー:', error);
+        // エラー時はフォールバックデータを使用
+        processJsonData(fallbackData);
+      });
+  }
+  
+  // ナビゲーションボタンの表示/非表示を更新
+  function updateNavigationButtons() {
+    if (minDate && maxDate) {
+      // 前月ボタンを制御
+      const prevMonth = new Date(currentYear, currentMonth - 1, 1);
+      const canGoToPrevMonth = prevMonth >= new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+      
+      // 次月ボタンを制御
+      const nextMonth = new Date(currentYear, currentMonth + 1, 1);
+      const canGoToNextMonth = nextMonth <= new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+      
+      // ボタンの表示/非表示を切り替え
+      prevMonthBtn.style.visibility = canGoToPrevMonth ? 'visible' : 'hidden';
+      nextMonthBtn.style.visibility = canGoToNextMonth ? 'visible' : 'hidden';
+    }
+  }
+  
+  // 前月ボタン
+  prevMonthBtn.addEventListener('click', function() {
+    if (this.disabled) return;
+    
+    currentMonth--;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+    
+    updateNavigationButtons();
+    renderCalendar();
+  });
+  
+  // 翌月ボタン
+  nextMonthBtn.addEventListener('click', function() {
+    if (this.disabled) return;
+    
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    
+    updateNavigationButtons();
+    renderCalendar();
+  });
+  
+  // カレンダー描画関数
+  function renderCalendar() {
+    // 月表示の更新
+    currentMonthEl.textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
+    
+    // カレンダーをクリア
+    calendarDaysEl.innerHTML = '';
+    
+    // 月初めの日
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    // 月末の日
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    
+    // 前月の最終日
+    const prevLastDay = new Date(currentYear, currentMonth, 0);
+    const prevDays = prevLastDay.getDate();
+    
+    // 月初めの曜日（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
+    const firstDayIndex = firstDay.getDay();
+    
+    // 月末の曜日
+    const lastDayIndex = lastDay.getDay();
+    
+    // 翌月の日数（カレンダーの最後の行を埋めるため）
+    const nextDays = 7 - lastDayIndex - 1;
+    
+    // 今日の日付
+    const today = new Date();
+    
+    // 前月の日を表示
+    for (let x = firstDayIndex; x > 0; x--) {
+      const day = prevDays - x + 1;
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day other-month';
+      dayEl.textContent = day;
+      calendarDaysEl.appendChild(dayEl);
+    }
+    
+    // 当月の日を表示
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day';
+      
+      // データがある日付にはマーカーを表示
+      if (hasDataForDate(currentYear, currentMonth, i)) {
+        dayEl.classList.add('has-data');
+      }
+      
+      // 今日の日付にはスタイルを適用
+      if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+        dayEl.classList.add('today');
+      }
+      
+      // 日付ごとのリンクを作成
+      const dateLink = document.createElement('a');
+      // YYYY-MM-DD 形式
+      const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      // YYYYMMDD形式（URLパス用）
+      const dateForUrl = formatDateYYYYMMDD(new Date(currentYear, currentMonth, i));
+      
+      // リンク先を生成（YAMLのpublic_urlに基づく）
+      let reportUrl = '';
+      if (baseUrl) {
+        // baseUrlからindex.htmlなどのファイル名を削除
+        const baseUrlWithoutFile = baseUrl.replace(/\/[^\/]*\.html$/, '');
+        
+        // reports/YYYYMMDD.html 形式のURLを生成
+        if (baseUrlWithoutFile.endsWith('/')) {
+          reportUrl = `${baseUrlWithoutFile}reports/${dateForUrl}.html`;
+        } else {
+          reportUrl = `${baseUrlWithoutFile}/reports/${dateForUrl}.html`;
+        }
+      } else {
+        // フォールバック
+        reportUrl = `/reports/${dateForUrl}.html`;
+      }
+      
+      // すべての日付に対してリンクを有効にする
+      dateLink.href = reportUrl;
+      dateLink.title = `${formattedDate}のレポートを表示`;
+      
+      // データがある日付には特別なクラスを追加（スタイリング用）
+      if (hasDataForDate(currentYear, currentMonth, i)) {
+        dateLink.classList.add('has-data');
+      }
+      
+      dateLink.textContent = i;
+      dayEl.appendChild(dateLink);
+      calendarDaysEl.appendChild(dayEl);
+    }
+    
+    // 翌月の日を表示
+    for (let j = 1; j <= nextDays; j++) {
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day other-month';
+      dayEl.textContent = j;
+      calendarDaysEl.appendChild(dayEl);
+    }
+  }
+  
+  // 初期データの読み込みとカレンダー描画
+  fetchCalendarData();
+  
+  // カレンダー描画時のフック関数を上書き
+  const originalRenderCalendar = renderCalendar;
+  renderCalendar = function() {
+    // 元の描画関数を呼び出し
+    originalRenderCalendar.apply(this, arguments);
+    
+    // カレンダー描画後にリンク修正を実行（遅延付き）
+    console.log('カレンダー描画後のリンク修正をスケジュール');
+    fixOldLinks(50);  // カレンダー描画直後
+    fixOldLinks(300); // 少し待ってから
+  };
+  
+  //月切り替えボタンのクリック時にも修正を適用
+  const originalPrevMonthClick = prevMonthBtn.onclick || function(){};
+  prevMonthBtn.onclick = function(e) {
+    originalPrevMonthClick.call(this, e);
+    fixOldLinks(100);
+  };
+  
+  const originalNextMonthClick = nextMonthBtn.onclick || function(){};
+  nextMonthBtn.onclick = function(e) {
+    originalNextMonthClick.call(this, e);
+    fixOldLinks(100);
+  };
+});
+
+
+
 </script>
+  
+  <!-- カレンダースクリプト（内包化） -->
+  <script>
+  /**
+   * カレンダーUI機能
+   * 日付をクリックすると該当日付のHTMLにリンク
+   */
+  document.addEventListener('DOMContentLoaded', function() {
+    // カレンダー要素
+    const prevMonthBtn = document.getElementById('prev-month');
+    const nextMonthBtn = document.getElementById('next-month');
+    const currentMonthEl = document.getElementById('current-month');
+    const calendarDaysEl = document.getElementById('calendar-days');
+    
+    // 現在の日付
+    let currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+    
+    // 月の名前（日本語）
+    const monthNames = [
+      '1月', '2月', '3月', '4月', '5月', '6月',
+      '7月', '8月', '9月', '10月', '11月', '12月'
+    ];
+    
+    // 前月ボタン
+    prevMonthBtn.addEventListener('click', function() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar();
+    });
+    
+    // 翌月ボタン
+    nextMonthBtn.addEventListener('click', function() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar();
+    });
+    
+    // カレンダー描画関数
+    function renderCalendar() {
+      // 月表示の更新
+      currentMonthEl.textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
+      
+      // カレンダーをクリア
+      calendarDaysEl.innerHTML = '';
+      
+      // 月初めの日
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      // 月末の日
+      const lastDay = new Date(currentYear, currentMonth + 1, 0);
+      
+      // 前月の最終日
+      const prevLastDay = new Date(currentYear, currentMonth, 0);
+      const prevDays = prevLastDay.getDate();
+      
+      // 月初めの曜日（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
+      // 月曜始まりに調整（日曜日の場合は6、それ以外は前日-1）
+      const firstDayIndex = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+      
+      // 月末の曜日（月曜始まりに調整）
+      const lastDayIndex = lastDay.getDay() === 0 ? 6 : lastDay.getDay() - 1;
+      
+      // 翌月の日数（カレンダーの最後の行を埋めるため）
+      const nextDays = 7 - lastDayIndex - 1;
+      
+      // 今日の日付
+      const today = new Date();
+      
+      // データがある日（仮のダミーデータ）
+      const hasDataDays = [5, 10, 15, 20, 25];
+      
+      // 前月の日を表示
+      for (let x = firstDayIndex; x > 0; x--) {
+        const day = prevDays - x + 1;
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day other-month';
+        dayEl.textContent = day;
+        calendarDaysEl.appendChild(dayEl);
+      }
+      
+      // 当月の日を表示
+      for (let i = 1; i <= lastDay.getDate(); i++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        
+        // データがある日付にはマーカーを表示
+        if (hasDataDays.includes(i)) {
+          dayEl.classList.add('has-data');
+        }
+        
+        // 今日の日付にはスタイルを適用
+        if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+          dayEl.classList.add('today');
+        }
+        
+        // 日付ごとのリンクを作成（ダミーURL）
+        const dateLink = document.createElement('a');
+        // YYYY-MM-DD 形式
+        const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        // GCSのダミーURL
+        dateLink.href = `https://storage.googleapis.com/kpi-tree-data/${formattedDate}.html`;
+        dateLink.textContent = i;
+        
+        // 実際のデータがあるかどうかを確認してスタイルを適用（この例ではランダム）
+        if (Math.random() > 0.7) {
+          dayEl.classList.add('has-data');
+        }
+        
+        dayEl.appendChild(dateLink);
+        calendarDaysEl.appendChild(dayEl);
+      }
+      
+      // 翌月の日を表示
+      for (let j = 1; j <= nextDays; j++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day other-month';
+        dayEl.textContent = j;
+        calendarDaysEl.appendChild(dayEl);
+      }
+    }
+    
+    // 初期カレンダーを描画
+    renderCalendar();
+  });
+  </script>
 
 </body>
 </html>

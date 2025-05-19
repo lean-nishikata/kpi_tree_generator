@@ -4,43 +4,116 @@
  * データがある日付には緑のマーカーを表示
  */
 document.addEventListener('DOMContentLoaded', function() {
-  // 既存リンクの修正処理（遅延実行してレンダリング後に適用）
-  setTimeout(function() {
-    const oldLinks = document.querySelectorAll('a[href*="kpi-tree-data/2025-"]');
-    console.log('値修正処理中: 古い形式のリンクを探して修正します', oldLinks.length);
-    
-    oldLinks.forEach(link => {
-      const href = link.getAttribute('href');
-      if (href && href.includes('/kpi-tree-data/') && !href.includes('/reports/')) {
-        const dateMatch = href.match(/\d{4}-\d{2}-\d{2}/);
-        if (dateMatch) {
-          const date = dateMatch[0];
-          const dateParts = date.split('-');
-          const formattedDate = dateParts.join('');
-          
-          // ベースURLからリンクを生成（public_urlに基づく）
-          let baseUrlForLinks = window.PUBLIC_URL || '';
-          baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, ''); // 末尾のファイル名を削除
-          
-          // 新しいリンク形式
-          let newUrl = '';
-          if (baseUrlForLinks) {
-            if (baseUrlForLinks.endsWith('/')) {
-              newUrl = `${baseUrlForLinks}reports/${formattedDate}.html`;
-            } else {
-              newUrl = `${baseUrlForLinks}/reports/${formattedDate}.html`;
-            }
-          } else {
-            // フォールバック
-            newUrl = `/reports/${formattedDate}.html`;
-          }
-          
-          link.setAttribute('href', newUrl);
-          console.log(`リンク修正: ${href} → ${newUrl}`);
+  // リンク修正関数 - 再利用可能なユーティリティ関数
+  function fixOldLinks(delay) {
+    setTimeout(function() {
+      // 可能な限り多くのパターンを対象にする広範なセレクタ
+      // カレンダー内の全てのリンクを対象に
+      const allLinks = document.querySelectorAll('a');
+      console.log(`リンク修正処理[${delay}ms]: 全てのリンクをチェックします (${allLinks.length}個)`);
+      
+      let fixedCount = 0;
+      
+      allLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        // リンクがない場合やreportsを既に含むものはスキップ
+        if (!href || href.includes('/reports/')) {
+          return;
         }
+        
+        // GCSやkpi-tree-dataを含むリンクを検出
+        if (href.includes('storage.googleapis.com') || href.includes('kpi-tree-data')) {
+          fixedCount++;
+          console.log(`修正対象リンク: ${href}`);
+          
+          // 両方の日付形式 (YYYY-MM-DD と YYYYMMDD) を検出する強化された正規表現
+          const dateMatch = href.match(/\d{4}-\d{2}-\d{2}|\d{8}/);
+          if (dateMatch) {
+            let formattedDate = dateMatch[0];
+            
+            // YYYY-MM-DD 形式の場合、YYYYMMDD形式に変換
+            if (formattedDate.includes('-')) {
+              const dateParts = formattedDate.split('-');
+              formattedDate = dateParts.join('');
+            }
+            
+            console.log(`検出した日付: ${dateMatch[0]}, 変換後: ${formattedDate}`);
+            
+            // ベースURLを取得
+            let baseUrlForLinks = window.PUBLIC_URL || '';
+            console.log(`PUBLIC_URL: ${baseUrlForLinks}`);
+            baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, ''); // 末尾のファイル名を削除
+            console.log(`ベースURL: ${baseUrlForLinks}`);
+            
+            // 新しいリンク形式
+            let newUrl = '';
+            if (baseUrlForLinks) {
+              if (baseUrlForLinks.endsWith('/')) {
+                newUrl = `${baseUrlForLinks}reports/${formattedDate}.html`;
+              } else {
+                newUrl = `${baseUrlForLinks}/reports/${formattedDate}.html`;
+              }
+            } else {
+              // フォールバック
+              newUrl = `/reports/${formattedDate}.html`;
+            }
+            
+            link.setAttribute('href', newUrl);
+            console.log(`リンク修正: ${href} → ${newUrl}`);
+          } else {
+            console.log(`日付パターンが見つからないリンク: ${href}`);
+          }
+        }
+      });
+      
+      console.log(`修正完了: ${fixedCount}個のリンクを処理しました`);
+      
+      // カレンダー内のリンクが存在し、修正対象があった場合は別のアプローチも適用
+      if (document.querySelector('.calendar-day a') && fixedCount === 0) {
+        // 直接カレンダー内のすべてのリンクを修正
+        console.log('カレンダー内のリンクを直接修正します');
+        const calendarLinks = document.querySelectorAll('.calendar-day a');
+        
+        calendarLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          // GCSのURLかどうかをチェック
+          if (href && href.includes('storage.googleapis.com')) {
+            // 日付を検出
+            const month = currentMonth + 1;
+            const day = link.textContent.trim();
+            if (day && !isNaN(parseInt(day))) {
+              // 日付を整形
+              const dateForUrl = `${currentYear}${String(month).padStart(2, '0')}${String(parseInt(day)).padStart(2, '0')}`;
+              
+              // 新しいURLを生成
+              let baseUrlForLinks = window.PUBLIC_URL || '';
+              baseUrlForLinks = baseUrlForLinks.replace(/\/[^\/]*\.html$/, '');
+              
+              let newUrl = '';
+              if (baseUrlForLinks) {
+                if (baseUrlForLinks.endsWith('/')) {
+                  newUrl = `${baseUrlForLinks}reports/${dateForUrl}.html`;
+                } else {
+                  newUrl = `${baseUrlForLinks}/reports/${dateForUrl}.html`;
+                }
+              } else {
+                newUrl = `/reports/${dateForUrl}.html`;
+              }
+              
+              link.setAttribute('href', newUrl);
+              console.log(`カレンダーリンク修正: ${href} → ${newUrl}`);
+            }
+          }
+        });
       }
-    });
-  }, 500);
+    }, delay || 0);
+  }
+  
+  // 初回のリンク修正（ページロード直後）
+  fixOldLinks(100);
+  
+  // 第2回のリンク修正（少し待ってから）
+  fixOldLinks(500);
   
   // カレンダー要素
   const prevMonthBtn = document.getElementById('prev-month');
@@ -366,5 +439,30 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 初期データの読み込みとカレンダー描画
   fetchCalendarData();
+  
+  // カレンダー描画時のフック関数を上書き
+  const originalRenderCalendar = renderCalendar;
+  renderCalendar = function() {
+    // 元の描画関数を呼び出し
+    originalRenderCalendar.apply(this, arguments);
+    
+    // カレンダー描画後にリンク修正を実行（遅延付き）
+    console.log('カレンダー描画後のリンク修正をスケジュール');
+    fixOldLinks(50);  // カレンダー描画直後
+    fixOldLinks(300); // 少し待ってから
+  };
+  
+  //月切り替えボタンのクリック時にも修正を適用
+  const originalPrevMonthClick = prevMonthBtn.onclick || function(){};
+  prevMonthBtn.onclick = function(e) {
+    originalPrevMonthClick.call(this, e);
+    fixOldLinks(100);
+  };
+  
+  const originalNextMonthClick = nextMonthBtn.onclick || function(){};
+  nextMonthBtn.onclick = function(e) {
+    originalNextMonthClick.call(this, e);
+    fixOldLinks(100);
+  };
 });
 
