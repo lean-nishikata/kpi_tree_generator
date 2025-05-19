@@ -741,8 +741,9 @@ h1 {
 }
 
 .calendar-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .calendar-btn:hover:not(:disabled) {
@@ -885,7 +886,7 @@ h1 {
   font-weight: bold;
 }
 
-.calendar-day a.has-data::after {
+.calendar-day.has-data::after {
   content: "";
   position: absolute;
   bottom: 4px;
@@ -895,7 +896,14 @@ h1 {
   height: 8px;
   border-radius: 50%;
   background-color: #4caf50; /* 緑色のマーカー */
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3); /* 影を追加して目立たせる */
+}
+
+/* 現在表示しているページの日付を強調表示 */
+.calendar-day.current-page-date {
+  background-color: #8bc34a; /* 薄い緑 */
+  font-weight: bold;
+  border: 2px solid #4caf50; /* 濃い緑のボーダー */
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
 }
 
 .calendar-day a {
@@ -906,14 +914,10 @@ h1 {
   color: inherit;
 }
 
-.calendar-day .no-data {
+.calendar-day a.no-data {
   cursor: default;
   color: #999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  text-decoration: line-through;
   opacity: 0.6;
 }
 
