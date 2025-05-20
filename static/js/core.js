@@ -737,18 +737,11 @@ function updateAllNodeValues() {
           displayValue = displayValue + '%';
         }
         
-        // プラスの値には「+」を、マイナスの値には「-」を付けるようにする
+        // プラスの値には「+」を付けるようにする
         if (numValue > 100 && !displayValue.toString().startsWith('+')) {
           displayValue = '+' + displayValue;
-        } else if (numValue < 100 && !displayValue.toString().startsWith('-')) {
-          // パーセント値を一時的に取り外す
-          let tempValue = displayValue;
-          if (tempValue.endsWith('%')) {
-            tempValue = tempValue.slice(0, -1);
-          }
-          // マイナス記号を追加して再度パーセント記号を付ける
-          displayValue = '-' + tempValue + '%';
         }
+        // 100%未満の場合はマイナス記号を付けない（そのまま表示）
         
         // HTMLを再構築
         diffElement.innerHTML = `
@@ -813,6 +806,46 @@ function updateAllNodeValues() {
     if (oldValue !== newValue) {
       valueElement.textContent = newValue;
       changedNodes++;
+    }
+    
+    // 日本語テキストの切り替え処理を追加
+    const textElement = node.querySelector('.node-text');
+    if (textElement) {
+      // 月次モードでtext_monthly属性があれば切り替え
+      const textMonthly = textElement.getAttribute('data-text-monthly');
+      const textDaily = textElement.getAttribute('data-text-daily');
+      const textDefault = textElement.getAttribute('data-text-default');
+      
+      if (currentMode === 'monthly' && textMonthly) {
+        // 月次モードで月次テキストがあれば表示
+        textElement.textContent = textMonthly;
+        textElement.setAttribute('title', textMonthly);
+        changedNodes++;
+      } else if (currentMode === 'daily' && textDaily) {
+        // 日次モードで日次テキストがあれば表示
+        textElement.textContent = textDaily;
+        textElement.setAttribute('title', textDaily);
+        changedNodes++;
+      } else if (textDefault) {
+        // デフォルトテキストがあれば表示
+        textElement.textContent = textDefault;
+        textElement.setAttribute('title', textDefault);
+        changedNodes++;
+      }
+    }
+    
+    // text_enの切り替え処理を追加
+    const textEnElement = node.querySelector('.text-en');
+    if (textEnElement) {
+      // 月次モードでtext_en_monthly属性があれば切り替え
+      const textEnMonthly = textEnElement.getAttribute('data-text-en-monthly');
+      if (currentMode === 'monthly' && textEnMonthly) {
+        textEnElement.textContent = textEnMonthly;
+        changedNodes++;
+      } else if (currentMode === 'daily' && node.text_en) {
+        // 日次モードでは元の英語表記に戻す
+        // 元の値はソースから取得できないため、再ロードが必要
+      }
     }
   });
   

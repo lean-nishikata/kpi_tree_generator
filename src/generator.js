@@ -595,7 +595,12 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   // text_enが存在する場合は小さなフォントで追加（リンクの外側に追加）
   // 英語表記にもtitle属性を追加
   if (node.text_en) {
-    nodeContent += `<div class="text-en" title="${node.text_en}">${node.text_en}</div>`;
+    // text_en_monthlyがあれば属性として追加
+    let enAttributes = '';
+    if (node.text_en_monthly) {
+      enAttributes = ` data-text-en-monthly="${node.text_en_monthly}"`;
+    }
+    nodeContent += `<div class="text-en" title="${node.text_en}"${enAttributes}>${node.text_en}</div>`;
   }
   
   // 値表示用の変数初期化
