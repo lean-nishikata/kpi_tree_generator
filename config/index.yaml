@@ -129,6 +129,8 @@ root:
       children:
       - text: ETH保有金額
         text_en: ETH Balance
+        text_monthly: ETHステーキング総額
+        text_en_monthly: Total ETH Staking amount
         operator: "*"
         value_daily: "=for_generator!G40"
         value_monthly: "=for_generator!I40"
@@ -143,6 +145,9 @@ root:
           diff_daily: "=for_generator!L41"
           diff_monthly: "=for_generator!M41"
         - text: 一人当たり保有金額
+          text_en: Amount per user
+          text_monthly: 一人当たりETHステーキング総額
+          text_en_monthly: ETH staking amount per ser
           operator: "*"
           value_daily: "=for_generator!G68"
           value_monthly: "=for_generator!I68"
