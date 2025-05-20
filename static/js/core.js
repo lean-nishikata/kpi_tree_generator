@@ -732,16 +732,12 @@ function updateAllNodeValues() {
         // パーセント文字を削除して数値化
         let numValue = parseFloat(displayValue.toString().replace('%', ''));
         
+        // 前月比はスプレッドシートの内容をそのまま表示
         // パーセントがない場合は付ける
         if (!displayValue.toString().endsWith('%')) {
           displayValue = displayValue + '%';
         }
-        
-        // プラスの値には「+」を付けるようにする
-        if (numValue > 100 && !displayValue.toString().startsWith('+')) {
-          displayValue = '+' + displayValue;
-        }
-        // 100%未満の場合はマイナス記号を付けない（そのまま表示）
+        // 前月比は+や-を自動付加しないようにする
         
         // HTMLを再構築
         diffElement.innerHTML = `
