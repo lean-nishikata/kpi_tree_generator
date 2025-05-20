@@ -835,12 +835,16 @@ function updateAllNodeValues() {
     if (textEnElement) {
       // 月次モードでtext_en_monthly属性があれば切り替え
       const textEnMonthly = textEnElement.getAttribute('data-text-en-monthly');
+      const textEnDefault = textEnElement.getAttribute('title'); // title属性に元の値が保存されている
+      
       if (currentMode === 'monthly' && textEnMonthly) {
+        // 月次モードでtext_en_monthly属性があれば表示
         textEnElement.textContent = textEnMonthly;
         changedNodes++;
-      } else if (currentMode === 'daily' && node.text_en) {
-        // 日次モードでは元の英語表記に戻す
-        // 元の値はソースから取得できないため、再ロードが必要
+      } else if (currentMode === 'daily' && textEnDefault) {
+        // 日次モードでは元の英語表記（title属性の値）に戻す
+        textEnElement.textContent = textEnDefault;
+        changedNodes++;
       }
     }
   });
