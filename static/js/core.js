@@ -830,6 +830,14 @@ function updateAllNodeValues() {
       }
     }
     
+    // デバッグ：一人当たり保有金額ノードの検出
+    if (node.textContent.includes('一人当たり保有金額')) {
+      console.log('★問題のノードを発見:', node);
+      console.log('- 内部テキスト:', node.textContent);
+      console.log('- HTML構造:', node.innerHTML);
+      console.log('- text-en要素:', node.querySelector('.text-en'));
+    }
+    
     // text_enの切り替え処理を追加
     const textEnElement = node.querySelector('.text-en');
     if (textEnElement) {
@@ -837,13 +845,24 @@ function updateAllNodeValues() {
       const textEnMonthly = textEnElement.getAttribute('data-text-en-monthly');
       const textEnDefault = textEnElement.getAttribute('title'); // title属性に元の値が保存されている
       
+      // デバッグ：一人当たり保有金額ノードの属性確認
+      if (node.textContent.includes('一人当たり保有金額')) {
+        console.log('★text-en要素の属性:', {
+          monthly: textEnMonthly,
+          default: textEnDefault,
+          mode: currentMode
+        });
+      }
+      
       if (currentMode === 'monthly' && textEnMonthly) {
         // 月次モードでtext_en_monthly属性があれば表示
         textEnElement.textContent = textEnMonthly;
+        textEnElement.style.display = 'block'; // 確実に表示
         changedNodes++;
       } else if (currentMode === 'daily' && textEnDefault) {
         // 日次モードでは元の英語表記（title属性の値）に戻す
         textEnElement.textContent = textEnDefault;
+        textEnElement.style.display = 'block'; // 確実に表示
         changedNodes++;
       }
     }
