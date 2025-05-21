@@ -188,10 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const maxYearMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
             
             if (targetYearMonth >= minYearMonth && targetYearMonth <= maxYearMonth) {
-              // 有効範囲内の場合はターゲット日付の月を使用
-              currentMonth = userTargetDate.getMonth();
-              currentYear = userTargetDate.getFullYear();
-              console.log(`指定されたターゲット日付の月を表示します: ${currentYear}年${currentMonth + 1}月`);
+              // 重要：既に設定されているcurrentMonth/currentYearを上書きしない
+              // （初期設定が4月なら4月のまま維持）
+              console.log(`ターゲット日付は有効範囲内ですが、既存の月設定を維持します: ${currentYear}年${currentMonth + 1}月`);
             } else {
               console.log(`ターゲット日付が有効範囲外です: ${userTargetDate.toISOString()}, 範囲: ${minYearMonth.toISOString()} - ${maxYearMonth.toISOString()}`);
               // デフォルトの処理を実行
