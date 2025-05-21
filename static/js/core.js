@@ -466,8 +466,61 @@ function switchViewMode(mode) {
   // 全てのノードの値を更新
   updateAllNodeValues();
   
+  // 日付表示を更新
+  updateDateDisplay(mode);
+  
   // コンソールで簡単に確認できるようにログを出力
   console.log('■■■ switchViewMode処理完了');
+}
+
+/**
+ * 表示モードに応じて日付表示を更新する
+ * @param {string} mode - 表示モード ('daily' または 'monthly')
+ */
+function updateDateDisplay(mode) {
+  // 日付表示要素を取得
+  const dateDisplay = document.querySelector('.data-date');
+  if (!dateDisplay) {
+    console.warn('日付表示要素が見つかりません');
+    return;
+  }
+  
+  // 現在の日付表示テキストを取得
+  const currentText = dateDisplay.textContent;
+  
+  // 日付部分を抽出するパターン
+  const datePattern = /\d{4}年\d{2}月\d{2}日/;
+  const dateMatch = currentText.match(datePattern);
+  
+  if (!dateMatch) {
+    console.warn('日付パターンが見つかりません:', currentText);
+    return;
+  }
+  
+  const dateStr = dateMatch[0]; // 例: '2025年05月21日'
+  
+  // 日付を分解
+  const year = dateStr.substring(0, 4);
+  const month = dateStr.substring(5, 7);
+  const day = dateStr.substring(8, 10);
+  
+  let newDateDisplay = '';
+  
+  // モードに応じて日付表示を変更
+  if (mode === 'monthly') {
+    // 月次モード: 「月初～指定日付」の形式
+    newDateDisplay = `現在のデータ: ${year}年${month}月01日～${year}年${month}月${day}日`;
+  } else {
+    // 日次モード: 元の日付表示を維持
+    newDateDisplay = `現在のデータ: ${dateStr}`;
+  }
+  
+  // 追加情報があれば復元
+  const additionalInfo = currentText.split(dateStr)[1] || '';
+  
+  // 日付表示を更新
+  dateDisplay.textContent = newDateDisplay + additionalInfo;
+  console.log('日付表示を更新しました:', mode, newDateDisplay + additionalInfo);
 }
 
 /**
