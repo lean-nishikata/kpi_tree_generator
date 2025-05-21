@@ -62,17 +62,36 @@ function kpiTreeInit() {
   // 1. まずハッシュフラグメントから状態を取得試行
   var state = getStateFromHash();
   
+  // 【デバッグ強化】現在のURLとクエリパラメータを確認
+  console.log('【DEBUG】初期化時のURL情報:', {
+    fullUrl: window.location.href,
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash,
+    rawQueryParams: window.location.search.substring(1),
+    urlSearchParams: new URLSearchParams(window.location.search).toString()
+  });
+  
   // 1.5 ハッシュから表示モードを取得試行
   var viewModeParam = getViewModeFromHash();
+  console.log('【DEBUG】getViewModeFromHashの結果:', viewModeParam);
   
   // ハッシュから取得できなければ、URLクエリパラメータから表示モードを取得試行
   if (!viewModeParam) {
-    viewModeParam = getViewModeFromUrl();
+    try {
+      viewModeParam = getViewModeFromUrl();
+      console.log('【DEBUG】getViewModeFromUrlの結果:', viewModeParam);
+    } catch (e) {
+      console.error('【DEBUG】getViewModeFromUrlエラー発生:', e);
+    }
+    
     if (viewModeParam) {
-      console.log('URLクエリパラメータから表示モードを取得:', viewModeParam);
+      console.log('【成功】URLクエリパラメータから表示モードを取得:', viewModeParam);
+    } else {
+      console.warn('【注意】URLクエリパラメータから表示モードを取得できませんでした');
     }
   } else {
-    console.log('ハッシュから表示モードを取得:', viewModeParam);
+    console.log('【成功】ハッシュから表示モードを取得:', viewModeParam);
   }
   
   // 有効な表示モードが取得できた場合は適用
@@ -408,16 +427,27 @@ window.addEventListener('popstate', function(event) {
  * @param {string} mode - 表示モード ('daily' または 'monthly')
  */
 function switchViewMode(mode) {
+  // 【デバッグ強化】引数と現在の状態を詳細に出力
+  console.log('【SWITCH-MODE】表示モード切り替え関数が呼ばれました:', {
+    requestedMode: mode,
+    currentMode: window._viewMode,
+    callStack: new Error().stack, // 呼び出し元をトレース
+    url: window.location.href
+  });
+  
   // デバッグ情報を追加
   console.log('■■■ switchViewModeが呼び出されました:', mode);
   
+  // モードパラメータを検証
   if (mode !== 'daily' && mode !== 'monthly') {
+    console.error('【SWITCH-MODE】無効なモードパラメータが指定されました:', mode);
     console.error('無効な表示モード:', mode);
     return;
   }
   
-  // 同じモードなら何もしない
+  // 既に同じモードなら何もしない
   if (window._viewMode === mode) {
+    console.log('【SWITCH-MODE】既に同じモードなので何もしません:', mode);
     console.log('既に同じモードなので何もしません:', mode);
     return;
   }

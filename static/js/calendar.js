@@ -504,6 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (isDateAvailable) {
         // 現在の表示モードを取得
         const currentViewMode = window._viewMode || 'daily';
+        console.log(`【CALENDAR-DEBUG】現在の表示モード(window._viewMode): ${window._viewMode}、使用するモード: ${currentViewMode}`);
         
         // URLの処理
         let urlWithViewMode = reportUrl;
@@ -518,8 +519,15 @@ document.addEventListener('DOMContentLoaded', function() {
           urlWithViewMode = `${urlWithViewMode}?viewMode=${currentViewMode}`;
         }
         
-        // デバッグログ
-        console.log(`日付リンクに表示モードを追加: ${formattedDate} -> ${urlWithViewMode}`)
+        // 【デバッグ強化】作成したURLを詳細に出力
+        console.log(`【CALENDAR-DEBUG】日付リンク情報:`, {
+          date: formattedDate,
+          viewMode: currentViewMode,
+          originalUrl: reportUrl,
+          finalUrl: urlWithViewMode,
+          urlContainsViewMode: urlWithViewMode.includes('viewMode='),
+          viewModeValue: urlWithViewMode.match(/viewMode=([^&#]*)/)?.[1] || 'not found'
+        });
         
         dateLink.href = urlWithViewMode;
         dateLink.title = `${formattedDate}のレポートを${currentViewMode === 'daily' ? '日次' : '月次'}モードで表示`;
