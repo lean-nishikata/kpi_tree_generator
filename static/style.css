@@ -311,6 +311,9 @@ body {
 .main-content {
   transition: margin-left 0.3s ease;
   width: 100%;
+  /* トグルの開閉に合わせて横幅を調整する、右端が切れないようにする */
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
 @media (min-width: 769px) {
@@ -683,8 +686,8 @@ h1 {
 }
 
 .note {
-  margin-top: 16px;
-  margin-bottom: 12px;
+  margin-top: 8px;
+  margin-bottom: 24px;
   padding: 8px 12px;
   background-color: #e8f4fd; /* 淡い青 */
   border-left: 4px solid #2196f3; /* Google系の青 */

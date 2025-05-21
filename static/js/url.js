@@ -194,37 +194,18 @@ function getViewModeFromHash() {
  */
 function getViewModeFromUrl() {
   try {
-    // 【デバッグ強化】URL情報を詳細に出力
-    console.log('【DEBUG-URL】getViewModeFromUrlのURL情報:', {
-      url: window.location.href,
-      search: window.location.search,
-      searchWithoutQ: window.location.search.substring(1)
-    });
-    
     // URLクエリパラメータからviewModeを取得
     var urlSearchParams = new URLSearchParams(window.location.search);
-    
-    // 【デバッグ強化】URLSearchParamsの内容を詳細に出力
-    var paramsDebug = {};
-    urlSearchParams.forEach(function(value, key) {
-      paramsDebug[key] = value;
-    });
-    console.log('【DEBUG-URL】URLSearchParams全パラメータ:', paramsDebug);
-    
     var viewMode = urlSearchParams.get('viewMode');
-    console.log('【DEBUG-URL】viewModeパラメータの値:', viewMode);
     
     // パラメータが存在しなければ終了
     if (!viewMode) {
-      console.log('【DEBUG-URL】viewModeが存在しません');
-      
       // 代替方法：マニュアル解析
       var searchStr = window.location.search.substring(1); // '?'を除去
       var params = searchStr.split('&');
       for (var i = 0; i < params.length; i++) {
         var pair = params[i].split('=');
         if (pair[0] === 'viewMode' && (pair[1] === 'daily' || pair[1] === 'monthly')) {
-          console.log('【DEBUG-URL】手動解析でviewModeを発見:', pair[1]);
           return pair[1];
         }
       }
@@ -234,14 +215,12 @@ function getViewModeFromUrl() {
     
     // 有効な表示モード値か確認
     if (viewMode === 'daily' || viewMode === 'monthly') {
-      console.log('【DEBUG-URL】URLクエリパラメータから表示モードを取得成功:', viewMode);
       return viewMode;
     }
     
-    console.warn('【DEBUG-URL】無効な表示モード値（URLクエリパラメータ）:', viewMode);
     return null;
   } catch (e) {
-    console.error('【DEBUG-URL】URLクエリパラメータから表示モード取得エラー:', e);
+    console.error('URLクエリパラメータから表示モード取得エラー:', e);
     return null;
   }
 }

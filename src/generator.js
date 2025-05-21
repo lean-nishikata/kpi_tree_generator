@@ -584,7 +584,7 @@ function generateTreeHtml(node, level = 0, path = 'root') {
   // テキストが省略される可能性があるため、title属性を追加してマウスホバー時に全文を表示
   let textContent = '';
   if (node.url) {
-    textContent = `<a href="${node.url}" target="_blank" class="node-text" title="${mainText}"${textAttributes}>${mainText}</a>`;
+    textContent = `<a href="${node.url}" rel="noopener noreferrer" target="dashboard" class="node-text" title="${mainText}"${textAttributes}>${mainText}</a>`;
   } else {
     textContent = `<span class="node-text" title="${mainText}"${textAttributes}>${mainText}</span>`;
   }

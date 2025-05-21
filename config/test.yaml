@@ -1,0 +1,31 @@
+title: "KPI Tree with Spreadsheet References Example"
+theme: "default"
+
+# 公開時のURL設定（GCSなどでホスティングする場合に使用）
+public_url: "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/test.html"
+
+root:
+  text: "Revenue (¥100M)"
+  value: "=for_generator!G67"
+  url: "https://example.com/revenue"
+  children:
+    - text: "Product A"
+      value: "=for_generator!G2"
+      children:
+        - text: "Direct Sales"
+          value: "=for_generator!G3"
+          operator: "+"
+        - text: "Partner Sales"
+          value: "=for_generator!G4"
+          operator: "+"
+      operator: "+"
+    - text: "Product B"
+      value: "=for_generator!G10"
+      children:
+        - text: "Region X"
+          value: "=for_generator!G11"
+          operator: "+"
+        - text: "Region Y"
+          value: "=for_generator!G12"
+          operator: "+"
+      operator: "+"

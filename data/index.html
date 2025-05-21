@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KPI Tree with Spreadsheet References Example</title>
-  
+  <title>コインチェック 収益KPIツリー</title>
+  <link rel="icon" href="https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/b9c95f718640eab6.png" type="image/x-icon">
   <script>
     // リダイレクト環境で動作するPUBLIC_URL設定 - GCS対応強化版
     (function() {
       // 強制的にYAMLで設定した公開URLを使用
-      var FIXED_PUBLIC_URL = "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/test.html";
+      var FIXED_PUBLIC_URL = "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/index.html";
       
       // キャッシュバスティング用タイムスタンプ
       var CACHE_BUSTER = new Date().getTime();
@@ -772,8 +772,9 @@ h1 {
 }
 
 .calendar-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .calendar-btn:hover:not(:disabled) {
@@ -916,7 +917,7 @@ h1 {
   font-weight: bold;
 }
 
-.calendar-day a.has-data::after {
+.calendar-day.has-data::after {
   content: "";
   position: absolute;
   bottom: 4px;
@@ -926,7 +927,14 @@ h1 {
   height: 8px;
   border-radius: 50%;
   background-color: #4caf50; /* 緑色のマーカー */
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3); /* 影を追加して目立たせる */
+}
+
+/* 現在表示しているページの日付を強調表示 */
+.calendar-day.current-page-date {
+  background-color: #8bc34a; /* 薄い緑 */
+  font-weight: bold;
+  border: 2px solid #4caf50; /* 濃い緑のボーダー */
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
 }
 
 .calendar-day a {
@@ -937,14 +945,10 @@ h1 {
   color: inherit;
 }
 
-.calendar-day .no-data {
+.calendar-day a.no-data {
   cursor: default;
   color: #999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  text-decoration: line-through;
   opacity: 0.6;
 }
 
@@ -1127,8 +1131,8 @@ h1 {
           </svg>
         </button>
         <div class="page-title-container">
-          <h1 class="page-title">KPI Tree with Spreadsheet References Example</h1>
-          <span class="data-date">現在のデータ: 2025年05月14日</span>
+          <h1 class="page-title">コインチェック 収益KPIツリー</h1>
+          <span class="data-date">現在のデータ: 2025年05月18日 / 販売所以外収益/販売所収益:31.00%</span>
         </div>
       </div>
       <div class="header-controls">
@@ -1238,44 +1242,574 @@ h1 {
       <ul class="kpi-tree">
         
     <li>
-      <div class="node" id="node-fnuy61">
-        <a href="https://example.com/revenue" target="_blank" class="node-text" title="Revenue (¥100M)" data-text-default="Revenue (¥100M)">Revenue (¥100M)</a><div class="value" title="=for_generator!G67" data-value-default="=for_generator!G67">=for_generator!G67</div>
+      <div class="node" id="node-frauiz">
+        <a href="https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd" target="_blank" class="node-text" title="営業収益合計" data-text-default="営業収益合計">営業収益合計</a><div class="text-en" title="Revenue">Revenue</div><div class="value" title="74,824,839" data-value-daily="74,824,839" data-value-monthly="244,106,134" data-diff-daily="128.31%" data-diff-monthly="-95.87%">74,824,839</div><div class="diff-value" title="前日比: 128.31%" data-diff-daily="128.31%" data-diff-monthly="-95.87%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">128.31%</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-fnuy61-children"></button>
-      <ul id="node-fnuy61-children" class="children">
+      <button class="toggle-btn" data-target="node-frauiz-children"></button>
+      <ul id="node-frauiz-children" class="children">
     <li>
-      <div class="node" id="node-rpajgj">
-        <span class="node-text" title="Product A" data-text-default="Product A">Product A</span><div class="value" title="=for_generator!G2" data-value-default="=for_generator!G2">=for_generator!G2</div>
+      <div class="node" id="node-yhbi54">
+        <a href="https://lookerstudio.google.com/u/0/reporting/bc9ee1e8-b5e5-4f02-bd33-a7a5da56229b/page/p_xsek8mmgrd" target="_blank" class="node-text" title="販売所収益" data-text-default="販売所収益">販売所収益</a><div class="text-en" title="Marketplace Revenue">Marketplace Revenue</div><div class="value" title="57,118,457" data-value-daily="57,118,457" data-value-monthly="177,995,010" data-diff-daily="111.74%" data-diff-monthly="-95.54%">57,118,457</div><div class="diff-value" title="前日比: 111.74%" data-diff-daily="111.74%" data-diff-monthly="-95.54%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">111.74%</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-rpajgj-children"></button>
-      <ul id="node-rpajgj-children" class="children">
+      <button class="toggle-btn" data-target="node-yhbi54-children"></button>
+      <ul id="node-yhbi54-children" class="children">
     <li>
-      <div class="node" id="node-wej28">
-        <span class="node-text" title="Direct Sales" data-text-default="Direct Sales">Direct Sales</span><div class="value" title="=for_generator!G3" data-value-default="=for_generator!G3">=for_generator!G3</div>
+      <div class="node" id="node-d511z3">
+        <a href="https://lookerstudio.google.com/u/0/reporting/bc9ee1e8-b5e5-4f02-bd33-a7a5da56229b/page/p_xsek8mmgrd" target="_blank" class="node-text" title="販売所" data-text-default="販売所">販売所</a><div class="text-en" title="Marketplace Revenue">Marketplace Revenue</div><div class="value" title="57,118,457" data-value-daily="57,118,457" data-value-monthly="177,995,010" data-diff-daily="111.74%" data-diff-monthly="-95.54%">57,118,457</div><div class="diff-value" title="前日比: 111.74%" data-diff-daily="111.74%" data-diff-monthly="-95.54%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">111.74%</span>
+        </div>
       </div>
-    </li><li class="operator">+</li>
+      <button class="toggle-btn" data-target="node-d511z3-children"></button>
+      <ul id="node-d511z3-children" class="children">
     <li>
-      <div class="node" id="node-5fuwm7">
-        <span class="node-text" title="Partner Sales" data-text-default="Partner Sales">Partner Sales</span><div class="value" title="=for_generator!G4" data-value-default="=for_generator!G4">=for_generator!G4</div>
+      <div class="node" id="node-lb4hdr">
+        <span class="node-text" title="スプレッド" data-text-default="スプレッド">スプレッド</span><div class="text-en" title="Exchange Spread">Exchange Spread</div><div class="value" title="0.04" data-value-daily="0.04" data-value-monthly="0.03" data-diff-daily="8.03%" data-diff-monthly="15.49%">0.04</div><div class="diff-value" title="前日比: 8.03%" data-diff-daily="8.03%" data-diff-monthly="15.49%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">8.03%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-8wsumf">
+        <span class="node-text" title="取引金額" data-text-default="取引金額">取引金額</span><div class="text-en" title="Trading Volume">Trading Volume</div><div class="value" title="1,566,745,404" data-value-daily="1,566,745,404" data-value-monthly="5,104,955,548" data-diff-daily="96.01%" data-diff-monthly="-96.14%">1,566,745,404</div><div class="diff-value" title="前日比: 96.01%" data-diff-daily="96.01%" data-diff-monthly="-96.14%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">96.01%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-8wsumf-children"></button>
+      <ul id="node-8wsumf-children" class="children">
+    <li>
+      <div class="node" id="node-x28209">
+        <span class="node-text" title="取引単価" data-text-default="取引単価">取引単価</span><div class="text-en" title="Average Trade Size">Average Trade Size</div><div class="value" title="205,880" data-value-daily="205,880" data-value-monthly="227,717" data-diff-daily="2.59%" data-diff-monthly="2.50%">205,880</div><div class="diff-value" title="前日比: 2.59%" data-diff-daily="2.59%" data-diff-monthly="2.50%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">2.59%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-uyp1fp">
+        <span class="node-text" title="取引ユーザー数" data-text-default="取引ユーザー数">取引ユーザー数</span><div class="text-en" title="Number of Trading Users">Number of Trading Users</div><div class="value" title="7,610" data-value-daily="7,610" data-value-monthly="22,418" data-diff-daily="91.06%" data-diff-monthly="-93.26%">7,610</div><div class="diff-value" title="前日比: 91.06%" data-diff-daily="91.06%" data-diff-monthly="-93.26%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">91.06%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-uyp1fp-children"></button>
+      <ul id="node-uyp1fp-children" class="children">
+    <li>
+      <div class="node" id="node-ae5gge">
+        <span class="node-text" title="既存取引ユーザー数" data-text-default="既存取引ユーザー数">既存取引ユーザー数</span><div class="text-en" title="Trading Existing Customers">Trading Existing Customers</div><div class="value" title="7,151" data-value-daily="7,151" data-value-monthly="20,959" data-diff-daily="94.64%" data-diff-monthly="-93.78%">7,151</div><div class="diff-value" title="前日比: 94.64%" data-diff-daily="94.64%" data-diff-monthly="-93.78%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">94.64%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ae5gge-children"></button>
+      <ul id="node-ae5gge-children" class="children">
+    <li>
+      <div class="node" id="node-3sapsf">
+        <span class="node-text" title="月末本人確認済既存口座数" data-text-default="月末本人確認済既存口座数">月末本人確認済既存口座数</span><div class="text-en" title="Number of Verified Existing Accounts at Month-End">Number of Verified Existing Accounts at Month-End</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-ubkwku">
+        <span class="node-text" title="既存ユーザー取引率" data-text-default="既存ユーザー取引率">既存ユーザー取引率</span><div class="text-en" title="Trading Rate of Existing Users">Trading Rate of Existing Users</div><div class="value" title="-" data-value-default="-">-</div>
       </div>
     </li>
       </ul>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-kapj72">
-        <span class="node-text" title="Product B" data-text-default="Product B">Product B</span><div class="value" title="=for_generator!G10" data-value-default="=for_generator!G10">=for_generator!G10</div>
+      <div class="node" id="node-whu42y">
+        <span class="node-text" title="新規取引ユーザー数" data-text-default="新規取引ユーザー数">新規取引ユーザー数</span><div class="text-en" title="Trading New Customers">Trading New Customers</div><div class="value" title="459" data-value-daily="459" data-value-monthly="1,459" data-diff-daily="48.54%" data-diff-monthly="null">459</div><div class="diff-value" title="前日比: 48.54%" data-diff-daily="48.54%" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">48.54%</span>
+        </div>
       </div>
-      <button class="toggle-btn" data-target="node-kapj72-children"></button>
-      <ul id="node-kapj72-children" class="children">
+      <button class="toggle-btn" data-target="node-whu42y-children"></button>
+      <ul id="node-whu42y-children" class="children">
     <li>
-      <div class="node" id="node-647rf5">
-        <span class="node-text" title="Region X" data-text-default="Region X">Region X</span><div class="value" title="=for_generator!G11" data-value-default="=for_generator!G11">=for_generator!G11</div>
+      <div class="node" id="node-1l34ex">
+        <span class="node-text" title="新規口座開設数" data-text-default="新規口座開設数">新規口座開設数</span><div class="text-en" title="Number of New Accounts Opened">Number of New Accounts Opened</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+      <button class="toggle-btn" data-target="node-1l34ex-children"></button>
+      <ul id="node-1l34ex-children" class="children">
+    <li>
+      <div class="node" id="node-hsr7sj">
+        <span class="node-text" title="広告宣伝費" data-text-default="広告宣伝費">広告宣伝費</span><div class="text-en" title="Advertising Expense Transfers">Advertising Expense Transfers</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-5x6k">
+        <span class="node-text" title="Blended CPA" data-text-default="Blended CPA">Blended CPA</span><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-je19co">
+        <span class="node-text" title="新規ユーザー取引率" data-text-default="新規ユーザー取引率">新規ユーザー取引率</span><div class="text-en" title="Trading Rate of New Users">Trading Rate of New Users</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ujr88a">
+        <a href="https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd" target="_blank" class="node-text" title="販売所以外収益" data-text-default="販売所以外収益">販売所以外収益</a><div class="text-en" title="Non-Marketplace Revenue">Non-Marketplace Revenue</div><div class="value" title="17,706,382" data-value-daily="17,706,382" data-value-monthly="66,111,124" data-diff-daily="205.40%" data-diff-monthly="-96.92%">17,706,382</div><div class="diff-value" title="前日比: 205.40%" data-diff-daily="205.40%" data-diff-monthly="-96.92%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">205.40%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ujr88a-children"></button>
+      <ul id="node-ujr88a-children" class="children">
+    <li>
+      <div class="node" id="node-ywv5xg">
+        <a href="https://lookerstudio.google.com/u/0/reporting/a5869868-a23f-48f1-b98c-d5759ad578de/page/arSIF" target="_blank" class="node-text" title="ステーキング" data-text-default="ステーキング">ステーキング</a><div class="text-en" title="Staking">Staking</div><div class="value" title="1,892,646.50" data-value-daily="1,892,646.50" data-value-monthly="11,012,509.66" data-diff-daily="18.08%" data-diff-monthly="-93.57%">1,892,646.50</div><div class="diff-value" title="前日比: 18.08%" data-diff-daily="18.08%" data-diff-monthly="-93.57%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">18.08%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ywv5xg-children"></button>
+      <ul id="node-ywv5xg-children" class="children">
+    <li>
+      <div class="node" id="node-js57v1">
+        <span class="node-text" title="ETH保有金額" data-text-default="ETH保有金額" data-text-monthly="ETHステーキング総額">ETH保有金額</span><div class="text-en" title="ETH Balance" data-text-en-monthly="Total ETH staking amount">ETH Balance</div><div class="value" title="77,668,570,695" data-value-daily="77,668,570,695" data-value-monthly="582,691,258,569" data-diff-daily="18.92%" data-diff-monthly="-96.24%">77,668,570,695</div><div class="diff-value" title="前日比: 18.92%" data-diff-daily="18.92%" data-diff-monthly="-96.24%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">18.92%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-js57v1-children"></button>
+      <ul id="node-js57v1-children" class="children">
+    <li>
+      <div class="node" id="node-2xw4e3">
+        <span class="node-text" title="保有UU" data-text-default="保有UU">保有UU</span><div class="text-en" title="Number of ETH Holders">Number of ETH Holders</div><div class="value" title="332,818" data-value-daily="332,818" data-value-monthly="334,442" data-diff-daily="0.03%" data-diff-monthly="-0.03%">332,818</div><div class="diff-value" title="前日比: 0.03%" data-diff-daily="0.03%" data-diff-monthly="-0.03%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.03%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-3lvep0">
+        <span class="node-text" title="一人当たり保有金額" data-text-default="一人当たり保有金額" data-text-monthly="一人当たりETHステーキング総額">一人当たり保有金額</span><div class="value" title="233,366" data-value-daily="233,366" data-value-monthly="1,742,279" data-diff-daily="18.88%" data-diff-monthly="-96.24%">233,366</div><div class="diff-value" title="前日比: 18.88%" data-diff-daily="18.88%" data-diff-monthly="-96.24%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">18.88%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-aj93i8">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Staking Fee Rate">Staking Fee Rate</div><div class="value" title="0.002437%" data-value-daily="0.002437%" data-value-monthly="0.001890%" data-diff-daily="-0.70%" data-diff-monthly="70.94%">0.002437%</div><div class="diff-value" title="前日比: -0.70%" data-diff-daily="-0.70%" data-diff-monthly="70.94%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-0.70%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-oz4xcx">
+        <a href="https://lookerstudio.google.com/u/0/reporting/758085d1-c9d8-4e7e-898f-8a2d74904045/page/p_xsek8mmgrd" target="_blank" class="node-text" title="取引所（現物）" data-text-default="取引所（現物）">取引所（現物）</a><div class="text-en" title="Exchange Revenue">Exchange Revenue</div><div class="value" title="60,080" data-value-daily="60,080" data-value-monthly="533,183" data-diff-daily="-10.71%" data-diff-monthly="-94.46%">60,080</div><div class="diff-value" title="前日比: -10.71%" data-diff-daily="-10.71%" data-diff-monthly="-94.46%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-10.71%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-oz4xcx-children"></button>
+      <ul id="node-oz4xcx-children" class="children">
+    <li>
+      <div class="node" id="node-z5g1l2">
+        <span class="node-text" title="出来高" data-text-default="出来高">出来高</span><div class="text-en" title="Trading Amount">Trading Amount</div><div class="value" title="19,703,334,706" data-value-daily="19,703,334,706" data-value-monthly="89,349,898,999" data-diff-daily="29.85%" data-diff-monthly="-95.85%">19,703,334,706</div><div class="diff-value" title="前日比: 29.85%" data-diff-daily="29.85%" data-diff-monthly="-95.85%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">29.85%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-z5g1l2-children"></button>
+      <ul id="node-z5g1l2-children" class="children">
+    <li>
+      <div class="node" id="node-tiea8g">
+        <span class="node-text" title="DTU" data-text-daily="DTU" data-text-monthly="MTU">DTU</span><div class="text-en" title="Trading Users">Trading Users</div><div class="value" title="2,805" data-value-daily="2,805" data-value-monthly="5,739" data-diff-daily="45.26%" data-diff-monthly="-83.90%">2,805</div><div class="diff-value" title="前日比: 45.26%" data-diff-daily="45.26%" data-diff-monthly="-83.90%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">45.26%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-wqtqqb">
+        <span class="node-text" title="平均約定回数" data-text-default="平均約定回数">平均約定回数</span><div class="text-en" title="Avg. Trades per User">Avg. Trades per User</div><div class="value" title="26.40" data-value-daily="26.40" data-value-monthly="60.01" data-diff-daily="-4.01%" data-diff-monthly="-82.51%">26.40</div><div class="diff-value" title="前日比: -4.01%" data-diff-daily="-4.01%" data-diff-monthly="-82.51%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-4.01%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-94fsjc">
+        <span class="node-text" title="平均約定金額" data-text-default="平均約定金額">平均約定金額</span><div class="text-en" title="Average Trade Size">Average Trade Size</div><div class="value" title="266,110.24" data-value-daily="266,110.24" data-value-monthly="259,446.95" data-diff-daily="-6.88%" data-diff-monthly="47.21%">266,110.24</div><div class="diff-value" title="前日比: -6.88%" data-diff-daily="-6.88%" data-diff-monthly="47.21%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-6.88%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-aj92rj">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Trading Fee Rate">Trading Fee Rate</div><div class="value" title="0.000305%" data-value-daily="0.000305%" data-value-monthly="0.000597%" data-diff-daily="-31.24%" data-diff-monthly="33.66%">0.000305%</div><div class="diff-value" title="前日比: -31.24%" data-diff-daily="-31.24%" data-diff-monthly="33.66%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-31.24%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-2tdwjx">
+        <a href="https://lookerstudio.google.com/u/0/reporting/e4ad8b3b-913a-4312-8ed1-3709a5b75956/page/p_9nnkwdngrd" target="_blank" class="node-text" title="つみたて" data-text-default="つみたて">つみたて</a><div class="text-en" title="Periodic Purchase">Periodic Purchase</div><div class="value" title="789,993" data-value-daily="789,993" data-value-monthly="13,562,058" data-diff-daily="0.07%" data-diff-monthly="-97.43%">789,993</div><div class="diff-value" title="前日比: 0.07%" data-diff-daily="0.07%" data-diff-monthly="-97.43%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.07%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-2tdwjx-children"></button>
+      <ul id="node-2tdwjx-children" class="children">
+    <li>
+      <div class="node" id="node-tdgziu">
+        <span class="node-text" title="つみたて件数" data-text-default="つみたて件数">つみたて件数</span><div class="text-en" title="Number of Periodic Purchases">Number of Periodic Purchases</div><div class="value" title="35,065" data-value-daily="35,065" data-value-monthly="45,788" data-diff-daily="0.07%" data-diff-monthly="-23.67%">35,065</div><div class="diff-value" title="前日比: 0.07%" data-diff-daily="0.07%" data-diff-monthly="-23.67%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.07%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-ysxb65">
+        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="text-en" title="Average Revenue per Paying User (Periodic Purchase)">Average Revenue per Paying User (Periodic Purchase)</div><div class="value" title="22.53" data-value-daily="22.53" data-value-monthly="296.19" data-diff-daily="0.00%" data-diff-monthly="-96.63%">22.53</div><div class="diff-value" title="前日比: 0.00%" data-diff-daily="0.00%" data-diff-monthly="-96.63%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.00%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ficram">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_91cjqm5lrd" target="_blank" class="node-text" title="大口OTC" data-text-default="大口OTC">大口OTC</a><div class="text-en" title="OTC Trade">OTC Trade</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
       </div>
     </li><li class="operator">+</li>
     <li>
-      <div class="node" id="node-23fuhc">
-        <span class="node-text" title="Region Y" data-text-default="Region Y">Region Y</span><div class="value" title="=for_generator!G12" data-value-default="=for_generator!G12">=for_generator!G12</div>
+      <div class="node" id="node-quaj3t">
+        <a href="https://lookerstudio.google.com/u/0/reporting/cce6430d-1bfa-4fc8-b4ae-6af4345572f2/page/p_7n6shcsgrd" target="_blank" class="node-text" title="暗号資産送金" data-text-default="暗号資産送金">暗号資産送金</a><div class="text-en" title="Remittance Fees Crypto Currency">Remittance Fees Crypto Currency</div><div class="value" title="14,286,928" data-value-daily="14,286,928" data-value-monthly="37,433,251" data-diff-daily="399.96%" data-diff-monthly="-97.62%">14,286,928</div><div class="diff-value" title="前日比: 399.96%" data-diff-daily="399.96%" data-diff-monthly="-97.62%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">399.96%</span>
+        </div>
       </div>
+      <button class="toggle-btn" data-target="node-quaj3t-children"></button>
+      <ul id="node-quaj3t-children" class="children">
+    <li>
+      <div class="node" id="node-37gofw">
+        <span class="node-text" title="送金金額" data-text-default="送金金額">送金金額</span><div class="text-en" title="Remitted Amount">Remitted Amount</div><div class="value" title="1,346,478,542" data-value-daily="1,346,478,542" data-value-monthly="6,327,339,780" data-diff-daily="7.31%" data-diff-monthly="-92.61%">1,346,478,542</div><div class="diff-value" title="前日比: 7.31%" data-diff-daily="7.31%" data-diff-monthly="-92.61%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">7.31%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-aj90jg">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Remittance Fee Rate">Remittance Fee Rate</div><div class="value" title="13,368,107" data-value-daily="13,368,107" data-value-monthly="62,409,620" data-diff-daily="29.43%" data-diff-monthly="-95.66%">13,368,107</div><div class="diff-value" title="前日比: 29.43%" data-diff-daily="29.43%" data-diff-monthly="-95.66%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">29.43%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-jq4555">
+        <a href="https://lookerstudio.google.com/u/0/reporting/f94bfa99-67bf-420b-acd2-e6aa1d19917d/page/p_xsek8mmgrd" target="_blank" class="node-text" title="法定通貨入出金" data-text-default="法定通貨入出金">法定通貨入出金</a><div class="text-en" title="Deposit & Withdrawal Fees Fiat Currency">Deposit & Withdrawal Fees Fiat Currency</div><div class="value" title="657,627" data-value-daily="657,627" data-value-monthly="3,415,954" data-diff-daily="41.38%" data-diff-monthly="-95.79%">657,627</div><div class="diff-value" title="前日比: 41.38%" data-diff-daily="41.38%" data-diff-monthly="-95.79%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">41.38%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-jq4555-children"></button>
+      <ul id="node-jq4555-children" class="children">
+    <li>
+      <div class="node" id="node-zi4nxn">
+        <span class="node-text" title="入金手数料収益" data-text-default="入金手数料収益">入金手数料収益</span><div class="text-en" title="Deposit Fee Revenue">Deposit Fee Revenue</div><div class="value" title="54,860" data-value-daily="54,860" data-value-monthly="252,750" data-diff-daily="62.60%" data-diff-monthly="-96.44%">54,860</div><div class="diff-value" title="前日比: 62.60%" data-diff-daily="62.60%" data-diff-monthly="-96.44%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">62.60%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-zi4nxn-children"></button>
+      <ul id="node-zi4nxn-children" class="children">
+    <li>
+      <div class="node" id="node-8gdxry">
+        <span class="node-text" title="入金総額" data-text-default="入金総額">入金総額</span><div class="text-en" title="Total Deposit Amount">Total Deposit Amount</div><div class="value" title="13,368,107" data-value-daily="13,368,107" data-value-monthly="62,409,620" data-diff-daily="29.43%" data-diff-monthly="-95.66%">13,368,107</div><div class="diff-value" title="前日比: 29.43%" data-diff-daily="29.43%" data-diff-monthly="-95.66%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">29.43%</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-xk08dk">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Deposit Fee Rate">Deposit Fee Rate</div><div class="value" title="0.4104%" data-value-daily="0.4104%" data-value-monthly="0.4050%" data-diff-daily="25.62" data-diff-monthly="-17.94">0.4104%</div><div class="diff-value" title="前日比: 25.62" data-diff-daily="25.62" data-diff-monthly="-17.94">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">25.62</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ehii3v">
+        <span class="node-text" title="出金手数料収益" data-text-default="出金手数料収益">出金手数料収益</span><div class="text-en" title="Withdrawal Fee Revenue">Withdrawal Fee Revenue</div><div class="value" title="602,767" data-value-daily="602,767" data-value-monthly="3,163,204" data-diff-daily="39.72%" data-diff-monthly="-95.73%">602,767</div><div class="diff-value" title="前日比: 39.72%" data-diff-daily="39.72%" data-diff-monthly="-95.73%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">39.72%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ehii3v-children"></button>
+      <ul id="node-ehii3v-children" class="children">
+    <li>
+      <div class="node" id="node-xgtl2u">
+        <span class="node-text" title="出金総額" data-text-default="出金総額">出金総額</span><div class="text-en" title="Total Withdrawal Amount">Total Withdrawal Amount</div><div class="value" title="1,369,238,897" data-value-daily="1,369,238,897" data-value-monthly="5,968,872,907" data-diff-daily="111.33%" data-diff-monthly="-96.85%">1,369,238,897</div><div class="diff-value" title="前日比: 111.33%" data-diff-daily="111.33%" data-diff-monthly="-96.85%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">111.33%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-xk0949">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Withdrawal Fee Rate">Withdrawal Fee Rate</div><div class="value" title="0.0440%" data-value-daily="0.0440%" data-value-monthly="0.0530%" data-diff-daily="-33.89" data-diff-monthly="35.66">0.0440%</div><div class="diff-value" title="前日比: -33.89" data-diff-daily="-33.89" data-diff-monthly="35.66">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-33.89</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-cr9zjq">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_4ug3jdczrd" target="_blank" class="node-text" title="アセットロック" data-text-default="アセットロック">アセットロック</a><div class="text-en" title="Asset Lock">Asset Lock</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-2li65">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_k4l83l5lrd" target="_blank" class="node-text" title="IEO" data-text-default="IEO">IEO</a><div class="text-en" title="Initial Exchange Offering">Initial Exchange Offering</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-2li65-children"></button>
+      <ul id="node-2li65-children" class="children">
+    <li>
+      <div class="node" id="node-meg3ez">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_k4l83l5lrd" target="_blank" class="node-text" title="PLT" data-text-default="PLT">PLT</a><div class="text-en" title="Palette Token">Palette Token</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-p02xpp">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_jtjj2l5lrd" target="_blank" class="node-text" title="FNCT" data-text-default="FNCT">FNCT</a><div class="text-en" title="FiNANCiE Token">FiNANCiE Token</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-53f2p4">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_anp5qcsgrd" target="_blank" class="node-text" title="BRIL" data-text-default="BRIL">BRIL</a><div class="text-en" title="Brilliantcrypto Token">Brilliantcrypto Token</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-tk1rs0">
+        <span class="node-text" title="金銭信託運用" data-text-default="金銭信託運用">金銭信託運用</span><div class="text-en" title="Interest Income">Interest Income</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-48mckp">
+        <span class="node-text" title="その他" data-text-default="その他">その他</span><div class="text-en" title="Others">Others</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+      <button class="toggle-btn" data-target="node-48mckp-children"></button>
+      <ul id="node-48mckp-children" class="children">
+    <li>
+      <div class="node" id="node-mpb98x">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_vt545k5lrd" target="_blank" class="node-text" title="NFT" data-text-default="NFT">NFT</a><div class="text-en" title="Non-Fungible Tokens">Non-Fungible Tokens</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-mpb98x-children"></button>
+      <ul id="node-mpb98x-children" class="children">
+    <li>
+      <div class="node" id="node-an9nr3">
+        <span class="node-text" title="CC出品" data-text-default="CC出品">CC出品</span><div class="text-en" title="Coincheck Direct Listings">Coincheck Direct Listings</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ip07z6">
+        <span class="node-text" title="CtoC" data-text-default="CtoC">CtoC</span><div class="text-en" title="Customer-to-Customer Transactions">Customer-to-Customer Transactions</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-wiidqz">
+        <span class="node-text" title="発行体" data-text-default="発行体">発行体</span><div class="text-en" title="Issuer">Issuer</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-uwar6l">
+        <span class="node-text" title="自社NFT" data-text-default="自社NFT">自社NFT</span><div class="text-en" title="Proprietary NFTs">Proprietary NFTs</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-emx3y7">
+        <span class="node-text" title="出庫手数料" data-text-default="出庫手数料">出庫手数料</span><div class="text-en" title="NFT Withdrawal Fee">NFT Withdrawal Fee</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-45ezvr">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_cf5wucsgrd" target="_blank" class="node-text" title="OnRamp" data-text-default="OnRamp">OnRamp</a><div class="text-en" title="Crypto OnRamp">Crypto OnRamp</div><div class="value" title="" data-value-daily="" data-value-monthly="" data-diff-daily="" data-diff-monthly="-100.00%"></div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="-100.00%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-45ezvr-children"></button>
+      <ul id="node-45ezvr-children" class="children">
+    <li>
+      <div class="node" id="node-tmsnq1">
+        <span class="node-text" title="DTU" data-text-daily="DTU" data-text-monthly="MTU">DTU</span><div class="text-en" title="Trading User">Trading User</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-9ip8ri">
+        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="text-en" title="Average Revenue per Paying User (Periodic Purchase)">Average Revenue per Paying User (Periodic Purchase)</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-h9tt1l">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_7n6shcsgrd" target="_blank" class="node-text" title="リワード" data-text-default="リワード">リワード</a><div class="text-en" title="Rewards">Rewards</div><div class="value" title="19,108" data-value-daily="19,108" data-value-monthly="154,168" data-diff-daily="23.82%" data-diff-monthly="-97.19%">19,108</div><div class="diff-value" title="前日比: 23.82%" data-diff-daily="23.82%" data-diff-monthly="-97.19%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">23.82%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-h9tt1l-children"></button>
+      <ul id="node-h9tt1l-children" class="children">
+    <li>
+      <div class="node" id="node-2j2b3h">
+        <span class="node-text" title="広告費" data-text-default="広告費">広告費</span><div class="text-en" title="Advertising cost">Advertising cost</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li><li class="operator">-</li>
+    <li>
+      <div class="node" id="node-46bki6">
+        <span class="node-text" title="付与したポイント" data-text-default="付与したポイント">付与したポイント</span><div class="text-en" title="Points awarded">Points awarded</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-gvqnrz">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_brc2lm5lrd" target="_blank" class="node-text" title="でんき・ガス" data-text-default="でんき・ガス">でんき・ガス</a><div class="text-en" title="CC Electricity & Gas">CC Electricity & Gas</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-gvqnrz-children"></button>
+      <ul id="node-gvqnrz-children" class="children">
+    <li>
+      <div class="node" id="node-gmtrvo">
+        <span class="node-text" title="でんき" data-text-default="でんき">でんき</span><div class="text-en" title="Electricity bill">Electricity bill</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-s9qu09">
+        <span class="node-text" title="ガス" data-text-default="ガス">ガス</span><div class="text-en" title="Gas Bill">Gas Bill</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-" data-diff-daily="null" data-diff-monthly="null">-</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-515lzn">
+        <span class="node-text" title="クロス取引" data-text-default="クロス取引">クロス取引</span><div class="text-en" title="Cross Trade">Cross Trade</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-vaq0zm">
+        <span class="node-text" title="IEOモニタリング" data-text-default="IEOモニタリング">IEOモニタリング</span><div class="text-en" title="Monitoring Earnings (IEO)">Monitoring Earnings (IEO)</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-8jxza8">
+        <span class="node-text" title="リスティングフィー" data-text-default="リスティングフィー">リスティングフィー</span><div class="text-en" title="Listing Fees">Listing Fees</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-bgiiky">
+        <span class="node-text" title="退会手数料収益" data-text-default="退会手数料収益">退会手数料収益</span><div class="text-en" title="Account Cancellation Fee">Account Cancellation Fee</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-qt68yy">
+        <span class="node-text" title="不明入金" data-text-default="不明入金">不明入金</span><div class="text-en" title="Monetization Of Unclaimed Deposits">Monetization Of Unclaimed Deposits</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-riljjb">
+        <span class="node-text" title="その他トレーディング損益" data-text-default="その他トレーディング損益">その他トレーディング損益</span><div class="text-en" title="Unrealized Gain (Loss) On Own Position">Unrealized Gain (Loss) On Own Position</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-9jpl93">
+        <span class="node-text" title="Binanceリベート" data-text-default="Binanceリベート">Binanceリベート</span><div class="text-en" title="Rebate">Rebate</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-m9mq">
+        <span class="node-text" title="雑収入・雑費" data-text-default="雑収入・雑費">雑収入・雑費</span><div class="text-en" title="Miscellaneous Income And Expenses">Miscellaneous Income And Expenses</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li>
+      </ul>
     </li>
       </ul>
     </li>
@@ -2024,23 +2558,12 @@ function updateAllNodeValues() {
         // パーセント文字を削除して数値化
         let numValue = parseFloat(displayValue.toString().replace('%', ''));
         
+        // 前月比はスプレッドシートの内容をそのまま表示
         // パーセントがない場合は付ける
         if (!displayValue.toString().endsWith('%')) {
           displayValue = displayValue + '%';
         }
-        
-        // プラスの値には「+」を、マイナスの値には「-」を付けるようにする
-        if (numValue > 100 && !displayValue.toString().startsWith('+')) {
-          displayValue = '+' + displayValue;
-        } else if (numValue < 100 && !displayValue.toString().startsWith('-')) {
-          // パーセント値を一時的に取り外す
-          let tempValue = displayValue;
-          if (tempValue.endsWith('%')) {
-            tempValue = tempValue.slice(0, -1);
-          }
-          // マイナス記号を追加して再度パーセント記号を付ける
-          displayValue = '-' + tempValue + '%';
-        }
+        // 前月比は+や-を自動付加しないようにする
         
         // HTMLを再構築
         diffElement.innerHTML = `
@@ -2105,6 +2628,69 @@ function updateAllNodeValues() {
     if (oldValue !== newValue) {
       valueElement.textContent = newValue;
       changedNodes++;
+    }
+    
+    // 日本語テキストの切り替え処理を追加
+    const textElement = node.querySelector('.node-text');
+    if (textElement) {
+      // 月次モードでtext_monthly属性があれば切り替え
+      const textMonthly = textElement.getAttribute('data-text-monthly');
+      const textDaily = textElement.getAttribute('data-text-daily');
+      const textDefault = textElement.getAttribute('data-text-default');
+      
+      if (currentMode === 'monthly' && textMonthly) {
+        // 月次モードで月次テキストがあれば表示
+        textElement.textContent = textMonthly;
+        textElement.setAttribute('title', textMonthly);
+        changedNodes++;
+      } else if (currentMode === 'daily' && textDaily) {
+        // 日次モードで日次テキストがあれば表示
+        textElement.textContent = textDaily;
+        textElement.setAttribute('title', textDaily);
+        changedNodes++;
+      } else if (textDefault) {
+        // デフォルトテキストがあれば表示
+        textElement.textContent = textDefault;
+        textElement.setAttribute('title', textDefault);
+        changedNodes++;
+      }
+    }
+    
+    // デバッグ：一人当たり保有金額ノードの検出
+    if (node.textContent.includes('一人当たり保有金額')) {
+      console.log('★問題のノードを発見:', node);
+      console.log('- 内部テキスト:', node.textContent);
+      console.log('- HTML構造:', node.innerHTML);
+      console.log('- text-en要素:', node.querySelector('.text-en'));
+    }
+    
+    // text_enの切り替え処理を追加
+    const textEnElement = node.querySelector('.text-en');
+    if (textEnElement) {
+      // 月次モードでtext_en_monthly属性があれば切り替え
+      const textEnMonthly = textEnElement.getAttribute('data-text-en-monthly');
+      const textEnDefault = textEnElement.getAttribute('title'); // title属性に元の値が保存されている
+      
+      // デバッグ：一人当たり保有金額ノードの属性確認
+      if (node.textContent.includes('一人当たり保有金額')) {
+        console.log('★text-en要素の属性:', {
+          monthly: textEnMonthly,
+          default: textEnDefault,
+          mode: currentMode
+        });
+      }
+      
+      if (currentMode === 'monthly' && textEnMonthly) {
+        // 月次モードでtext_en_monthly属性があれば表示
+        textEnElement.textContent = textEnMonthly;
+        textEnElement.style.display = 'block'; // 確実に表示
+        changedNodes++;
+      } else if (currentMode === 'daily' && textEnDefault) {
+        // 日次モードでは元の英語表記（title属性の値）に戻す
+        textEnElement.textContent = textEnDefault;
+        textEnElement.style.display = 'block'; // 確実に表示
+        changedNodes++;
+      }
     }
   });
   
@@ -3328,6 +3914,25 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentMonth = currentDate.getMonth();
   let currentYear = currentDate.getFullYear();
   
+  // 現在開いているページの日付を取得（YYYYMMDD.html または reports/YYYYMMDD.html）
+  let currentPageDate = null;
+  try {
+    const currentPath = window.location.pathname;
+    // reports/YYYYMMDD.html または YYYYMMDD.html パターンを検出
+    const dateMatch = currentPath.match(/\/(\d{8})\.html$/) || currentPath.match(/\/reports\/(\d{8})\.html$/);
+    if (dateMatch && dateMatch[1]) {
+      // YYYYMMDD形式を解析
+      const dateStr = dateMatch[1];
+      const year = parseInt(dateStr.substring(0, 4));
+      const month = parseInt(dateStr.substring(4, 6)) - 1; // 0-11
+      const day = parseInt(dateStr.substring(6, 8));
+      currentPageDate = new Date(year, month, day);
+      console.log('現在のページ日付を検出:', currentPageDate);
+    }
+  } catch (e) {
+    console.error('ページ日付の解析エラー:', e);
+  }
+  
   // 月の名前（日本語）
   const monthNames = [
     '1月', '2月', '3月', '4月', '5月', '6月',
@@ -3400,14 +4005,13 @@ document.addEventListener('DOMContentLoaded', function() {
           // 日付を昇順でソート
           datesWithData.sort();
           minDate = parseDate(datesWithData[0]);
-          maxDate = parseDate(datesWithData[datesWithData.length - 1]);
           
-          // 最小月と最大月を計算
-          const minMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
-          const maxMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+          // 昨日の日付を最大日付として設定
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          maxDate = yesterday;
           
-          console.log('日付範囲:', minDate, maxDate);
-          console.log('月範囲:', minMonth, maxMonth);
+          console.log('日付範囲:', minDate, maxDate, '(昨日までに制限)');
           
           // 現在の表示月を、最小日付と最大日付の間にある今日の月、
           // または単に最小日付の月に設定
@@ -3502,23 +4106,43 @@ document.addEventListener('DOMContentLoaded', function() {
   // ナビゲーションボタンの表示/非表示を更新
   function updateNavigationButtons() {
     if (minDate && maxDate) {
-      // 前月ボタンを制御（最小日付の月より前には移動できない）
+      // 前月ボタンを制御
       const prevMonth = new Date(currentYear, currentMonth - 1, 1);
       const canGoToPrevMonth = prevMonth >= new Date(minDate.getFullYear(), minDate.getMonth(), 1);
       
-      // 次月ボタンを制御（最大日付の月より後には移動できない）
+      // 次月ボタンを制御
       const nextMonth = new Date(currentYear, currentMonth + 1, 1);
-      const canGoToNextMonth = nextMonth <= new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
       
-      // ボタンの表示/非表示とアクセシビリティを設定
+      // 今日の月を取得
+      const today = new Date();
+      const todayMonth = today.getMonth();
+      const todayYear = today.getFullYear();
+      const currentMonthFirst = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      // 次月ボタンを完全に無効化: 現在表示している月が今月の場合または次の月が今月より後の場合
+      let canGoToNextMonth = false;
+      if (currentMonth === todayMonth && currentYear === todayYear) {
+        // 今月を表示している場合は次月に進めない
+        canGoToNextMonth = false;
+      } else {
+        // 今月以外の月を表示している場合、次の月が今月以下ならOK
+        const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
+        canGoToNextMonth = nextMonthDate <= new Date(todayYear, todayMonth, 1);
+      }
+
+      // ボタンの表示/非表示を切り替え
       prevMonthBtn.style.visibility = canGoToPrevMonth ? 'visible' : 'hidden';
       nextMonthBtn.style.visibility = canGoToNextMonth ? 'visible' : 'hidden';
-      prevMonthBtn.disabled = !canGoToPrevMonth;
       nextMonthBtn.disabled = !canGoToNextMonth;
       
-      console.log('ナビゲーションボタン更新:', 
-                 '前月=', canGoToPrevMonth ? '表示' : '非表示', 
-                 '次月=', canGoToNextMonth ? '表示' : '非表示');
+      // 今月表示中の場合は強制的に次月ボタンを無効化
+      if (currentMonth === todayMonth && currentYear === todayYear) {
+        nextMonthBtn.style.visibility = 'hidden';
+        nextMonthBtn.disabled = true;
+      }
+      
+      console.log('ナビゲーションボタン更新: 今月=', (currentMonth === todayMonth && currentYear === todayYear),
+                  '前月=', canGoToPrevMonth, '次月=', canGoToNextMonth);
     }
   }
   
@@ -3539,11 +4163,46 @@ document.addEventListener('DOMContentLoaded', function() {
   // 翌月ボタン
   nextMonthBtn.addEventListener('click', function() {
     if (this.disabled) return;
+    if (this.style.visibility === 'hidden') return;
     
+    // 現在の日付を取得
+    const today = new Date();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+    
+    // 厳格なチェック: 現在表示中の月が今月なら何もしない
+    if (currentMonth === todayMonth && currentYear === todayYear) {
+      console.log('現在の月が今月なので次の月には移動できません');
+      return;
+    }
+    
+    // 次の月が今月以下の場合だけ移動可能
+    let nextMonth = currentMonth + 1;
+    let nextYear = currentYear;
+    if (nextMonth > 11) {
+      nextMonth = 0;
+      nextYear++;
+    }
+    
+    // 日付比較（次の月が今月より後は移動不可）
+    if (nextYear > todayYear || (nextYear === todayYear && nextMonth > todayMonth)) {
+      console.log('未来の月には移動できません');
+      return;
+    }
+    
+    // 条件を通過した場合のみ月を進める
     currentMonth++;
     if (currentMonth > 11) {
       currentMonth = 0;
       currentYear++;
+    }
+    
+    // 再度確認: 進めた後の月が今月以下かチェック
+    if (currentYear > todayYear || (currentYear === todayYear && currentMonth > todayMonth)) {
+      // 間違って未来に進んでしまった場合は今月に戻す
+      console.log('未来の月に移動してしまったので今月に戻します');
+      currentMonth = todayMonth;
+      currentYear = todayYear;
     }
     
     updateNavigationButtons();
@@ -3603,12 +4262,24 @@ document.addEventListener('DOMContentLoaded', function() {
         dayEl.classList.add('today');
       }
       
+      // 現在のページ日付があれば、その日付にハイライトを適用
+      if (currentPageDate && i === currentPageDate.getDate() && 
+          currentMonth === currentPageDate.getMonth() && 
+          currentYear === currentPageDate.getFullYear()) {
+        dayEl.classList.add('current-page-date');
+      }
+      
       // 日付ごとのリンクを作成
       const dateLink = document.createElement('a');
       // YYYY-MM-DD 形式
       const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       // YYYYMMDD形式（URLパス用）
       const dateForUrl = formatDateYYYYMMDD(new Date(currentYear, currentMonth, i));
+      
+      // 対象の日付
+      const dateObj = new Date(currentYear, currentMonth, i);
+      // 昨日までの日付かどうかをチェック
+      const isDateAvailable = dateObj <= maxDate;
       
       // リンク先を生成（YAMLのpublic_urlに基づく）
       let reportUrl = '';
@@ -3627,22 +4298,23 @@ document.addEventListener('DOMContentLoaded', function() {
         reportUrl = `/reports/${dateForUrl}.html`;
       }
       
-      // すべての日付に対してリンクを有効にする
-      dateLink.href = reportUrl;
-      dateLink.title = `${formattedDate}のレポートを表示`;
-      
-      // データがある日付には特別なクラスを追加（スタイリング用）
-      if (hasDataForDate(currentYear, currentMonth, i)) {
-        dateLink.classList.add('has-data');
-        dayEl.appendChild(dateLink);
+      // 昨日までの日付に対してのみリンクを有効にする
+      if (isDateAvailable) {
+        dateLink.href = reportUrl;
+        dateLink.title = `${formattedDate}のレポートを表示`;
+        
+        // データがある日付には特別なクラスを追加（スタイリング用）
+        if (hasDataForDate(currentYear, currentMonth, i)) {
+          dateLink.classList.add('has-data');
+        }
       } else {
-        // データがない日付の場合はリンクなしで数字だけ表示
-        const noDataSpan = document.createElement('span');
-        noDataSpan.textContent = i;
-        noDataSpan.classList.add('no-data');
-        noDataSpan.title = `${formattedDate}のデータはありません`;
-        dayEl.appendChild(noDataSpan);
+        // 将来の日付の場合は無効なリンクにする
+        dateLink.classList.add('no-data');
+        dateLink.title = `${formattedDate}のデータはまだ利用できません`;
       }
+      
+      dateLink.textContent = i;
+      dayEl.appendChild(dateLink);
       calendarDaysEl.appendChild(dayEl);
     }
     

@@ -1132,7 +1132,7 @@ h1 {
         </button>
         <div class="page-title-container">
           <h1 class="page-title">コインチェック 収益KPIツリー</h1>
-          <span class="data-date">現在のデータ: 2025年05月20日 / 販売所以外収益/販売所収益:=for_generator!G70</span>
+          <span class="data-date">現在のデータ: 2025年05月21日 / 販売所以外収益/販売所収益:=for_generator!G70</span>
         </div>
       </div>
       <div class="header-controls">
@@ -1385,7 +1385,7 @@ h1 {
       <ul id="node-ywv5xg-children" class="children">
     <li>
       <div class="node" id="node-js57v1">
-        <span class="node-text" title="ETH保有金額" data-text-default="ETH保有金額">ETH保有金額</span><div class="text-en" title="ETH Balance">ETH Balance</div><div class="value" title="=for_generator!G40" data-value-daily="=for_generator!G40" data-value-monthly="=for_generator!I40" data-diff-daily="=for_generator!L40" data-diff-monthly="=for_generator!M40">=for_generator!G40</div><div class="diff-value" title="前日比: =for_generator!L40" data-diff-daily="=for_generator!L40" data-diff-monthly="=for_generator!M40">
+        <span class="node-text" title="ETH保有金額" data-text-default="ETH保有金額" data-text-monthly="ETHステーキング総額">ETH保有金額</span><div class="text-en" title="ETH Balance" data-text-en-monthly="Total ETH Staking amount">ETH Balance</div><div class="value" title="=for_generator!G40" data-value-daily="=for_generator!G40" data-value-monthly="=for_generator!I40" data-diff-daily="=for_generator!L40" data-diff-monthly="=for_generator!M40">=for_generator!G40</div><div class="diff-value" title="前日比: =for_generator!L40" data-diff-daily="=for_generator!L40" data-diff-monthly="=for_generator!M40">
           <span class="diff-label">前日比: </span>
           <span class="diff-number">=for_generator!L40</span>
         </div>
@@ -1402,7 +1402,7 @@ h1 {
     </li><li class="operator">×</li>
     <li>
       <div class="node" id="node-3lvep0">
-        <span class="node-text" title="一人当たり保有金額" data-text-default="一人当たり保有金額">一人当たり保有金額</span><div class="value" title="=for_generator!G68" data-value-daily="=for_generator!G68" data-value-monthly="=for_generator!I68" data-diff-daily="=for_generator!L68" data-diff-monthly="=for_generator!M68">=for_generator!G68</div><div class="diff-value" title="前日比: =for_generator!L68" data-diff-daily="=for_generator!L68" data-diff-monthly="=for_generator!M68">
+        <span class="node-text" title="一人当たり保有金額" data-text-default="一人当たり保有金額" data-text-monthly="一人当たりETHステーキング総額">一人当たり保有金額</span><div class="text-en" title="Amount per user" data-text-en-monthly="ETH staking amount per ser">Amount per user</div><div class="value" title="=for_generator!G68" data-value-daily="=for_generator!G68" data-value-monthly="=for_generator!I68" data-diff-daily="=for_generator!L68" data-diff-monthly="=for_generator!M68">=for_generator!G68</div><div class="diff-value" title="前日比: =for_generator!L68" data-diff-daily="=for_generator!L68" data-diff-monthly="=for_generator!M68">
           <span class="diff-label">前日比: </span>
           <span class="diff-number">=for_generator!L68</span>
         </div>
@@ -2607,23 +2607,12 @@ function updateAllNodeValues() {
         // パーセント文字を削除して数値化
         let numValue = parseFloat(displayValue.toString().replace('%', ''));
         
+        // 前月比はスプレッドシートの内容をそのまま表示
         // パーセントがない場合は付ける
         if (!displayValue.toString().endsWith('%')) {
           displayValue = displayValue + '%';
         }
-        
-        // プラスの値には「+」を、マイナスの値には「-」を付けるようにする
-        if (numValue > 100 && !displayValue.toString().startsWith('+')) {
-          displayValue = '+' + displayValue;
-        } else if (numValue < 100 && !displayValue.toString().startsWith('-')) {
-          // パーセント値を一時的に取り外す
-          let tempValue = displayValue;
-          if (tempValue.endsWith('%')) {
-            tempValue = tempValue.slice(0, -1);
-          }
-          // マイナス記号を追加して再度パーセント記号を付ける
-          displayValue = '-' + tempValue + '%';
-        }
+        // 前月比は+や-を自動付加しないようにする
         
         // HTMLを再構築
         diffElement.innerHTML = `
@@ -2688,6 +2677,50 @@ function updateAllNodeValues() {
     if (oldValue !== newValue) {
       valueElement.textContent = newValue;
       changedNodes++;
+    }
+    
+    // 日本語テキストの切り替え処理を追加
+    const textElement = node.querySelector('.node-text');
+    if (textElement) {
+      // 月次モードでtext_monthly属性があれば切り替え
+      const textMonthly = textElement.getAttribute('data-text-monthly');
+      const textDaily = textElement.getAttribute('data-text-daily');
+      const textDefault = textElement.getAttribute('data-text-default');
+      
+      if (currentMode === 'monthly' && textMonthly) {
+        // 月次モードで月次テキストがあれば表示
+        textElement.textContent = textMonthly;
+        textElement.setAttribute('title', textMonthly);
+        changedNodes++;
+      } else if (currentMode === 'daily' && textDaily) {
+        // 日次モードで日次テキストがあれば表示
+        textElement.textContent = textDaily;
+        textElement.setAttribute('title', textDaily);
+        changedNodes++;
+      } else if (textDefault) {
+        // デフォルトテキストがあれば表示
+        textElement.textContent = textDefault;
+        textElement.setAttribute('title', textDefault);
+        changedNodes++;
+      }
+    }
+    
+    // text_enの切り替え処理を追加
+    const textEnElement = node.querySelector('.text-en');
+    if (textEnElement) {
+      // 月次モードでtext_en_monthly属性があれば切り替え
+      const textEnMonthly = textEnElement.getAttribute('data-text-en-monthly');
+      const textEnDefault = textEnElement.getAttribute('title'); // title属性に元の値が保存されている
+      
+      if (currentMode === 'monthly' && textEnMonthly) {
+        // 月次モードでtext_en_monthly属性があれば表示
+        textEnElement.textContent = textEnMonthly;
+        changedNodes++;
+      } else if (currentMode === 'daily' && textEnDefault) {
+        // 日次モードでは元の英語表記（title属性の値）に戻す
+        textEnElement.textContent = textEnDefault;
+        changedNodes++;
+      }
     }
   });
   
@@ -3941,6 +3974,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // データの期間の境界（最小日付と最大日付）
   let minDate = null;
   let maxDate = null;
+  
+  // デバッグ：初期状態の出力
+  console.log('【デバッグ】カレンダー初期化時のdatesWithData:', [...datesWithData]);
   // ベースURL（YAMLから取得）
   let baseUrl = '';
   
@@ -3961,7 +3997,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // 日付がデータがある日付かどうかをチェック
   function hasDataForDate(year, month, day) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return datesWithData.includes(dateStr);
+    const hasData = datesWithData.includes(dateStr);
+    
+    // デバッグ：緑ポッチの対象になる日付を出力
+    if (hasData) {
+      console.log(`【デバッグ】緑ポッチ対象の日付: ${dateStr}`);
+    }
+    
+    return hasData;
   }
   
   // 日付がデータ期間内かどうかをチェック
@@ -3990,12 +4033,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const fallbackData = {
       datesWithData: []
     };
+    console.log('【デバッグ】フォールバックデータ:', fallbackData);
     
     // データ処理関数
     function processJsonData(data) {
+      console.log('【デバッグ】processJsonData受け取ったデータ:', data);
+      
       if (data && Array.isArray(data.datesWithData)) {
         // 日付データを保存
         datesWithData = data.datesWithData;
+        console.log('【デバッグ】datesWithDataを設定:', [...datesWithData]);
         
         // 最小日付と最大日付を取得
         if (datesWithData.length > 0) {
@@ -4089,6 +4136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 空のJSONファイルの場合も適切に処理
         if (!data || !data.datesWithData || !Array.isArray(data.datesWithData)) {
           console.warn('カレンダーデータが正しい形式ではありません。空のデータを使用します。');
+          console.log('【デバッグ】フォールバックデータに切り替え');
           return processJsonData(fallbackData);
         }
         processJsonData(data);

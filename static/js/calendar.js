@@ -396,64 +396,55 @@ document.addEventListener('DOMContentLoaded', function() {
     renderCalendar();
   });
   
-  // 翻月ボタン
+  // 翻月ボタン - 完全に修正したバージョン
   nextMonthBtn.addEventListener('click', function() {
-    if (this.disabled) return;
-    if (this.style.visibility === 'hidden') return;
+    if (this.disabled || this.style.visibility === 'hidden') return;
     
-    // 【デバッグ強化】現在の状態を出力
-    console.log('【CALENDAR-NAV-DEBUG】次の月ボタンクリック:', {
-      現在の月: currentMonth + 1,
-      現在の年: currentYear,
-      画面上の日付: document.getElementById('current-date') ? document.getElementById('current-date').innerText : '未設定'
+    // デバッグ情報追加
+    console.log('【月移動-修正版】クリック前状態:', {
+      現在月: currentMonth + 1,
+      現在年: currentYear
     });
     
-    // 現在の日付を取得
+    // 今日の日付を取得
     const today = new Date();
     const todayMonth = today.getMonth();
     const todayYear = today.getFullYear();
     
-    // 【デバッグ強化】チェック条件を詳細に出力
-    console.log('【CALENDAR-NAV-DEBUG】チェック条件:', {
+    // 次の月への移動処理
+    let targetMonth = currentMonth + 1;
+    let targetYear = currentYear;
+    
+    // 年をまたぐ場合の処理
+    if (targetMonth > 11) {
+      targetMonth = 0;
+      targetYear++;
+    }
+    
+    console.log('【月移動-修正版】計算結果:', {
+      現在月: currentMonth + 1,
+      移動先月: targetMonth + 1,
+      現在年: currentYear,
+      移動先年: targetYear,
       今日の月: todayMonth + 1,
-      今日の年: todayYear,
-      現在表示中は今月か: (currentMonth === todayMonth && currentYear === todayYear)
+      今日の年: todayYear
     });
     
-    // 厳格なチェック: 現在表示中の月が今月なら何もしない
-    if (currentMonth === todayMonth && currentYear === todayYear) {
-      console.log('現在の月が今月なので次の月には移動できません');
+    // 未来の月への移動を制限
+    if (targetYear > todayYear || (targetYear === todayYear && targetMonth > todayMonth)) {
+      console.log('【月移動-修正版】移動先が未来の月のため移動をキャンセル');
       return;
     }
     
-    // 次の月が今月以下の場合だけ移動可能 
-    // 【修正点】次の月を一度だけ計算し、保存する
-    let nextMonth = currentMonth + 1;
-    let nextYear = currentYear;
-    if (nextMonth > 11) {
-      nextMonth = 0;
-      nextYear++;
-    }
-    
-    // 【デバッグ強化】次の月の計算結果を詳細に出力
-    console.log('【CALENDAR-NAV-DEBUG】次の月計算結果:', {
-      計算後の次の月: nextMonth + 1,
-      計算後の次の年: nextYear,
-      今日の月: todayMonth + 1,
-      今日の年: todayYear,
-      移動可能か: !(nextYear > todayYear || (nextYear === todayYear && nextMonth > todayMonth))
+    // 実際に月を移動
+    console.log('【月移動-修正版】移動実行:', {
+      移動前: currentMonth + 1 + '月' + currentYear + '年',
+      移動後: targetMonth + 1 + '月' + targetYear + '年'
     });
     
-    // 日付比較（次の月が今月より後は移動不可）
-    if (nextYear > todayYear || (nextYear === todayYear && nextMonth > todayMonth)) {
-      console.log('未来の月には移動できません');
-      return;
-    }
-    
-    // 【修正点】直接nextMonthとnextYearを使用して更新
-    console.log('【CALENDAR-NAV-DEBUG】移動実行: ' + (currentMonth + 1) + '月 → ' + (nextMonth + 1) + '月');
-    currentMonth = nextMonth;
-    currentYear = nextYear;
+    // 移動先を設定
+    currentMonth = targetMonth;
+    currentYear = targetYear;
     
     // 再度確認: 進めた後の月が今月以下かチェック
     if (currentYear > todayYear || (currentYear === todayYear && currentMonth > todayMonth)) {
