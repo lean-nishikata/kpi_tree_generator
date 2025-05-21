@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('【CALENDAR-NAV-DEBUG】次の月ボタンクリック:', {
       現在の月: currentMonth + 1,
       現在の年: currentYear,
-      画面上の日付: document.getElementById('current-date').innerText
+      画面上の日付: document.getElementById('current-date') ? document.getElementById('current-date').innerText : '未設定'
     });
     
     // 現在の日付を取得
@@ -383,7 +383,8 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    // 次の月が今月以下の場合だけ移動可能
+    // 次の月が今月以下の場合だけ移動可能 
+    // 【修正点】次の月を一度だけ計算し、保存する
     let nextMonth = currentMonth + 1;
     let nextYear = currentYear;
     if (nextMonth > 11) {
@@ -406,13 +407,10 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    // 条件を通過した場合のみ月を進める
-    console.log('【CALENDAR-NAV-DEBUG】移動実行: ' + currentMonth + '月 → ' + (currentMonth + 1) + '月');
-    currentMonth++;
-    if (currentMonth > 11) {
-      currentMonth = 0;
-      currentYear++;
-    }
+    // 【修正点】直接nextMonthとnextYearを使用して更新
+    console.log('【CALENDAR-NAV-DEBUG】移動実行: ' + (currentMonth + 1) + '月 → ' + (nextMonth + 1) + '月');
+    currentMonth = nextMonth;
+    currentYear = nextYear;
     
     // 再度確認: 進めた後の月が今月以下かチェック
     if (currentYear > todayYear || (currentYear === todayYear && currentMonth > todayMonth)) {
