@@ -1,0 +1,4714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>コインチェック 収益KPIツリー</title>
+  <link rel="icon" href="https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/b9c95f718640eab6.png" type="image/x-icon">
+  <script>
+    // リダイレクト環境で動作するPUBLIC_URL設定 - GCS対応強化版
+    (function() {
+      // 強制的にYAMLで設定した公開URLを使用
+      var FIXED_PUBLIC_URL = "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/index.html";
+      
+      // キャッシュバスティング用タイムスタンプ
+      var CACHE_BUSTER = new Date().getTime();
+      
+      // 常にグローバルに利用可能な形で公開URLを設定
+      window.PUBLIC_URL = FIXED_PUBLIC_URL;
+      window._publicBaseUrl = FIXED_PUBLIC_URL;
+      
+      console.log('キャッシュ対策タイムスタンプ:', CACHE_BUSTER);
+      console.log('強制的に設定した公開URL:', FIXED_PUBLIC_URL);
+      
+      // GCSリダイレクトを検出しても上書きしない
+      if (window.location.href.includes('googleusercontent.com')) {
+        console.log('リダイレクト先を検出しましたが、YAML設定の公開URLを優先します: ' + FIXED_PUBLIC_URL);
+      }
+    })();
+    </script>
+  <style>
+    /* 埋め込みCSS */
+    /* General styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+  overflow-x: hidden; /* スクロールバーを防止 */
+}
+
+/* メインヘッダー - Claudeスタイル */
+.main-header {
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000; /* ドロワーよりも上に表示するため増やす */
+  padding: 0;
+  width: 100%;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  max-width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+}
+
+.page-title-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+}
+
+.data-date {
+  font-size: 14px;
+  color: #666;
+  margin-top: 3px;
+}
+
+/* ハンバーガーメニューボタン */
+.menu-toggle {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background-color: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  padding: 6px;
+  margin-left: 8px;
+}
+
+.menu-icon {
+  fill: #5f6368;
+}
+
+.menu-toggle:hover {
+  background-color: rgba(95, 99, 104, 0.1);
+}
+
+.hamburger-icon {
+  position: relative;
+  width: 20px;
+  height: 2px;
+  background-color: #3c4043;
+  transition: all 0.3s ease;
+}
+
+.hamburger-icon::before,
+.hamburger-icon::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background-color: #3c4043;
+  transition: all 0.3s ease;
+}
+
+.hamburger-icon::before {
+  transform: translateY(-6px);
+}
+
+.hamburger-icon::after {
+  transform: translateY(6px);
+}
+
+/* ハンバーガーアイコンの変形アニメーション（オープン状態） */
+.menu-toggle.open .hamburger-icon {
+  background-color: transparent;
+}
+
+.menu-toggle.open .hamburger-icon::before {
+  transform: rotate(45deg);
+}
+
+.menu-toggle.open .hamburger-icon::after {
+  transform: rotate(-45deg);
+}
+
+/* ドロワーメニュー */
+.drawer {
+  position: fixed;
+  top: 56px; /* ヘッダーの高さを考慮して下に配置 */
+  left: -320px; /* 初期状態は画面外 */
+  width: 320px;
+  height: calc(100% - 56px); /* ヘッダー高さを引いた高さ */
+  background-color: #fff;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  z-index: 999;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+}
+
+.drawer.open {
+  left: 0; /* 画面内に表示 */
+  margin-left: 0; /* ドロワーが開いた状態の位置を調整 */
+}
+
+/* ドロワーメニューのヘッダー */
+.drawer-header {
+  padding: 0;
+  background-color: white;
+  color: #3c4043;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  border-bottom: 1px solid #dadce0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+
+.drawer-header-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 12px 0 16px;
+}
+
+.drawer-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+}
+
+.drawer-icon {
+  width: 28px;
+  height: 28px;
+  background-color: #09BA85;
+  color: white;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.drawer-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 400;
+  color: #3c4043;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 閉じるボタン */
+.drawer-close {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  padding: 0;
+}
+
+.drawer-close:hover {
+  background-color: rgba(255,255,255,0.2);
+}
+
+.close-icon {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+
+.close-icon::before,
+.close-icon::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 2px;
+  background-color: white;
+  top: 7px;
+  left: 0;
+}
+
+.close-icon::before {
+  transform: rotate(45deg);
+}
+
+.close-icon::after {
+  transform: rotate(-45deg);
+}
+
+/* ドロワーメニューのコンテンツ */
+.drawer-content {
+  padding: 0;
+  overflow-y: auto;
+  height: calc(100% - 64px);
+}
+
+.drawer-nav {
+  padding: 0;
+}
+
+.drawer-section-group {
+  border-bottom: 1px solid #dadce0;
+}
+
+.drawer-section {
+  padding: 0;
+}
+
+.drawer-section.active {
+  background-color: #f1f3f4;
+}
+
+.drawer-section-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #dadce0;
+}
+
+.drawer-section-header h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3c4043;
+  margin: 0;
+}
+
+.drawer-section-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #dadce0;
+}
+
+.drawer-item-header {
+  margin-bottom: 8px;
+}
+
+.drawer-item-header h4 {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  margin: 0;
+}
+
+.drawer-item-content {
+  padding: 4px 0;
+}
+
+/* ドロワーオーバーレイ */
+.drawer-overlay {
+  position: fixed;
+  top: 56px; /* ヘッダー高さの下から配置 */
+  left: 0;
+  width: 100%;
+  height: calc(100% - 56px); /* ヘッダーの高さを引いた高さ */
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 500;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.drawer-overlay.visible {
+  display: block;
+  opacity: 1;
+}
+
+/* メインコンテンツエリア */
+.main-content {
+  transition: margin-left 0.3s ease;
+  width: 100%;
+  /* トグルの開閉に合わせて横幅を調整する、右端が切れないようにする */
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+@media (min-width: 769px) {
+  /* PCサイズの場合はコンテンツをオフセット */
+  .main-content.drawer-open {
+    margin-left: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* モバイルサイズの場合はオーバーレイ表示 */
+  .drawer {
+    z-index: 1001;
+  }
+  
+  .main-content.drawer-open {
+    margin-left: 0; /* コンテンツは動かさない */
+  }
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+/* KPI Tree styles - Common */
+.kpi-tree-container {
+  overflow: auto;
+  padding: 20px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.kpi-tree {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 英語表記用スタイル */
+.text-en {
+  font-size: 0.7em;
+  color: #666;
+  margin-top: 2px;
+  white-space: nowrap; /* 改行しない */
+  overflow: hidden; /* はみ出した部分を非表示 */
+  text-overflow: ellipsis; /* はみ出した部分を省略記号(...)で表示 */
+  display: block; /* ブロック要素にする */
+  max-width: 100%; /* 親要素の幅を超えないようにする */
+}
+
+/* コントロールパネル */
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 日次/月次切り替えボタン */
+.view-mode-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mode-options {
+  display: flex;
+  position: relative;
+  width: 140px;
+  height: 36px;
+  background-color: #e0e0e0;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  z-index: 2;
+  transition: color 0.3s ease;
+  padding: 0 10px;
+}
+
+.mode-btn.active {
+  color: white;
+}
+
+.mode-indicator {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 67px;
+  height: 30px;
+  background-color: #09BA85;
+  border-radius: 15px;
+  transition: transform 0.3s ease;
+  z-index: 1;
+}
+
+/* 月次モードの時のインジケーター位置 */
+#monthly-mode-btn.active ~ .mode-indicator {
+  transform: translateX(67px);
+}
+
+/* URLコピーボタン */
+.url-copy-container {
+  display: flex;
+  align-items: center;
+}
+
+.copy-url-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 14px;
+  background-color: #09BA85;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.copy-url-btn:hover {
+  background-color: #3367d6;
+}
+
+.copy-url-btn svg {
+  margin-right: 6px;
+}
+
+/* 月次テキストの位置調整 */
+.toggle-option.monthly {
+  left: 0;
+}
+
+/* Horizontal direction styles */
+.direction-horizontal {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.direction-horizontal .kpi-tree {
+  display: flex;
+  align-items: center;
+}
+
+.direction-horizontal .kpi-tree ul {
+  list-style-type: none;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.direction-horizontal .kpi-tree li {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.direction-horizontal .kpi-tree ul::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-left: 2px solid #ccc;
+  height: 100%;
+}
+
+.direction-horizontal .kpi-tree li.operator {
+  margin: 0 0 10px 0;
+}
+
+.direction-horizontal .operator {
+  vertical-align: middle;
+  height: 45px;
+  line-height: 45px;
+  text-align: center;
+  font-size: 32px;
+  margin: 0 10px;
+}
+
+.direction-horizontal .toggle-btn {
+  margin: 0 10px 0 0;
+}
+
+/* Node styles */
+.node {
+  /* 20250517-iwase-MEMO 横幅固定しなくて良い */
+  /* width: 180px !important; /* 横幅を固定、上書き防止 */
+  /* max-width: 180px !important; /* 最大幅も固定 */
+  /* margin-bottom: 5px; */
+  /* box-sizing: border-box !important; /* ボックスサイズ計算を固定 */
+  min-width: 180px !important; /* 最小幅も固定 */
+  min-height: 100px; /* 最低の高さ */
+  height: auto; /* 内容に応じて高さを自動調整 */
+  padding: 8px;
+  background-color: #fff;
+  border: 2px solid #666;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  margin-bottom: auto;
+  margin-right: 10px;
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
+}
+
+.node a {
+  color: #0066cc;
+  text-decoration: none;
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
+  overflow: visible; /* はみ出した部分も表示 */
+  display: block; /* ブロック要素にする */
+  /* 20250517-iwase-MEMO */ 横幅固定しなくて良い
+  /* max-width: 100%; */ /* 親要素の幅を超えないようにする */
+  /* white-space: normal; */ /* テキストを折り返す */
+  /* word-wrap: break-word; */ /* 長い単語も折り返す */
+}
+
+.node a:hover {
+  text-decoration: underline;
+}
+
+.node .value {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #333;
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
+  overflow: visible; /* はみ出した部分も表示 */
+  display: block; /* ブロック要素にする */
+  /* 20250517-iwase-MEMO */ 横幅固定しなくて良い
+  /* max-width: 100%; */ /* 親要素の幅を超えないようにする */
+  /* white-space: normal; */ /* テキストを折り返す */
+  /* word-wrap: break-word; */ /* 長い単語も折り返す */
+}
+
+/* 前日比・前月比のスタイル */
+.diff-value {
+  font-size: 0.85em;
+  margin-top: 5px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+/* 前日比・前月比のラベル部分 */
+.diff-label {
+  color: #333; /* 通常色 */
+  margin-right: 4px;
+}
+
+/* 前日比・前月比の値部分 */
+.diff-number {
+  font-weight: bold;
+}
+
+/* プラス値の場合の色 */
+.diff-positive .diff-number {
+  color: #28a745;
+}
+
+/* マイナス値の場合の色 */
+.diff-negative .diff-number {
+  color: #dc3545;
+}
+
+/* 変化なしの場合の色 */
+.diff-neutral .diff-number {
+  color: #6c757d;
+}
+
+/* ノード内のテキスト要素用スタイル */
+.node-text {
+  white-space: nowrap; /* テキストは折り返さず全て表示する */
+  /* 20250517-iwase-MEMO */ 横幅固定しなくて良い
+  /* white-space: normal; */ /* テキストを折り返す */
+  /* word-wrap: break-word; */ /* 長い単語も折り返す */
+  // overflow: visible; /* はみ出した部分も表示 */
+  // display: block; /* ブロック要素にする */
+  /* max-width: 100%; */ /* 親要素の幅を超えないようにする */
+}
+
+/* Operator styles */
+.operator {
+  font-size: 32px; /* フォントサイズを大きく */
+  font-weight: bold;
+  color: #666; /* 元の色に戻す */
+  width: 45px; /* 幅を大きく */
+  height: 45px; /* 高さを大きく */
+  line-height: 45px; /* height と揃える */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0; /* 元の背景色に戻す */
+  border-radius: 50%;
+  z-index: 10; /* 前面に表示 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 影を追加 */
+  border: 2px solid #ddd; /* 境界線色を元に近い色に調整 */
+  margin-bottom: 10px;
+}
+
+/* Toggle button styles */
+.toggle-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #ddd;
+  border: 1px solid #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  font-size: 0;
+  z-index: 2;
+  margin: 0px 10px;
+}
+
+.toggle-btn::before {
+  content: '−';
+  font-size: 16px;
+  line-height: 1;
+}
+
+.toggle-btn.collapsed::before {
+  content: '+';
+}
+
+/* Collapsed state */
+.children.collapsed {
+  display: none !important;
+}
+
+/* Theme colors */
+.theme-default .node {
+  border-color: #00796b;
+  background-color: #e0f2f1;
+}
+
+.theme-blue .node {
+  border-color: #1976d2;
+  background-color: #e3f2fd;
+}
+
+.theme-red .node {
+  border-color: #d32f2f;
+  background-color: #ffebee;
+}
+
+.note {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  padding: 8px 12px;
+  background-color: #e8f4fd; /* 淡い青 */
+  border-left: 4px solid #2196f3; /* Google系の青 */
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: #333;
+}
+
+.note ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.note li {
+  margin-bottom: 4px;
+}
+
+.note a {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.note a:hover {
+  text-decoration: none;
+}
+
+/* カレンダースタイル */
+.calendar-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 10px 0;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.calendar-btn {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.calendar-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.calendar-btn:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+#current-month {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* カレンダーグリッドの共通設定 - レイアウトを完全に統一 */
+.calendar-days,
+.weekdays {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  text-align: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 曜日ヘッダー・日付グリッドの間隔調整 */
+.weekdays {
+  margin-bottom: 0 !important;
+  border-bottom: 2px solid #f0f0f0 !important;
+}
+
+/* 曜日ヘッダーの共通設定 */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* 土曜日と日曜日の色設定 */
+.calendar-days .calendar-day:nth-child(7n-1) {
+  color: #4285f4 !important; /* 土曜日 */
+}
+
+.calendar-days .calendar-day:nth-child(7n) {
+  color: #ea4335 !important; /* 日曜日 */
+}
+
+/* 他の月の日付の色 */
+.calendar-days .calendar-day.other-month:nth-child(7n-1),
+.calendar-days .calendar-day.other-month:nth-child(7n) {
+  color: #bdc1c6 !important;
+}
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0 0 8px 0;
+}
+
+.calendar-weekdays div,
+.weekdays div {
+  padding: 6px 0;
+  font-size: 14px;
+  color: #666;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* 曜日ヘッダーの土曜日（6番目の要素）の色 */
+.calendar-weekdays div:nth-child(6),
+.weekdays div:nth-child(6) {
+  color: #4285f4; /* 青色 */
+}
+
+/* 曜日ヘッダーの日曜日（7番目の要素）の色 */
+.calendar-weekdays div:nth-child(7),
+.weekdays div:nth-child(7) {
+  color: #ea4335; /* 赤色 */
+}
+
+.weekdays div {
+  height: 28px;
+  line-height: 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.calendar-day {
+  position: relative;
+  height: 28px;
+  line-height: 28px;
+  border-radius: 4px;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.calendar-day.other-month {
+  color: #ccc;
+}
+
+/* 土曜日の色 - 実際のHTML構造では6番目が土曜日 */
+.calendar-days .calendar-day:nth-child(7n+6),
+.calendar-day:nth-child(7n+6) {
+  color: #4285f4 !important; /* 青色、優先順位を高くする */
+}
+
+/* 緑ポチがない土曜日の色を薄く */
+.calendar-days .calendar-day:not(.has-data):nth-child(7n+6) a,
+.calendar-day:not(.has-data):nth-child(7n+6) {
+  color: #84aef9 !important; /* より薄い青色 */
+}
+
+/* 日曜日の色 - 実際のHTML構造では7番目が日曜日 */
+.calendar-days .calendar-day:nth-child(7n),
+.calendar-day:nth-child(7n) {
+  color: #ea4335 !important; /* 赤色、優先順位を高くする */
+}
+
+/* 緑ポチがない日曜日の色を薄く */
+.calendar-days .calendar-day:not(.has-data):nth-child(7n) a,
+.calendar-day:not(.has-data):nth-child(7n) {
+  color: #f2928a !important; /* より薄い赤色 */
+}
+
+/* 他の月の日でも土日の色を保持（グレーにならないようにする） */
+.calendar-days .calendar-day.other-month:nth-child(7n+6),
+.calendar-day.other-month:nth-child(7n+6) {
+  color: #a5c0f7 !important; /* 薄い青色 */
+}
+
+.calendar-days .calendar-day.other-month:nth-child(7n),
+.calendar-day.other-month:nth-child(7n) {
+  color: #f5b6b3 !important; /* 薄い赤色 */
+}
+
+.calendar-day.today {
+  background-color: #e3f2fd;
+  font-weight: bold;
+}
+
+.calendar-day.has-data::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4caf50; /* 緑色のマーカー */
+}
+
+/* 現在表示しているページの日付を強調表示 */
+.calendar-day.current-page-date {
+  background-color: #8bc34a; /* 薄い緑 */
+  font-weight: bold;
+  border: 2px solid #4caf50; /* 濃い緑のボーダー */
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+}
+
+.calendar-day a {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.calendar-day a.no-data {
+  cursor: default;
+  color: #999;
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.calendar-day a:hover:not(.no-data) {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+  </style>
+  
+  <!-- カレンダー用CSS（内包化） -->
+  <style>
+  /* カレンダー用CSS */
+  .calendar-container {
+    width: 100%;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+  }
+  
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .current-month {
+    font-weight: 500;
+    color: #3c4043;
+    font-size: 14px;
+  }
+  
+  .calendar-nav-btn {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #5f6368;
+    transition: background-color 0.2s;
+  }
+  
+  .calendar-nav-btn:hover {
+    background-color: rgba(9, 186, 133, 0.1);
+  }
+  
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5f6368;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaeaea;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 0;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  
+  .weekdays div {
+    padding: 0;
+    margin: 0;
+    height: 28px;
+    line-height: 28px;
+  }
+  
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    padding: 4px 0;
+    margin: 0;
+  }
+  
+  .calendar-day {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: #3c4043;
+    border-radius: 50%;
+    margin: 2px auto;
+  }
+  
+  .calendar-day:hover {
+    background-color: rgba(9, 186, 133, 0.1);
+  }
+  
+  .calendar-day.today {
+    font-weight: bold;
+    background-color: #09BA85;
+    color: white;
+  }
+  
+  .calendar-day.other-month {
+    color: #bdc1c6;
+  }
+  
+  .calendar-day.has-data::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+    background-color: #09BA85;
+    border-radius: 50%;
+  }
+  
+  .calendar-day a {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  /* 土曜日の色 - 月曜始まりでは7n-1が土曜日 */
+  .calendar-days .calendar-day:nth-child(7n-1) {
+    color: #4285f4;
+  }
+  
+  /* 日曜日の色 - 月曜始まりでは7nが日曜日 */
+  .calendar-days .calendar-day:nth-child(7n) {
+    color: #ea4335;
+  }
+  
+  /* 他の月の日曜・土曜日 */
+  .calendar-days .calendar-day.other-month:nth-child(7n-1),
+  .calendar-days .calendar-day.other-month:nth-child(7n) {
+    color: #bdc1c6;
+  }
+  </style>
+  
+  <style>
+    /* 追加のカスタムスタイル - 水平レイアウト専用 */
+    body { margin: 0; }
+  </style>
+  
+  <style>
+    .kpi-tree li {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start !important;
+      margin: 0px 0px 10px 0px;
+    }
+    /* 縦方向表示は非表示にし、水平方向表示は表示する */
+    .direction-vertical {
+      display: none;
+    }
+    .direction-horizontal {
+      display: block;
+    }
+  </style>
+</head>
+<body data-theme="default">
+  <!-- メインコンテンツヘッダーにハンバーガーボタンを配置 - 左上配置 -->
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button id="menu-toggle" class="menu-toggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="drawer-menu">
+          <svg class="menu-icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+          </svg>
+        </button>
+        <div class="page-title-container">
+          <h1 class="page-title">コインチェック 収益KPIツリー</h1>
+          <span class="data-date">現在のデータ: 2025年04月30日 / 販売所以外収益/販売所収益:21.69%</span>
+        </div>
+      </div>
+      <div class="header-controls">
+        <!-- 将来的に必要なコントロールをここに追加 -->
+      </div>
+    </div>
+  </header>
+
+  <!-- ナビゲーションドロワー -->
+  <div id="drawer-menu" class="drawer" aria-hidden="true" role="navigation" aria-label="メインナビゲーション">
+    <div class="drawer-header">
+      <div class="drawer-header-title">
+
+        <h2>設定</h2>
+        <button id="drawer-close" class="drawer-close" aria-label="メニューを閉じる">
+          <span class="close-icon"></span>
+        </button>
+      </div>
+    </div>
+    <div class="drawer-content">
+      <div class="drawer-nav">
+        <!-- ナビゲーションセクション -->
+        <div class="drawer-section-group">
+          <div class="drawer-section active">
+
+            
+            <!-- 日次/月次切り替え -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>表示モード</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div class="view-mode-switch">
+                  <div class="mode-options">
+                    <button id="daily-mode-btn" class="mode-btn active" aria-pressed="true">日次</button>
+                    <button id="monthly-mode-btn" class="mode-btn" aria-pressed="false">月次</button>
+                    <span class="mode-indicator"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- カレンダー -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>カレンダー</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div class="calendar-container">
+                  <div class="calendar-header">
+                    <button id="prev-month" class="calendar-nav-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div id="current-month" class="current-month"></div>
+                    <button id="next-month" class="calendar-nav-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="weekdays">
+                    <div>月</div>
+                    <div>火</div>
+                    <div>水</div>
+                    <div>木</div>
+                    <div>金</div>
+                    <div>土</div>
+                    <div>日</div>
+                  </div>
+                  <div id="calendar-days" class="calendar-days">
+                    <!-- 日付はJavaScriptで動的に生成されます -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- URLコピーボタンはドロワー内に配置（共有ボタン） -->
+            <div class="drawer-section-item">
+              <div class="drawer-item-header">
+                <h4>共有</h4>
+              </div>
+              <div class="drawer-item-content">
+                <div id="drawer-share-btn-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ドロワーオーバーレイ -->
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+
+  <!-- メインコンテンツ -->
+  <div class="main-content">
+    <div class="direction-horizontal">
+    <div class="kpi-tree-container theme-default">
+      <div class="note">
+        <ul>
+          <li>データソースは<a href="https://docs.google.com/spreadsheets/d/1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U/edit?usp=sharing" target="data-src">こちら</a>、各指標の定義は<a href="https://coincheck.atlassian.net/wiki/spaces/CTO/pages/3913843770" target="kpi-dic">こちら</a>を参照ください</li>
+          <li>金銭信託運用、その他の一部の数値は月次のみ手動掲載のため、営業収益合計は正確でない場合があります</li>
+          <li>数値に関してのお問い合わせは <a href="https://coincheck.enterprise.slack.com/archives/C069WL5UH3L" target="_blank">#req-data-platform</a> @data-platform-admin まで</li>
+        </ul>
+      </div>
+      <ul class="kpi-tree">
+        
+    <li>
+      <div class="node" id="node-frauiz">
+        <a href="https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="営業収益合計" data-text-default="営業収益合計">営業収益合計</a><div class="text-en" title="Revenue">Revenue</div><div class="value" title="25,004,371" data-value-daily="25,004,371" data-value-monthly="706,570,802" data-diff-daily="71.92%" data-diff-monthly="-8.01%">25,004,371</div><div class="diff-value" title="前日比: 71.92%" data-diff-daily="71.92%" data-diff-monthly="-8.01%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">71.92%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-frauiz-children"></button>
+      <ul id="node-frauiz-children" class="children">
+    <li>
+      <div class="node" id="node-yhbi54">
+        <a href="https://lookerstudio.google.com/u/0/reporting/bc9ee1e8-b5e5-4f02-bd33-a7a5da56229b/page/p_xsek8mmgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="販売所収益" data-text-default="販売所収益">販売所収益</a><div class="text-en" title="Marketplace Revenue">Marketplace Revenue</div><div class="value" title="20,547,511" data-value-daily="20,547,511" data-value-monthly="604,782,974" data-diff-daily="81.09%" data-diff-monthly="-9.34%">20,547,511</div><div class="diff-value" title="前日比: 81.09%" data-diff-daily="81.09%" data-diff-monthly="-9.34%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">81.09%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-yhbi54-children"></button>
+      <ul id="node-yhbi54-children" class="children">
+    <li>
+      <div class="node" id="node-d511z3">
+        <a href="https://lookerstudio.google.com/u/0/reporting/bc9ee1e8-b5e5-4f02-bd33-a7a5da56229b/page/p_xsek8mmgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="販売所" data-text-default="販売所">販売所</a><div class="text-en" title="Marketplace Revenue">Marketplace Revenue</div><div class="value" title="20,547,511" data-value-daily="20,547,511" data-value-monthly="604,782,974" data-diff-daily="81.09%" data-diff-monthly="-9.34%">20,547,511</div><div class="diff-value" title="前日比: 81.09%" data-diff-daily="81.09%" data-diff-monthly="-9.34%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">81.09%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-d511z3-children"></button>
+      <ul id="node-d511z3-children" class="children">
+    <li>
+      <div class="node" id="node-lb4hdr">
+        <span class="node-text" title="スプレッド" data-text-default="スプレッド">スプレッド</span><div class="text-en" title="Exchange Spread">Exchange Spread</div><div class="value" title="3.46%" data-value-daily="3.46%" data-value-monthly="2.92%" data-diff-daily="0.00" data-diff-monthly="-1.01">3.46%</div><div class="diff-value" title="前日比: 0.00" data-diff-daily="0.00" data-diff-monthly="-1.01">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.00</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-8wsumf">
+        <span class="node-text" title="取引金額" data-text-default="取引金額">取引金額</span><div class="text-en" title="Trading Volume">Trading Volume</div><div class="value" title="593,134,119" data-value-daily="593,134,119" data-value-monthly="20,696,379,171" data-diff-daily="82.46%" data-diff-monthly="11.15%">593,134,119</div><div class="diff-value" title="前日比: 82.46%" data-diff-daily="82.46%" data-diff-monthly="11.15%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">82.46%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-8wsumf-children"></button>
+      <ul id="node-8wsumf-children" class="children">
+    <li>
+      <div class="node" id="node-x28209">
+        <span class="node-text" title="取引単価" data-text-default="取引単価">取引単価</span><div class="text-en" title="Average Trade Size">Average Trade Size</div><div class="value" title="196,207" data-value-daily="196,207" data-value-monthly="350,489" data-diff-daily="52.46%" data-diff-monthly="178.81%">196,207</div><div class="diff-value" title="前日比: 52.46%" data-diff-daily="52.46%" data-diff-monthly="178.81%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">52.46%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-uyp1fp">
+        <span class="node-text" title="取引ユーザー数" data-text-default="取引ユーザー数">取引ユーザー数</span><div class="text-en" title="Number of Trading Users">Number of Trading Users</div><div class="value" title="3,023" data-value-daily="3,023" data-value-monthly="59,050" data-diff-daily="19.68%" data-diff-monthly="-24.27%">3,023</div><div class="diff-value" title="前日比: 19.68%" data-diff-daily="19.68%" data-diff-monthly="-24.27%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">19.68%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-uyp1fp-children"></button>
+      <ul id="node-uyp1fp-children" class="children">
+    <li>
+      <div class="node" id="node-ae5gge">
+        <span class="node-text" title="既存取引ユーザー数" data-text-default="既存取引ユーザー数">既存取引ユーザー数</span><div class="text-en" title="Trading Existing Customers">Trading Existing Customers</div><div class="value" title="2,576" data-value-daily="2,576" data-value-monthly="54,674" data-diff-daily="18.27%" data-diff-monthly="-29.88%">2,576</div><div class="diff-value" title="前日比: 18.27%" data-diff-daily="18.27%" data-diff-monthly="-29.88%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">18.27%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ae5gge-children"></button>
+      <ul id="node-ae5gge-children" class="children">
+    <li>
+      <div class="node" id="node-pw7i10">
+        <span class="node-text" title="前月末本人確認済既存口座数" data-text-default="前月末本人確認済既存口座数">前月末本人確認済既存口座数</span><div class="text-en" title="Number of Verified Existing Accounts at Month-End">Number of Verified Existing Accounts at Month-End</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-ubkwku">
+        <span class="node-text" title="既存ユーザー取引率" data-text-default="既存ユーザー取引率">既存ユーザー取引率</span><div class="text-en" title="Trading Rate of Existing Users">Trading Rate of Existing Users</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-whu42y">
+        <span class="node-text" title="新規取引ユーザー数" data-text-default="新規取引ユーザー数">新規取引ユーザー数</span><div class="text-en" title="Trading New Customers">Trading New Customers</div><div class="value" title="447" data-value-daily="447" data-value-monthly="4,376" data-diff-daily="28.45%" data-diff-monthly="null">447</div><div class="diff-value" title="前日比: 28.45%" data-diff-daily="28.45%" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">28.45%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-whu42y-children"></button>
+      <ul id="node-whu42y-children" class="children">
+    <li>
+      <div class="node" id="node-1l34ex">
+        <span class="node-text" title="新規口座開設数" data-text-default="新規口座開設数">新規口座開設数</span><div class="text-en" title="Number of New Accounts Opened">Number of New Accounts Opened</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+      <button class="toggle-btn" data-target="node-1l34ex-children"></button>
+      <ul id="node-1l34ex-children" class="children">
+    <li>
+      <div class="node" id="node-hsr7sj">
+        <span class="node-text" title="広告宣伝費" data-text-default="広告宣伝費">広告宣伝費</span><div class="text-en" title="Advertising Expense Transfers">Advertising Expense Transfers</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-5x6k">
+        <span class="node-text" title="Blended CPA" data-text-default="Blended CPA">Blended CPA</span><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-je19co">
+        <span class="node-text" title="新規ユーザー取引率" data-text-default="新規ユーザー取引率">新規ユーザー取引率</span><div class="text-en" title="Trading Rate of New Users">Trading Rate of New Users</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ujr88a">
+        <a href="https://lookerstudio.google.com/u/0/reporting/2bcb0a10-433a-47f3-9fc3-153d2cac06cd/page/p_xsek8mmgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="販売所以外収益" data-text-default="販売所以外収益">販売所以外収益</a><div class="text-en" title="Non-Marketplace Revenue">Non-Marketplace Revenue</div><div class="value" title="4,456,861" data-value-daily="4,456,861" data-value-monthly="101,787,827" data-diff-daily="39.38%" data-diff-monthly="0.78%">4,456,861</div><div class="diff-value" title="前日比: 39.38%" data-diff-daily="39.38%" data-diff-monthly="0.78%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">39.38%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ujr88a-children"></button>
+      <ul id="node-ujr88a-children" class="children">
+    <li>
+      <div class="node" id="node-ywv5xg">
+        <a href="https://lookerstudio.google.com/u/0/reporting/a5869868-a23f-48f1-b98c-d5759ad578de/page/arSIF" rel="noopener noreferrer" target="dashboard" class="node-text" title="ステーキング" data-text-default="ステーキング">ステーキング</a><div class="text-en" title="Staking">Staking</div><div class="value" title="1,069,313" data-value-daily="1,069,313" data-value-monthly="67,459,334" data-diff-daily="7.60%" data-diff-monthly="37.20%">1,069,313</div><div class="diff-value" title="前日比: 7.60%" data-diff-daily="7.60%" data-diff-monthly="37.20%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">7.60%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ywv5xg-children"></button>
+      <ul id="node-ywv5xg-children" class="children">
+    <li>
+      <div class="node" id="node-js57v1">
+        <span class="node-text" title="ETH保有金額" data-text-default="ETH保有金額" data-text-monthly="ETHステーキング総額">ETH保有金額</span><div class="text-en" title="ETH Balance" data-text-en-monthly="Total ETH staking amount">ETH Balance</div><div class="value" title="61,480,143,503.253500" data-value-daily="61,480,143,503.253500" data-value-monthly="1,736,116,216,733" data-diff-daily="0.11%" data-diff-monthly="-20.42%">61,480,143,503.253500</div><div class="diff-value" title="前日比: 0.11%" data-diff-daily="0.11%" data-diff-monthly="-20.42%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.11%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-js57v1-children"></button>
+      <ul id="node-js57v1-children" class="children">
+    <li>
+      <div class="node" id="node-2xw4e3">
+        <span class="node-text" title="保有UU" data-text-default="保有UU">保有UU</span><div class="text-en" title="Number of ETH Holders">Number of ETH Holders</div><div class="value" title="332,147" data-value-daily="332,147" data-value-monthly="332,789" data-diff-daily="1.16%" data-diff-monthly="1.97%">332,147</div><div class="diff-value" title="前日比: 1.16%" data-diff-daily="1.16%" data-diff-monthly="1.97%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">1.16%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-3lvep0">
+        <span class="node-text" title="一人当たり保有金額" data-text-default="一人当たり保有金額" data-text-monthly="一人当たりETHステーキング総額">一人当たり保有金額</span><div class="text-en" title="Amount per user" data-text-en-monthly="ETH staking amount per ser">Amount per user</div><div class="value" title="185,099" data-value-daily="185,099" data-value-monthly="5,216,868" data-diff-daily="-1.04%" data-diff-monthly="-21.96%">185,099</div><div class="diff-value" title="前日比: -1.04%" data-diff-daily="-1.04%" data-diff-monthly="-21.96%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-1.04%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-aj93i8">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Staking Fee Rate">Staking Fee Rate</div><div class="value" title="0.001739%" data-value-daily="0.001739%" data-value-monthly="0.001436%" data-diff-daily="7.47%" data-diff-monthly="75.66%">0.001739%</div><div class="diff-value" title="前日比: 7.47%" data-diff-daily="7.47%" data-diff-monthly="75.66%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">7.47%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-oz4xcx">
+        <a href="https://lookerstudio.google.com/u/0/reporting/758085d1-c9d8-4e7e-898f-8a2d74904045/page/p_xsek8mmgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="取引所（現物）" data-text-default="取引所（現物）">取引所（現物）</a><div class="text-en" title="Exchange Revenue">Exchange Revenue</div><div class="value" title="116,180" data-value-daily="116,180" data-value-monthly="1,214,429" data-diff-daily="212.32%" data-diff-monthly="-29.09%">116,180</div><div class="diff-value" title="前日比: 212.32%" data-diff-daily="212.32%" data-diff-monthly="-29.09%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">212.32%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-oz4xcx-children"></button>
+      <ul id="node-oz4xcx-children" class="children">
+    <li>
+      <div class="node" id="node-z5g1l2">
+        <span class="node-text" title="出来高" data-text-default="出来高">出来高</span><div class="text-en" title="Trading Amount">Trading Amount</div><div class="value" title="8,142,218,293" data-value-daily="8,142,218,293" data-value-monthly="366,050,205,396" data-diff-daily="7.14%" data-diff-monthly="-19.42%">8,142,218,293</div><div class="diff-value" title="前日比: 7.14%" data-diff-daily="7.14%" data-diff-monthly="-19.42%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">7.14%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-z5g1l2-children"></button>
+      <ul id="node-z5g1l2-children" class="children">
+    <li>
+      <div class="node" id="node-tiea8g">
+        <span class="node-text" title="DTU" data-text-daily="DTU" data-text-monthly="MTU">DTU</span><div class="text-en" title="Trading Users">Trading Users</div><div class="value" title="1,498" data-value-daily="1,498" data-value-monthly="11,993" data-diff-daily="29.92%" data-diff-monthly="-19.77%">1,498</div><div class="diff-value" title="前日比: 29.92%" data-diff-daily="29.92%" data-diff-monthly="-19.77%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">29.92%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-wqtqqb">
+        <span class="node-text" title="平均約定回数" data-text-default="平均約定回数">平均約定回数</span><div class="text-en" title="Avg. Trades per User">Avg. Trades per User</div><div class="value" title="27.85" data-value-daily="27.85" data-value-monthly="157.23" data-diff-daily="2.20%" data-diff-monthly="0.08%">27.85</div><div class="diff-value" title="前日比: 2.20%" data-diff-daily="2.20%" data-diff-monthly="0.08%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">2.20%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-94fsjc">
+        <span class="node-text" title="平均約定金額" data-text-default="平均約定金額">平均約定金額</span><div class="text-en" title="Average Trade Size">Average Trade Size</div><div class="value" title="195,163.43" data-value-daily="195,163.43" data-value-monthly="194,118.18" data-diff-daily="-19.31%" data-diff-monthly="0.35%">195,163.43</div><div class="diff-value" title="前日比: -19.31%" data-diff-daily="-19.31%" data-diff-monthly="0.35%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-19.31%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-aj92rj">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Trading Fee Rate">Trading Fee Rate</div><div class="value" title="0.001427%" data-value-daily="0.001427%" data-value-monthly="0.000332%" data-diff-daily="191.51%" data-diff-monthly="29.83%">0.001427%</div><div class="diff-value" title="前日比: 191.51%" data-diff-daily="191.51%" data-diff-monthly="29.83%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">191.51%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-2tdwjx">
+        <a href="https://lookerstudio.google.com/u/0/reporting/e4ad8b3b-913a-4312-8ed1-3709a5b75956/page/p_9nnkwdngrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="つみたて" data-text-default="つみたて">つみたて</a><div class="text-en" title="Periodic Purchase">Periodic Purchase</div><div class="value" title="988,746" data-value-daily="988,746" data-value-monthly="30,703,065" data-diff-daily="0.03%" data-diff-monthly="-3.61%">988,746</div><div class="diff-value" title="前日比: 0.03%" data-diff-daily="0.03%" data-diff-monthly="-3.61%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.03%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-2tdwjx-children"></button>
+      <ul id="node-2tdwjx-children" class="children">
+    <li>
+      <div class="node" id="node-tdgziu">
+        <span class="node-text" title="つみたて件数" data-text-default="つみたて件数">つみたて件数</span><div class="text-en" title="Number of Periodic Purchases">Number of Periodic Purchases</div><div class="value" title="35,155" data-value-daily="35,155" data-value-monthly="45,910" data-diff-daily="0.01%" data-diff-monthly="0.91%">35,155</div><div class="diff-value" title="前日比: 0.01%" data-diff-daily="0.01%" data-diff-monthly="0.91%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.01%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-ysxb65">
+        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="text-en" title="Average Revenue per Paying User (Periodic Purchase)">Average Revenue per Paying User (Periodic Purchase)</div><div class="value" title="28.13" data-value-daily="28.13" data-value-monthly="668.77" data-diff-daily="0.02%" data-diff-monthly="-4.48%">28.13</div><div class="diff-value" title="前日比: 0.02%" data-diff-daily="0.02%" data-diff-monthly="-4.48%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.02%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ficram">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_91cjqm5lrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="大口OTC" data-text-default="大口OTC">大口OTC</a><div class="text-en" title="OTC Trade">OTC Trade</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-quaj3t">
+        <a href="https://lookerstudio.google.com/u/0/reporting/cce6430d-1bfa-4fc8-b4ae-6af4345572f2/page/p_7n6shcsgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="暗号資産送金" data-text-default="暗号資産送金">暗号資産送金</a><div class="text-en" title="Remittance Fees Crypto Currency">Remittance Fees Crypto Currency</div><div class="value" title="1,520,813" data-value-daily="1,520,813" data-value-monthly="33,339,830" data-diff-daily="34.80%" data-diff-monthly="-3.35%">1,520,813</div><div class="diff-value" title="前日比: 34.80%" data-diff-daily="34.80%" data-diff-monthly="-3.35%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">34.80%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-quaj3t-children"></button>
+      <ul id="node-quaj3t-children" class="children">
+    <li>
+      <div class="node" id="node-37gofw">
+        <span class="node-text" title="送金金額" data-text-default="送金金額">送金金額</span><div class="text-en" title="Remitted Amount">Remitted Amount</div><div class="value" title="431,837,024" data-value-daily="431,837,024" data-value-monthly="16,983,475,918" data-diff-daily="159.40%" data-diff-monthly="-24.32%">431,837,024</div><div class="diff-value" title="前日比: 159.40%" data-diff-daily="159.40%" data-diff-monthly="-24.32%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">159.40%</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-aj90jg">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Remittance Fee Rate">Remittance Fee Rate</div><div class="value" title="0.35%" data-value-daily="0.35%" data-value-monthly="0.20%" data-diff-daily="-48.03%" data-diff-monthly="340.87%">0.35%</div><div class="diff-value" title="前日比: -48.03%" data-diff-daily="-48.03%" data-diff-monthly="340.87%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-48.03%</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-jq4555">
+        <a href="https://lookerstudio.google.com/u/0/reporting/f94bfa99-67bf-420b-acd2-e6aa1d19917d/page/p_xsek8mmgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="法定通貨入出金" data-text-default="法定通貨入出金">法定通貨入出金</a><div class="text-en" title="Deposit & Withdrawal Fees Fiat Currency">Deposit & Withdrawal Fees Fiat Currency</div><div class="value" title="743,807" data-value-daily="743,807" data-value-monthly="11,056,452" data-diff-daily="2990.18%" data-diff-monthly="-8.22%">743,807</div><div class="diff-value" title="前日比: 2990.18%" data-diff-daily="2990.18%" data-diff-monthly="-8.22%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">2990.18%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-jq4555-children"></button>
+      <ul id="node-jq4555-children" class="children">
+    <li>
+      <div class="node" id="node-zi4nxn">
+        <span class="node-text" title="入金手数料収益" data-text-default="入金手数料収益">入金手数料収益</span><div class="text-en" title="Deposit Fee Revenue">Deposit Fee Revenue</div><div class="value" title="27,080" data-value-daily="27,080" data-value-monthly="948,200" data-diff-daily="12.51%" data-diff-monthly="-30.25%">27,080</div><div class="diff-value" title="前日比: 12.51%" data-diff-daily="12.51%" data-diff-monthly="-30.25%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">12.51%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-zi4nxn-children"></button>
+      <ul id="node-zi4nxn-children" class="children">
+    <li>
+      <div class="node" id="node-8gdxry">
+        <span class="node-text" title="入金総額" data-text-default="入金総額">入金総額</span><div class="text-en" title="Total Deposit Amount">Total Deposit Amount</div><div class="value" title="5,979,930" data-value-daily="5,979,930" data-value-monthly="238,171,135" data-diff-daily="24.76%" data-diff-monthly="-26.32%">5,979,930</div><div class="diff-value" title="前日比: 24.76%" data-diff-daily="24.76%" data-diff-monthly="-26.32%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">24.76%</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-xk08dk">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Deposit Fee Rate">Deposit Fee Rate</div><div class="value" title="0.4528%" data-value-daily="0.4528%" data-value-monthly="0.3981%" data-diff-daily="-9.82" data-diff-monthly="19.41">0.4528%</div><div class="diff-value" title="前日比: -9.82" data-diff-daily="-9.82" data-diff-monthly="19.41">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-9.82</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ehii3v">
+        <span class="node-text" title="出金手数料収益" data-text-default="出金手数料収益">出金手数料収益</span><div class="text-en" title="Withdrawal Fee Revenue">Withdrawal Fee Revenue</div><div class="value" title="716,727" data-value-daily="716,727" data-value-monthly="10,108,252" data-diff-daily="" data-diff-monthly="-5.41%">716,727</div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="-5.41%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-ehii3v-children"></button>
+      <ul id="node-ehii3v-children" class="children">
+    <li>
+      <div class="node" id="node-xgtl2u">
+        <span class="node-text" title="出金総額" data-text-default="出金総額">出金総額</span><div class="text-en" title="Total Withdrawal Amount">Total Withdrawal Amount</div><div class="value" title="1,373,373,944" data-value-daily="1,373,373,944" data-value-monthly="20,595,115,716" data-diff-daily="" data-diff-monthly="-31.49%">1,373,373,944</div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="-31.49%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-xk0949">
+        <span class="node-text" title="手数料率" data-text-default="手数料率">手数料率</span><div class="text-en" title="Withdrawal Fee Rate">Withdrawal Fee Rate</div><div class="value" title="0.0522%" data-value-daily="0.0522%" data-value-monthly="0.0491%" data-diff-daily="0.00" data-diff-monthly="0.38">0.0522%</div><div class="diff-value" title="前日比: 0.00" data-diff-daily="0.00" data-diff-monthly="0.38">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">0.00</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-cr9zjq">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_4ug3jdczrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="アセットロック" data-text-default="アセットロック">アセットロック</a><div class="text-en" title="Asset Lock">Asset Lock</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-2li65">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_k4l83l5lrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="IEO" data-text-default="IEO">IEO</a><div class="text-en" title="Initial Exchange Offering">Initial Exchange Offering</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-2li65-children"></button>
+      <ul id="node-2li65-children" class="children">
+    <li>
+      <div class="node" id="node-meg3ez">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_k4l83l5lrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="PLT" data-text-default="PLT">PLT</a><div class="text-en" title="Palette Token">Palette Token</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-p02xpp">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_jtjj2l5lrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="FNCT" data-text-default="FNCT">FNCT</a><div class="text-en" title="FiNANCiE Token">FiNANCiE Token</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-53f2p4">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_anp5qcsgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="BRIL" data-text-default="BRIL">BRIL</a><div class="text-en" title="Brilliantcrypto Token">Brilliantcrypto Token</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-tk1rs0">
+        <span class="node-text" title="金銭信託運用" data-text-default="金銭信託運用">金銭信託運用</span><div class="text-en" title="Interest Income">Interest Income</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-">-</div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-48mckp">
+        <span class="node-text" title="その他" data-text-default="その他">その他</span><div class="text-en" title="Others">Others</div><div class="value" title="18,002" data-value-daily="18,002" data-value-monthly="83,571,116" data-diff-daily="-30.23%" data-diff-monthly="59.26%">18,002</div><div class="diff-value" title="前日比: -30.23%" data-diff-daily="-30.23%" data-diff-monthly="59.26%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-30.23%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-48mckp-children"></button>
+      <ul id="node-48mckp-children" class="children">
+    <li>
+      <div class="node" id="node-mpb98x">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_vt545k5lrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="NFT" data-text-default="NFT">NFT</a><div class="text-en" title="Non-Fungible Tokens">Non-Fungible Tokens</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-mpb98x-children"></button>
+      <ul id="node-mpb98x-children" class="children">
+    <li>
+      <div class="node" id="node-an9nr3">
+        <span class="node-text" title="CC出品" data-text-default="CC出品">CC出品</span><div class="text-en" title="Coincheck Direct Listings">Coincheck Direct Listings</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-ip07z6">
+        <span class="node-text" title="CtoC" data-text-default="CtoC">CtoC</span><div class="text-en" title="Customer-to-Customer Transactions">Customer-to-Customer Transactions</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-wiidqz">
+        <span class="node-text" title="発行体" data-text-default="発行体">発行体</span><div class="text-en" title="Issuer">Issuer</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-uwar6l">
+        <span class="node-text" title="自社NFT" data-text-default="自社NFT">自社NFT</span><div class="text-en" title="Proprietary NFTs">Proprietary NFTs</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-emx3y7">
+        <span class="node-text" title="出庫手数料" data-text-default="出庫手数料">出庫手数料</span><div class="text-en" title="NFT Withdrawal Fee">NFT Withdrawal Fee</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-45ezvr">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_cf5wucsgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="OnRamp" data-text-default="OnRamp">OnRamp</a><div class="text-en" title="Crypto OnRamp">Crypto OnRamp</div><div class="value" title="" data-value-daily="" data-value-monthly="936" data-diff-daily="" data-diff-monthly="338.75%"></div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="338.75%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-45ezvr-children"></button>
+      <ul id="node-45ezvr-children" class="children">
+    <li>
+      <div class="node" id="node-tmsnq1">
+        <span class="node-text" title="DTU" data-text-daily="DTU" data-text-monthly="MTU">DTU</span><div class="text-en" title="Trading User">Trading User</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">×</li>
+    <li>
+      <div class="node" id="node-9ip8ri">
+        <span class="node-text" title="ARPPU" data-text-default="ARPPU">ARPPU</span><div class="text-en" title="Average Revenue per Paying User (Periodic Purchase)">Average Revenue per Paying User (Periodic Purchase)</div><div class="value" title="" data-value-daily="" data-value-monthly="468" data-diff-daily="" data-diff-monthly="119.38%"></div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="119.38%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-h9tt1l">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_7n6shcsgrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="リワード" data-text-default="リワード">リワード</a><div class="text-en" title="Rewards">Rewards</div><div class="value" title="18,002" data-value-daily="18,002" data-value-monthly="548,887" data-diff-daily="-30.23%" data-diff-monthly="-30.89%">18,002</div><div class="diff-value" title="前日比: -30.23%" data-diff-daily="-30.23%" data-diff-monthly="-30.89%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">-30.23%</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-h9tt1l-children"></button>
+      <ul id="node-h9tt1l-children" class="children">
+    <li>
+      <div class="node" id="node-2j2b3h">
+        <span class="node-text" title="広告費" data-text-default="広告費">広告費</span><div class="text-en" title="Advertising cost">Advertising cost</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li><li class="operator">-</li>
+    <li>
+      <div class="node" id="node-46bki6">
+        <span class="node-text" title="付与したポイント" data-text-default="付与したポイント">付与したポイント</span><div class="text-en" title="Points awarded">Points awarded</div><div class="value" title="-" data-value-default="-">-</div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-gvqnrz">
+        <a href="https://lookerstudio.google.com/u/0/reporting/9199beac-a093-46ff-829f-bf626367e729/page/p_brc2lm5lrd" rel="noopener noreferrer" target="dashboard" class="node-text" title="でんき・ガス" data-text-default="でんき・ガス">でんき・ガス</a><div class="text-en" title="CC Electricity & Gas">CC Electricity & Gas</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+      <button class="toggle-btn" data-target="node-gvqnrz-children"></button>
+      <ul id="node-gvqnrz-children" class="children">
+    <li>
+      <div class="node" id="node-gmtrvo">
+        <span class="node-text" title="でんき" data-text-default="でんき">でんき</span><div class="text-en" title="Electricity bill">Electricity bill</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-s9qu09">
+        <span class="node-text" title="ガス" data-text-default="ガス">ガス</span><div class="text-en" title="Gas Bill">Gas Bill</div><div class="value" title="-" data-value-daily="-" data-value-monthly="-" data-diff-daily="null" data-diff-monthly="null">-</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-515lzn">
+        <span class="node-text" title="クロス取引" data-text-default="クロス取引">クロス取引</span><div class="text-en" title="Cross Trade">Cross Trade</div><div class="value" title="0" data-value-daily="0" data-value-monthly="5,128,583" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-vaq0zm">
+        <span class="node-text" title="IEOモニタリング" data-text-default="IEOモニタリング">IEOモニタリング</span><div class="text-en" title="Monitoring Earnings (IEO)">Monitoring Earnings (IEO)</div><div class="value" title="0" data-value-daily="0" data-value-monthly="500,000" data-diff-daily="" data-diff-monthly="0.00%">0</div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="0.00%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-8jxza8">
+        <span class="node-text" title="リスティングフィー" data-text-default="リスティングフィー">リスティングフィー</span><div class="text-en" title="Listing Fees">Listing Fees</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-bgiiky">
+        <span class="node-text" title="退会手数料収益" data-text-default="退会手数料収益">退会手数料収益</span><div class="text-en" title="Account Cancellation Fee">Account Cancellation Fee</div><div class="value" title="0" data-value-daily="0" data-value-monthly="4,702" data-diff-daily="" data-diff-monthly="48.28%">0</div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="48.28%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-qt68yy">
+        <span class="node-text" title="不明入金" data-text-default="不明入金">不明入金</span><div class="text-en" title="Monetization Of Unclaimed Deposits">Monetization Of Unclaimed Deposits</div><div class="value" title="0" data-value-daily="0" data-value-monthly="2,589,158" data-diff-daily="" data-diff-monthly="-62.29%">0</div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="-62.29%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-riljjb">
+        <span class="node-text" title="その他トレーディング損益" data-text-default="その他トレーディング損益">その他トレーディング損益</span><div class="text-en" title="Unrealized Gain (Loss) On Own Position">Unrealized Gain (Loss) On Own Position</div><div class="value" title="0" data-value-daily="0" data-value-monthly="7,609,300" data-diff-daily="" data-diff-monthly="-276.24%">0</div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="-276.24%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-9jpl93">
+        <span class="node-text" title="Binanceリベート" data-text-default="Binanceリベート">Binanceリベート</span><div class="text-en" title="Rebate">Rebate</div><div class="value" title="0" data-value-daily="0" data-value-monthly="0" data-diff-daily="null" data-diff-monthly="null">0</div><div class="diff-value" title="前日比: null" data-diff-daily="null" data-diff-monthly="null">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">null</span>
+        </div>
+      </div>
+    </li><li class="operator">+</li>
+    <li>
+      <div class="node" id="node-m9mq">
+        <span class="node-text" title="雑収入・雑費" data-text-default="雑収入・雑費">雑収入・雑費</span><div class="text-en" title="Miscellaneous Income And Expenses">Miscellaneous Income And Expenses</div><div class="value" title="0" data-value-daily="0" data-value-monthly="-269,785" data-diff-daily="" data-diff-monthly="-49.93%">0</div><div class="diff-value" title="前日比: " data-diff-daily="" data-diff-monthly="-49.93%">
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number"></span>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- 結合されたJSがここに埋め込まれます -->
+  <script>
+
+// KPIツリージェネレーター JavaScript 結合ファイル
+// core.js
+/**
+ * KPIツリージェネレーター：コア機能
+ * 初期化、基本機能とメインインターフェースを提供します
+ * 
+ * このファイルはアプリケーションの入口点となり、他のモジュールを統合します。
+ * DOM読み込み後の初期化処理や、グローバルイベントハンドリングを担当します。
+ */
+
+/**
+ * グローバル状態管理変数
+ */
+window._initialLoadComplete = false;  // 初期ロード完了フラグ
+window._shareUrl = null;            // 現在の共有URL
+window._publicBaseUrl = null;       // 公開ベースURL
+window._viewMode = 'daily';         // 表示モード（daily または monthly）
+
+/**
+ * KPIツリーアプリケーションのメイン初期化処理
+ * ページ読み込み後に実行され、全モジュールの調整と状態初期化を行う
+ * ツリーの表示、共有機能、URLパラメータの処理、初期状態の適用を実施
+ * 
+ * @returns {void}
+ */
+function kpiTreeInit() {
+  console.log('KPIツリー初期化開始');
+  
+  // グローバル状態変数のリセット
+  window._initialLoadComplete = false;
+  window._shareUrl = null;
+  
+  /**
+   * ステップ1: 共有URL設定の初期化
+   * YAML設定から公開用URLを取得
+   */
+  if (window.PUBLIC_URL) {
+    window._publicBaseUrl = window.PUBLIC_URL;
+    console.log('PUBLIC_URL設定検出:', window._publicBaseUrl);
+  }
+  
+  /**
+   * ステップ2: リダイレクト環境の処理
+   * GCSなどのリダイレクト環境でパラメータが消失しないよう対応
+   */
+  handleUrlRedirects();
+  
+  /**
+   * ステップ3: UI設定とレイアウトの初期化
+   */
+  // ツリーの向きを横方向に固定
+  setDirection('horizontal');
+  
+  // 共有ボタンの設置
+  addShareButton();
+  
+  // ノードハイライト用のスタイルをページに追加
+  addHighlightStyle();
+  
+  /**
+   * ステップ4: ツリー状態の取得と適用
+   * 優先順位: ハッシュパラメータ > URLクエリパラメータ > ローカルストレージ
+   */
+  // 1. まずハッシュフラグメントから状態を取得試行
+  var state = getStateFromHash();
+  
+  // 【デバッグ強化】現在のURLとクエリパラメータを確認
+  console.log('【DEBUG】初期化時のURL情報:', {
+    fullUrl: window.location.href,
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash,
+    rawQueryParams: window.location.search.substring(1),
+    urlSearchParams: new URLSearchParams(window.location.search).toString()
+  });
+  
+  // 1.5 ハッシュから表示モードを取得試行
+  var viewModeParam = getViewModeFromHash();
+  console.log('【DEBUG】getViewModeFromHashの結果:', viewModeParam);
+  
+  // ハッシュから取得できなければ、URLクエリパラメータから表示モードを取得試行
+  if (!viewModeParam) {
+    try {
+      viewModeParam = getViewModeFromUrl();
+      console.log('【DEBUG】getViewModeFromUrlの結果:', viewModeParam);
+    } catch (e) {
+      console.error('【DEBUG】getViewModeFromUrlエラー発生:', e);
+    }
+    
+    if (viewModeParam) {
+      console.log('【成功】URLクエリパラメータから表示モードを取得:', viewModeParam);
+    } else {
+      console.warn('【注意】URLクエリパラメータから表示モードを取得できませんでした');
+    }
+  } else {
+    console.log('【成功】ハッシュから表示モードを取得:', viewModeParam);
+  }
+  
+  // 有効な表示モードが取得できた場合は適用
+  if (viewModeParam) {
+    window._viewMode = viewModeParam;
+    
+    // 重要: 表示モードを実際に適用する処理を追加
+    console.log('初期ロード時に表示モードを設定します:', viewModeParam);
+    
+    // 重要: 変数を定義してDOMContentLoaded完了後に確実にモードを適用できるようにする
+    window._initialViewMode = viewModeParam;
+    
+    // DOM読み込み完了後に表示モードを確実に切り替える
+    document.addEventListener('DOMContentLoaded', function() {
+      // トグル読み込み後に少し遅延させて実行
+      setTimeout(function() {
+        console.log('初期読み込み後に表示モードを切り替え:', viewModeParam);
+        switchViewMode(viewModeParam);
+      }, 100);
+    });
+  }
+  
+  // 2. ハッシュに状態がなければ、URLクエリパラメータから取得試行
+  if (!state || Object.keys(state).length === 0) {
+    state = getStateFromUrl();
+    
+    // 3. URLパラメータにもなければローカルストレージを確認
+    if (!state || Object.keys(state).length === 0) {
+      try {
+        // ローカルストレージから過去の状態の復元試行
+        var savedStateParam = localStorage.getItem('kpiTreeStateParam');
+        if (savedStateParam) {
+          state = decodeStateParam(savedStateParam);
+          console.log('ローカル保存状態を復元しました');
+        }
+      } catch (storageError) {
+        console.error('ストレージからの状態読み込み失敗:', storageError);
+        // エラー発生時は空の状態で継続
+      }
+    }
+  }
+  
+  /**
+   * ステップ5: 取得した状態に基づくツリーの初期設定
+   */
+  // 日次・月次トグル状態の復元
+  if (state && state._viewMode) {
+    console.log('URLから表示モードを復元:', state._viewMode);
+    switchViewMode(state._viewMode);
+    // _viewModeはツリー状態ではないので実行後に削除
+    delete state._viewMode;
+  }
+  
+  // 取得した状態をツリーに適用（開閉状態の復元）
+  console.log('ツリー状態を適用します');
+  // applyTreeState(state);
+  if (state && Object.keys(state).length > 0) {
+    applyTreeState(state); // 取得した状態があればそれを適用
+  } else {
+    initAllNodes(); // 状態がなければ初期展開（3段目まで）
+  }
+  
+  // トグルボタンの機能を設定
+  setupToggleButtons();
+  
+  // DOMレンダリング後にハッシュから取得したモードを確実に適用
+  setTimeout(function() {
+    if (window._initialViewMode) {
+      console.log('ハッシュから取得した表示モードを確実に適用します:', window._initialViewMode);
+      
+      // トグルボタンを該当モードに合わせて活性化
+      const dailyButton = document.querySelector('.toggle-option.daily');
+      const monthlyButton = document.querySelector('.toggle-option.monthly');
+      
+      if (dailyButton && monthlyButton) {
+        dailyButton.classList.toggle('active', window._initialViewMode === 'daily');
+        monthlyButton.classList.toggle('active', window._initialViewMode === 'monthly');
+      }
+      
+      // 入力値を特定モードに合わせて更新
+      updateAllNodeValues();
+      
+      console.log('表示モード初期化完了:', window._initialViewMode);
+    }
+  }, 300);
+  
+  /**
+   * ステップ6: ノードアンカーとリンク機能の初期化
+   */
+  // 各ノードにリンクアイコンを追加
+  addNodeAnchors();
+  
+  // URLハッシュに指定されたノードがあればそこにスクロール
+  setTimeout(function() {
+    scrollToAnchorNode();
+    console.log('アンカーノードスクロール処理完了');
+  }, 500); // DOMが完全にレンダリングされるのを待つ
+  
+  /**
+   * ステップ7: URL更新と初期化完了
+   */
+  // URLを現在の状態で更新
+  setTimeout(function() {
+    updateShareUrl();
+    console.log('共有URLを更新しました');
+  }, 600);
+  
+  // 初期化完了フラグを設定
+  window._initialLoadComplete = true;
+  console.log('KPIツリー初期化完了');
+}
+
+/**
+ * ツリーの表示方向を設定
+ * @param {string} direction - 表示方向 ('horizontal' または 'vertical')
+ */
+function setDirection(direction) {
+  if (direction === 'horizontal') {
+    document.body.setAttribute('data-direction', 'horizontal');
+    document.querySelector('.kpi-tree-container').classList.add('direction-horizontal');
+    document.querySelector('.kpi-tree-container').classList.remove('direction-vertical');
+  } else {
+    document.body.setAttribute('data-direction', 'vertical');
+    document.querySelector('.kpi-tree-container').classList.add('direction-vertical');
+    document.querySelector('.kpi-tree-container').classList.remove('direction-horizontal');
+  }
+}
+
+/**
+ * ノードハイライト表示用のスタイルを動的に追加
+ * アンカーリンクを使用した場合の強調表示に使用されます
+ */
+function addHighlightStyle() {
+  // 既存のスタイル要素があれば追加しない
+  if (document.getElementById('kpi-tree-highlight-style')) return;
+  
+  var style = document.createElement('style');
+  style.id = 'kpi-tree-highlight-style';
+  style.textContent = `
+    .highlight-node {
+      animation: nodeHighlight 2s;
+    }
+    @keyframes nodeHighlight {
+      0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+
+/**
+ * ナビゲーションドロワーの初期化とイベント設定
+ */
+function setupNavigationDrawer() {
+  const menuToggle = document.getElementById('menu-toggle');
+  const drawer = document.getElementById('drawer-menu');
+  const overlay = document.getElementById('drawer-overlay');
+  const mainContent = document.querySelector('.main-content');
+  const drawerClose = document.getElementById('drawer-close');
+  
+  // 要素が見つからない場合のエラーハンドリング
+  if (!menuToggle || !drawer) {
+    console.error('ナビゲーションドロワーの必要な要素が見つかりません');
+    return;
+  }
+  
+  // オーバーレイ要素がない場合は作成
+  let overlayElement = overlay;
+  if (!overlayElement) {
+    console.log('オーバーレイ要素を作成します');
+    overlayElement = document.createElement('div');
+    overlayElement.id = 'drawer-overlay';
+    overlayElement.className = 'drawer-overlay';
+    document.body.appendChild(overlayElement);
+  }
+  
+  // ドロワーを開く関数
+  function openDrawer() {
+    drawer.classList.add('open');
+    menuToggle.classList.add('open');
+    overlay.classList.add('visible');
+    mainContent.classList.add('drawer-open');
+    
+    // ARIA属性を更新
+    menuToggle.setAttribute('aria-expanded', 'true');
+    drawer.setAttribute('aria-hidden', 'false');
+    
+    // メニューボタンのラベルを更新
+    menuToggle.setAttribute('aria-label', 'メニューを閉じる');
+    
+    console.log('ドロワーを開きました');
+  }
+  
+  // ドロワーを閉じる関数
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    menuToggle.classList.remove('open');
+    overlay.classList.remove('visible');
+    mainContent.classList.remove('drawer-open');
+    
+    // ARIA属性を更新
+    menuToggle.setAttribute('aria-expanded', 'false');
+    drawer.setAttribute('aria-hidden', 'true');
+    
+    // メニューボタンのラベルを更新
+    menuToggle.setAttribute('aria-label', 'メニューを開く');
+    
+    console.log('ドロワーを閉じました');
+  }
+  
+  // メニューボタンのクリックイベント
+  menuToggle.addEventListener('click', function() {
+    if (drawer.classList.contains('open')) {
+      closeDrawer();
+    } else {
+      openDrawer();
+    }
+  });
+  
+  // ドロワー内の閉じるボタンのクリックイベント
+  if (drawerClose) {
+    drawerClose.addEventListener('click', closeDrawer);
+  }
+  
+  // オーバーレイのクリックイベント
+  overlayElement.addEventListener('click', closeDrawer);
+  
+  // ESCキーでドロワーを閉じる
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && drawer.classList.contains('open')) {
+      closeDrawer();
+    }
+  });
+  
+  // ドロワー内に共有ボタンを配置
+  moveShareButtonToDrawer();
+  
+  console.log('ナビゲーションドロワーの初期化完了');
+}
+
+/**
+ * 共有ボタンをドロワー内に移動する関数
+ */
+function moveShareButtonToDrawer() {
+  const shareButton = document.getElementById('shareButton');
+  const drawerShareContainer = document.getElementById('drawer-share-btn-container');
+  
+  // 共有ボタンが存在する場合はドロワー内に移動
+  if (shareButton && drawerShareContainer) {
+    // 元の親要素からボタンを削除
+    if (shareButton.parentNode) {
+      shareButton.parentNode.removeChild(shareButton);
+    }
+    
+    // ドロワー内のコンテナに追加
+    drawerShareContainer.appendChild(shareButton);
+    
+    // ドロワー内での表示にふさわしいスタイルに調整
+    shareButton.style.width = '100%';
+    shareButton.style.marginTop = '8px';
+    
+    console.log('共有ボタンをドロワーに移動しました');
+  } else {
+    console.warn('共有ボタンまたはドロワー内コンテナが見つかりません');
+  }
+}
+
+/**
+ * アプリケーションのエントリーポイント
+ * DOM読み込み完了時に実行されるメイン処理
+ */
+document.addEventListener('DOMContentLoaded', function() {
+  // ページ読み込み完了時に実行される初期化処理
+  console.log('ページ読み込み完了');
+
+  // 共有ボタンの追加
+  addShareButton();
+  
+  // 日次/月次切り替えボタンの設定
+  setupViewModeToggle();
+
+  // ツリーの開閉ボタンの初期化
+  setupToggleButtons();
+  
+  // ナビゲーションドロワーの設定
+  setupNavigationDrawer();
+  
+  // 前日比・前月比の色を初期状態で適用
+  applyInitialDiffStyles();
+  
+  // 全ノードの値を更新
+  updateAllNodeValues();
+  
+  // 初回読み込み時に前日比・前月比の色を適用
+  applyInitialDiffStyles();
+  
+  // 初期データ読み込み完了を通知
+  document.dispatchEvent(new Event('kpi-tree-loaded'));
+  
+  // URL変更の監視を開始
+  monitorUrlChanges();
+  
+  // KPIツリーの初期化処理を実行
+  kpiTreeInit();
+  
+  // 初回読み込み時に前日比・前月比の色を適用
+  applyInitialDiffStyles();
+  
+  // 日次/月次切り替えボタンのイベントリスナーを設定
+  setupViewModeToggle();
+  
+  console.log('KPIツリーの初期化完了');
+});
+
+/**
+ * ブラウザのナビゲーションイベントハンドラ（戻るボタンやURL変更時）
+ * URLハッシュ変更時にツリーの状態を自動更新します
+ */
+window.addEventListener('popstate', function(event) {
+  console.log('URL変更検出、URLから状態を再読み込み');
+  
+  // ページの再読み込みなしでハッシュから状態を取得し適用
+  var state = getStateFromHash();
+  if (Object.keys(state).length > 0) {
+    applyTreeState(state);
+  }
+});
+
+/**
+ * 表示モード（日次/月次）を切り替える関数
+ * @param {string} mode - 表示モード ('daily' または 'monthly')
+ */
+function switchViewMode(mode) {
+  // 【デバッグ強化】引数と現在の状態を詳細に出力
+  console.log('【VIEW-MODE-DEBUG】表示モード切り替え関数が呼ばれました:', {
+    要求モード: mode,
+    現在モード: window._viewMode,
+    URL: window.location.href,
+    URLパラメータ: new URLSearchParams(window.location.search).toString(),
+    呼び出し元: new Error().stack.split('\n')[1]
+  });
+  
+  // モードパラメータを検証
+  if (mode !== 'daily' && mode !== 'monthly') {
+    console.error('【SWITCH-MODE】無効なモードパラメータが指定されました:', mode);
+    console.error('無効な表示モード:', mode);
+    return;
+  }
+  
+  // 既に同じモードなら何もしない
+  if (window._viewMode === mode) {
+    console.log('【SWITCH-MODE】既に同じモードなので何もしません:', mode);
+    console.log('既に同じモードなので何もしません:', mode);
+    return;
+  }
+  
+  // グローバル状態を更新
+  console.log('表示モードを切り替え:', mode);
+  window._viewMode = mode;
+  
+  // まず全てのnode要素にデータ属性があるか確認
+  const allNodes = document.querySelectorAll('.node');
+  const nodesWithDailyValue = document.querySelectorAll('.node[data-value-daily]').length;
+  const nodesWithMonthlyValue = document.querySelectorAll('.node[data-value-monthly]').length;
+  console.log(`データ属性統計: 全ノード数=${allNodes.length}, daily属性あり=${nodesWithDailyValue}, monthly属性あり=${nodesWithMonthlyValue}`);
+  
+  // ボタンの状態を更新
+  try {
+    const dailyButton = document.querySelector('.toggle-option.daily');
+    const monthlyButton = document.querySelector('.toggle-option.monthly');
+    
+    if (dailyButton && monthlyButton) {
+      dailyButton.classList.toggle('active', mode === 'daily');
+      monthlyButton.classList.toggle('active', mode === 'monthly');
+      console.log('ボタンの状態を更新しました');
+    } else {
+      console.error('トグルボタン要素が見つかりません');
+    }
+  } catch (e) {
+    console.error('ボタン状態更新中にエラー:', e);
+  }
+
+  // 重要: URLを更新する処理
+  try {
+    // 現在のツリー状態を取得
+    var treeState = saveTreeState();
+    var viewModeParam = mode;
+    
+    // ハッシュフラグメントの生成
+    var hashFragment = '';
+    var stateParam = '';
+    
+    if (treeState && Object.keys(treeState).length > 0) {
+      stateParam = generateStateParam(treeState);
+    }
+    
+    // 表示モードを必ず含める
+    if (stateParam) {
+      hashFragment = '#state=' + stateParam + '&viewMode=' + viewModeParam;
+    } else {
+      hashFragment = '#viewMode=' + viewModeParam;
+    }
+    
+    console.log('生成されたURLハッシュ:', hashFragment);
+    
+    // ブラウザのURL更新
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, document.title, hashFragment);
+      console.log('URLを更新しました');
+    }
+    
+    // _shareUrlをリセットして新しいモードで再生成されるように
+    window._shareUrl = null;
+  } catch (urlError) {
+    console.error('URL更新中にエラー:', urlError);
+  }
+  
+  // URLを更新し、現在の状態を反映させる
+  window.history.replaceState({}, '', hashFragment);
+  console.log('ハッシュを更新しました:', hashFragment);
+  
+  // カレンダーの日付リンクを更新
+  // モード切替後に既存のカレンダー日付リンクを更新する
+  try {
+    // カレンダーの日付リンクを取得
+    const calendarLinks = document.querySelectorAll('.calendar-day a');
+    if (calendarLinks && calendarLinks.length > 0) {
+      // 各日付リンクのURLを更新
+      calendarLinks.forEach(function(link) {
+        if (link.href) {
+          const urlObj = new URL(link.href);
+          
+          // 既存のviewModeパラメータを削除
+          urlObj.searchParams.delete('viewMode');
+          
+          // 新しいモードを設定
+          urlObj.searchParams.set('viewMode', mode);
+          
+          // URLを更新
+          link.href = urlObj.toString();
+        }
+      });
+    }
+  } catch (e) {
+    console.error('カレンダーリンク更新エラー:', e);
+  }
+  
+  // 全てのノードの値を更新
+  updateAllNodeValues();
+  
+  // 日付表示を更新
+  updateDateDisplay(mode);
+  
+  // コンソールで簡単に確認できるようにログを出力
+  console.log('■■■ switchViewMode処理完了');
+}
+
+/**
+ * 表示モードに応じて日付表示を更新する
+ * @param {string} mode - 表示モード ('daily' または 'monthly')
+ */
+function updateDateDisplay(mode) {
+  // 日付表示要素を取得
+  const dateDisplay = document.querySelector('.data-date');
+  if (!dateDisplay) {
+    console.warn('日付表示要素が見つかりません');
+    return;
+  }
+  
+  // 現在の日付表示テキストを取得
+  const currentText = dateDisplay.textContent;
+  
+  // 「現在のデータ: 」の後に来るテキストを抽出
+  const prefixPattern = /現在のデータ: /;
+  let mainContent = currentText.replace(prefixPattern, '');
+  
+  // 追加情報を折り返し文字や特殊文字で分割して抽出
+  let additionalInfo = '';
+  let dateContent = mainContent;
+  
+  // 「/」や「～」などで分割されている場合
+  if (mainContent.includes('/')) {
+    const parts = mainContent.split('/');
+    dateContent = parts[0].trim();
+    additionalInfo = '/' + parts.slice(1).join('/');
+  } else if (mainContent.includes('～')) { // 月次モードの場合
+    // 月初～指定日付の形式から指定日付部分を抽出
+    const parts = mainContent.split('～');
+    if (parts.length > 1) {
+      dateContent = parts[1].trim();
+    }
+    
+    // さらに追加情報がある場合は抽出
+    if (dateContent.includes('/')) {
+      const moreParts = dateContent.split('/');
+      dateContent = moreParts[0].trim();
+      additionalInfo = '/' + moreParts.slice(1).join('/');
+    }
+  }
+  
+  // 日付部分を抽出するパターン
+  const datePattern = /\d{4}年\d{2}月\d{2}日/;
+  const dateMatch = dateContent.match(datePattern);
+  
+  if (!dateMatch) {
+    console.warn('日付パターンが見つかりません:', dateContent);
+    return;
+  }
+  
+  const dateStr = dateMatch[0]; // 例: '2025年05月21日'
+  
+  // 日付を分解
+  const year = dateStr.substring(0, 4);
+  const month = dateStr.substring(5, 7);
+  const day = dateStr.substring(8, 10);
+  
+  let newDateDisplay = '';
+  
+  // モードに応じて日付表示を変更
+  if (mode === 'monthly') {
+    // 月次モード: 「月初～指定日付」の形式
+    newDateDisplay = `現在のデータ: ${year}年${month}月01日～${year}年${month}月${day}日`;
+  } else {
+    // 日次モード: 元の日付表示を維持
+    newDateDisplay = `現在のデータ: ${dateStr}`;
+  }
+  
+  // 日付表示を更新
+  dateDisplay.textContent = newDateDisplay + additionalInfo;
+  console.log('日付表示を更新しました:', mode, newDateDisplay + additionalInfo);
+}
+
+/**
+ * 差分値に応じて適切なスタイルを適用する
+ * @param {HTMLElement} element - スタイルを適用する要素
+ * @param {string} diffValue - 差分値
+ */
+function updateDiffStyle(element, diffValue) {
+  // まず既存のスタイルクラスを削除
+  element.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+  
+  if (!diffValue) return;
+  
+  // 日次モードか月次モードかを判定
+  const isMonthly = element.textContent.includes('前月比');
+  
+  // 数値化する前に文字列を整形
+  let valueStr = diffValue.toString().trim();
+  // 「+」記号が付いているかチェック
+  const isPositive = valueStr.startsWith('+');
+  
+  // 付いている場合は削除して値を取り出す
+  if (isPositive) {
+    valueStr = valueStr.substring(1);
+  }
+  
+  // パーセント値を取り扱う場合
+  const isPercent = valueStr.endsWith('%');
+  if (isPercent) {
+    valueStr = valueStr.replace('%', '');
+  }
+  
+  // 数値化して比較
+  const numValue = parseFloat(valueStr);
+  
+  if (isNaN(numValue)) {
+    // 数値でない場合はデフォルトスタイル
+    element.classList.add('diff-neutral');
+    return;
+  }
+  
+  // 月次モードと日次モードで条件を変える
+  if (isMonthly) {
+    // 月次モード: 100%以上なら緑、100%未満なら赤
+    if (numValue >= 100) {
+      element.classList.add('diff-positive');
+    } else {
+      element.classList.add('diff-negative');
+    }
+  } else {
+    // 日次モード: プラス値は緑、マイナス値は赤
+    if (isPositive || numValue > 0) {
+      element.classList.add('diff-positive');
+    } else if (numValue < 0) {
+      element.classList.add('diff-negative');
+    } else {
+      element.classList.add('diff-neutral');
+    }
+  }
+}
+
+/**
+ * 日次/月次切り替えボタンのイベントリスナーを設定する
+ */
+function setupViewModeToggle() {
+  // ボタン要素を取得
+  const dailyBtn = document.getElementById('daily-mode-btn');
+  const monthlyBtn = document.getElementById('monthly-mode-btn');
+  const modeIndicator = document.querySelector('.mode-indicator');
+  
+  if (!dailyBtn || !monthlyBtn || !modeIndicator) {
+    console.error('表示モード切り替え要素が見つかりません:', {
+      dailyBtn: !!dailyBtn,
+      monthlyBtn: !!monthlyBtn,
+      modeIndicator: !!modeIndicator
+    });
+    return;
+  }
+  
+  // 初期化時に正しいモードを選択状態にする
+  if (window._viewMode === 'daily') {
+    // 日次モードの場合
+    modeIndicator.style.transform = 'translateX(0)';
+    dailyBtn.classList.add('active');
+    monthlyBtn.classList.remove('active');
+  } else if (window._viewMode === 'monthly') {
+    // 月次モードの場合
+    modeIndicator.style.transform = 'translateX(67px)';
+    dailyBtn.classList.remove('active');
+    monthlyBtn.classList.add('active');
+  }
+  
+  console.log('現在のモード:', window._viewMode);
+  
+  // 日次ボタンのクリックイベント
+  dailyBtn.addEventListener('click', function() {
+    console.log('日次モードに切り替え');
+    modeIndicator.style.transform = 'translateX(0)';
+    dailyBtn.classList.add('active');
+    monthlyBtn.classList.remove('active');
+    switchViewMode('daily');
+  });
+  
+  // 月次ボタンのクリックイベント
+  monthlyBtn.addEventListener('click', function() {
+    console.log('月次モードに切り替え');
+    modeIndicator.style.transform = 'translateX(67px)';
+    dailyBtn.classList.remove('active');
+    monthlyBtn.classList.add('active');
+    switchViewMode('monthly');
+  });
+  
+  console.log('表示モード切り替えリスナーを設定しました');
+}
+
+/**
+ * 初回ページ読み込み時に前日比・前月比の色を適用する
+ */
+function applyInitialDiffStyles() {
+  // 現在のモードをグローバル変数から取得
+  const currentMode = window._viewMode || 'daily';
+  console.log('ページ読み込み時の表示モード:', currentMode);
+  
+  // 全ての差分表示要素を取得
+  const diffElements = document.querySelectorAll('.diff-value');
+  
+  diffElements.forEach(element => {
+    // 初期化前に既存のクラスを削除
+    element.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+    
+    // データ属性から値を取得
+    const diffDaily = element.getAttribute('data-diff-daily');
+    const diffMonthly = element.getAttribute('data-diff-monthly');
+    
+    // HTML構造を修正
+    if (currentMode === 'daily' && diffDaily) {
+      // 数値変換
+      let numValue = parseFloat(diffDaily);
+      let displayValue = diffDaily;
+      
+      // プラスの値に「+」を付ける
+      if (numValue > 0 && !displayValue.toString().startsWith('+')) {
+        displayValue = '+' + displayValue;
+      }
+      
+      // HTML再構築
+      element.innerHTML = `
+        <span class="diff-label">前日比: </span>
+        <span class="diff-number">${displayValue}</span>
+      `;
+      
+      // スタイルクラスを適用
+      if (numValue > 0) {
+        element.classList.add('diff-positive');
+      } else if (numValue < 0) {
+        element.classList.add('diff-negative');
+      } else {
+        element.classList.add('diff-neutral');
+      }
+    } else if (currentMode === 'monthly' && diffMonthly) {
+      // パーセント削除して数値化
+      let displayValue = diffMonthly;
+      let numValue = parseFloat(displayValue.toString().replace('%', ''));
+      
+      // パーセントがない場合は付ける
+      if (!displayValue.toString().endsWith('%')) {
+        displayValue = displayValue + '%';
+      }
+      
+      // プラスの値には「+」を、マイナスの値には「-」を付けるようにする
+      if (numValue > 100 && !displayValue.toString().startsWith('+')) {
+        displayValue = '+' + displayValue;
+      } else if (numValue < 100 && !displayValue.toString().startsWith('-')) {
+        // パーセント値を一時的に取り外す
+        let tempValue = displayValue;
+        if (tempValue.endsWith('%')) {
+          tempValue = tempValue.slice(0, -1);
+        }
+        // マイナス記号を追加して再度パーセント記号を付ける
+        displayValue = '-' + tempValue + '%';
+      }
+      
+      // HTML再構築
+      element.innerHTML = `
+        <span class="diff-label">前月比: </span>
+        <span class="diff-number">${displayValue}</span>
+      `;
+      
+      // スタイルクラスを適用
+      if (numValue >= 100) {
+        element.classList.add('diff-positive');
+      } else {
+        element.classList.add('diff-negative');
+      }
+    }
+  });
+}
+
+/**
+ * 全てのノードの値を現在のモードに応じて更新
+ */
+function updateAllNodeValues() {
+  // 現在の表示モードを確認
+  const currentMode = window._viewMode || 'daily'; // デフォルトは日次
+  console.log('現在の表示モード:', currentMode);
+  
+  // 全ノードを取得
+  const allNodes = document.querySelectorAll('.node');
+  console.log('ノード値の更新 - モード:', currentMode, 'ノード数:', allNodes.length);
+  
+  // 値が変更されたノード数を記録
+  let changedNodes = 0;
+  let missingValueNodes = 0;
+  let unchangedFixedNodes = 0;
+  
+  allNodes.forEach((node, index) => {
+    // 値を表示する要素を取得
+    const valueElement = node.querySelector('.value');
+    if (!valueElement) {
+      // console.log(`ノード#${index}: .value要素が見つかりません`);
+      return;
+    }
+    
+    // 前日比・前月比の要素を取得
+    const diffElement = node.querySelector('.diff-value');
+    if (diffElement) {
+      // 表示モードに応じて差分表示を切り替え
+      const diffDaily = diffElement.getAttribute('data-diff-daily');
+      const diffMonthly = diffElement.getAttribute('data-diff-monthly');
+      
+      if (currentMode === 'daily' && diffDaily) {
+        // 日次モードの場合は前日比を表示
+        let displayValue = diffDaily;
+        // 数値に変換
+        let numValue = parseFloat(displayValue);
+        
+        // プラスの値には「+」を付けるようにする
+        if (numValue > 0 && !displayValue.toString().startsWith('+')) {
+          displayValue = '+' + displayValue;
+        }
+        
+        // HTMLを再構築
+        diffElement.innerHTML = `
+          <span class="diff-label">前日比: </span>
+          <span class="diff-number">${displayValue}</span>
+        `;
+        diffElement.setAttribute('title', `前日比: ${displayValue}`);
+        
+        // 親要素にスタイルクラスを適用
+        diffElement.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+        if (numValue > 0) {
+          diffElement.classList.add('diff-positive');
+        } else if (numValue < 0) {
+          diffElement.classList.add('diff-negative');
+        } else {
+          diffElement.classList.add('diff-neutral');
+        }
+        
+      } else if (currentMode === 'monthly' && diffMonthly) {
+        // 月次モードの場合は前月比を表示
+        let displayValue = diffMonthly;
+        // パーセント文字を削除して数値化
+        let numValue = parseFloat(displayValue.toString().replace('%', ''));
+        
+        // 前月比はスプレッドシートの内容をそのまま表示
+        // パーセントがない場合は付ける
+        if (!displayValue.toString().endsWith('%')) {
+          displayValue = displayValue + '%';
+        }
+        // 前月比は+や-を自動付加しないようにする
+        
+        // HTMLを再構築
+        diffElement.innerHTML = `
+          <span class="diff-label">前月比: </span>
+          <span class="diff-number">${displayValue}</span>
+        `;
+        diffElement.setAttribute('title', `前月比: ${displayValue}`);
+        
+        // 100%を基準に色分け
+        diffElement.classList.remove('diff-positive', 'diff-negative', 'diff-neutral');
+        if (numValue >= 100) {
+          diffElement.classList.add('diff-positive');
+        } else {
+          diffElement.classList.add('diff-negative');
+        }
+      }
+    }
+    
+    // 各モードの値を取得 - .value要素から直接取得するように修正
+    const dailyValue = valueElement.getAttribute('data-value-daily');
+    const monthlyValue = valueElement.getAttribute('data-value-monthly');
+    const defaultValue = valueElement.getAttribute('data-value-default');
+    
+    // デバッグ用に最初の数ノードの情報を表示
+    if (index < 3) {
+      console.log(`ノード#${index} ID:${node.id} 属性確認:`, {
+        現在表示値: valueElement.textContent,
+        daily属性: dailyValue,
+        monthly属性: monthlyValue,
+        default属性: defaultValue,
+        切替可能か: !!(dailyValue && monthlyValue)
+      });
+    }
+    
+    // 属性が設定されているか確認
+    if (!dailyValue && !monthlyValue && !defaultValue) {
+      missingValueNodes++;
+      // どの属性もない場合はスキップ
+      return;
+    }
+    
+    const oldValue = valueElement.textContent;
+    let newValue = oldValue; // デフォルトは現在の値を維持
+    
+    // dailyとmonthlyの両方が設定されている場合のみ切替えの対象にする
+    if (dailyValue && monthlyValue) {
+      // 現在のモードに応じて値を設定
+      if (window._viewMode === 'daily') {
+        newValue = dailyValue;
+      } else if (window._viewMode === 'monthly') {
+        newValue = monthlyValue;
+      }
+    } else {
+      // valueのみ設定されているノードは常にその値を表示
+      if (defaultValue) {
+        newValue = defaultValue;
+        unchangedFixedNodes++;
+      }
+    }
+    
+    // 値が変更された場合のみ更新
+    if (oldValue !== newValue) {
+      valueElement.textContent = newValue;
+      changedNodes++;
+    }
+    
+    // 日本語テキストの切り替え処理を追加
+    const textElement = node.querySelector('.node-text');
+    if (textElement) {
+      // 月次モードでtext_monthly属性があれば切り替え
+      const textMonthly = textElement.getAttribute('data-text-monthly');
+      const textDaily = textElement.getAttribute('data-text-daily');
+      const textDefault = textElement.getAttribute('data-text-default');
+      
+      if (currentMode === 'monthly' && textMonthly) {
+        // 月次モードで月次テキストがあれば表示
+        textElement.textContent = textMonthly;
+        textElement.setAttribute('title', textMonthly);
+        changedNodes++;
+      } else if (currentMode === 'daily' && textDaily) {
+        // 日次モードで日次テキストがあれば表示
+        textElement.textContent = textDaily;
+        textElement.setAttribute('title', textDaily);
+        changedNodes++;
+      } else if (textDefault) {
+        // デフォルトテキストがあれば表示
+        textElement.textContent = textDefault;
+        textElement.setAttribute('title', textDefault);
+        changedNodes++;
+      }
+    }
+    
+    // text_enの切り替え処理を追加
+    const textEnElement = node.querySelector('.text-en');
+    if (textEnElement) {
+      // 月次モードでtext_en_monthly属性があれば切り替え
+      const textEnMonthly = textEnElement.getAttribute('data-text-en-monthly');
+      const textEnDefault = textEnElement.getAttribute('title'); // title属性に元の値が保存されている
+      
+      if (currentMode === 'monthly' && textEnMonthly) {
+        // 月次モードでtext_en_monthly属性があれば表示
+        textEnElement.textContent = textEnMonthly;
+        changedNodes++;
+      } else if (currentMode === 'daily' && textEnDefault) {
+        // 日次モードでは元の英語表記（title属性の値）に戻す
+        textEnElement.textContent = textEnDefault;
+        changedNodes++;
+      }
+    }
+  });
+  
+  console.log(`値の更新完了: ${changedNodes}個のノードを更新、${missingValueNodes}個のノードに属性なし、${unchangedFixedNodes}個は固定値`);
+}
+
+
+// tree.js
+/**
+ * KPIツリージェネレーター：ツリー操作機能
+ * ツリーノードの操作と状態管理を担当するモジュールです
+ * 
+ * ツリーの開閉状態の保存、読み込み、適用を管理します。
+ * トグルボタンの設定やイベントハンドラの登録も行います。
+ */
+
+/**
+ * トグルボタンの初期化とイベントハンドラの設定
+ * 各ノードの折りたたみ/展開ボタンにクリックイベントを登録します
+ */
+function setupToggleButtons() {
+  // すべてのトグルボタンを取得
+  var toggleButtons = document.querySelectorAll('.toggle-btn');
+  if (!toggleButtons.length) return;
+  
+  // 各ボタンにイベントハンドラを設定
+  toggleButtons.forEach(function(button) {
+    var targetId = button.getAttribute('data-target');
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    
+    // クリック時のイベントハンドラ
+    button.onclick = function() {
+      // トグル動作を実行
+      target.classList.toggle('collapsed');
+      button.classList.toggle('collapsed');
+      
+      // 状態を保存してURLを更新
+      saveTreeState();
+      updateShareUrl();
+    };
+  });
+}
+
+/**
+ * ツリーの現在の開閉状態を取得して保存
+ * 
+ * @returns {Object} 折りたたまれたノードIDとその状態を含むオブジェクト
+ */
+function saveTreeState() {
+  // すべての子ノードとその開閉状態を取得
+  var state = {};
+  document.querySelectorAll('.children').forEach(function(child) {
+    if (child.id) {
+      state[child.id] = child.classList.contains('collapsed') ? 'collapsed' : 'expanded';
+    }
+  });
+  
+  // 最小データ化: 折りたたまれたノードのみを抽出してURLパラメータを省サイズ化
+  var filteredState = {};
+  for (var nodeId in state) {
+    if (state[nodeId] === 'collapsed') {
+      filteredState[nodeId] = 'collapsed';
+    }
+  }
+  
+  // 完全な状態をローカルストレージに保存（通常の使用向け）
+  try {
+    localStorage.setItem('kpiTreeState', JSON.stringify(state));
+  } catch (e) {
+    console.warn('ローカルストレージへの状態保存失敗:', e);
+  }
+  
+  // 最小化された状態を返す（URLパラメータ用）
+  return Object.keys(filteredState).length > 0 ? filteredState : {};
+}
+
+/**
+ * ローカルストレージから保存されたツリー状態を読み込む
+ * 
+ * @returns {Object} 保存されていたツリー状態のオブジェクト。存在しない場合は空オブジェクト
+ */
+function loadTreeState() {
+  try {
+    var savedState = localStorage.getItem('kpiTreeState');
+    return savedState ? JSON.parse(savedState) : {};
+  } catch (e) {
+    console.error('ツリー状態の読み込みエラー:', e);
+    return {};
+  }
+}
+
+/**
+ * 全ノードを展開状態にリセット
+ * ツリー全体を展開状態に戻します
+ */
+function resetAllNodes() {
+  document.querySelectorAll('.children').forEach(function(child) {
+    child.classList.remove('collapsed');
+  });
+  
+  // すべてのトグルボタンを非折りたたみ状態に設定
+  document.querySelectorAll('.toggle-btn').forEach(function(button) {
+    button.classList.remove('collapsed');
+  });
+}
+
+/**
+ * ノードの開閉状態を初期化（3階層目まで展開、それ以降は折りたたみ）
+ */
+function initAllNodes() {
+  document.querySelectorAll('.children').forEach(function(child) {
+    const depth = getNodeDepth(child);
+
+    const toggleBtn = document.querySelector('.toggle-btn[data-target="' + child.id + '"]');
+    if (depth <= 2) {
+      child.classList.remove('collapsed');
+      if (toggleBtn) toggleBtn.classList.remove('collapsed');
+    } else {
+      child.classList.add('collapsed');
+      if (toggleBtn) toggleBtn.classList.add('collapsed');
+    }
+  });
+}
+
+/**
+ * 指定されたノード (.children) の階層レベル（深さ）を取得
+ * これは、親要素が .node を持つ回数で判定することで、
+ * 視覚的に「親→子→孫→ひ孫…」の何段目かを返します。
+ *
+ * @param {HTMLElement} element - .children UL要素
+ * @returns {number} - ノードの階層の深さ（1階層目から始まる）
+ */
+function getNodeDepth(element) {
+  let depth = 0;
+  let current = element;
+
+  while (current && current !== document.body) {
+    if (current.classList.contains('children')) {
+      const parentLi = current.closest('li');
+      if (parentLi && parentLi.querySelector('.node')) {
+        depth++;
+      }
+    }
+    current = current.parentElement;
+  }
+
+  return depth;
+}
+
+/**
+ * ツリー状態をDOMに適用
+ * URLハッシュなどから取得した状態をツリー表示に反映させます
+ * 
+ * @param {Object} state - 適用するツリー状態のオブジェクト 
+ */
+function applyTreeState(state) {
+  // 状態が空の場合は何もしない
+  if (!state || Object.keys(state).length === 0) return;
+  
+  // 先にすべて展開状態にリセット
+  resetAllNodes();
+  
+  // 指定された状態を適用
+  for (var nodeId in state) {
+    var nodeState = state[nodeId];
+    var node = document.getElementById(nodeId);
+    var button = null;
+    
+    // 対応するトグルボタンを探す
+    document.querySelectorAll('.toggle-btn').forEach(function(btn) {
+      if (btn.getAttribute('data-target') === nodeId) {
+        button = btn;
+      }
+    });
+    
+    // ノードとボタンが見つかった場合は状態を設定
+    if (node && button) {
+      if (nodeState === 'collapsed') {
+        node.classList.add('collapsed');
+        button.classList.add('collapsed');
+      } else if (nodeState === 'expanded') {
+        node.classList.remove('collapsed');
+        button.classList.remove('collapsed');
+      }
+    }
+  }
+  
+  // 状態をストレージに保存し、初期化完了フラグを設定
+  saveTreeState();
+  window._initialLoadComplete = true;
+}
+
+
+// url.js
+/**
+ * KPIツリージェネレーター：URL処理モジュール
+ * 
+ * URLハッシュとクエリパラメータを利用したツリー状態の保存と復元を担当します。
+ * Google Cloud Storageなどのリダイレクト環境にも対応し、共有可能なリンクを生成します。
+ */
+
+/**
+ * リダイレクト環境でのパラメータ保持を処理
+ * GCSなどのリダイレクト環境で状態パラメータが消失する問題に対応します
+ * 
+ * @returns {boolean} リダイレクト処理が行われた場合はtrue、それ以外は通常処理のことを示すfalse
+ */
+function handleUrlRedirects() {
+  /**
+   * URLパラメータをセッションストレージに保存する内部関数
+   * @returns {boolean} 保存が成功した場合はtrue
+   */
+  function saveStateParamToStorage() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var stateParam = urlParams.get('state');
+    
+    if (stateParam) {
+      try {
+        // 状態パラメータをセッションストレージに一時保存
+        sessionStorage.setItem('originalStateParam', stateParam);
+        return true;
+      } catch (e) {
+        console.error('パラメータの保存に失敗:', e);
+      }
+    }
+    return false;
+  }
+  
+  // GCSリダイレクトの検出（googleusercontent.comドメインとリファラー情報から判定）
+  var isGcsRedirect = window.location.href.includes('googleusercontent.com') && 
+                     (!document.referrer || document.referrer.includes('storage.cloud.google.com'));
+  
+  if (!isGcsRedirect) {
+    // 通常アクセス時：状態パラメータをセッションストレージに保存
+    return saveStateParamToStorage();
+  } else {
+    // リダイレクト後：先ほど保存した状態パラメータをURLに復元
+    var savedState = sessionStorage.getItem('originalStateParam');
+    if (savedState) {
+      var currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('state', savedState);
+      window.history.replaceState({}, document.title, currentUrl.toString());
+      console.log('リダイレクト後に状態パラメータを復元:', savedState);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * URLクエリパラメータからツリー状態を取得
+ * 
+ * @returns {Object} デコードされたツリー状態オブジェクト
+ */
+function getStateFromUrl() {
+  // URLクエリパラメータからstateを取得
+  var urlParams = new URLSearchParams(window.location.search);
+  var stateParam = urlParams.get('state');
+  
+  if (!stateParam) {
+    // URLパラメータにない場合はセッションストレージから取得試行
+    try {
+      var savedStateParam = sessionStorage.getItem('originalStateParam');
+      if (savedStateParam) {
+        stateParam = savedStateParam;
+        console.log('セッションストレージから状態を取得:', stateParam);
+      } else {
+        return {}; // 状態が見つからない場合は空オブジェクト
+      }
+    } catch (storageError) {
+      console.warn('セッションストレージアクセスエラー:', storageError);
+      return {}; 
+    }
+  } else {
+    // パラメータがあればセッションに保存（リダイレクト対策）
+    try {
+      sessionStorage.setItem('originalStateParam', stateParam);
+    } catch (e) {
+      console.warn('セッションストレージ保存エラー:', e);
+      // 保存エラーでも続行可能
+    }
+  }
+  
+  try {
+    // ハッシュ部分とデータ部分を分離
+    var parts = stateParam.split('.');
+    var encodedData = parts[0]; // データ部分
+    
+    // データ部分をデコード
+    var decodedState = decodeURIComponent(encodedData);
+    // URL-safe base64を標準base64に変換してデコード
+    decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
+    // JSONにパース
+    var parsedState = JSON.parse(decodedState);
+    
+    return parsedState;
+  } catch (e) {
+    console.error('State decoding error:', e);
+    
+    // 旧形式のパラメータの場合は直接デコードを試みる
+    try {
+      var directDecodedState = decodeURIComponent(stateParam);
+      directDecodedState = atob(directDecodedState.replace(/-/g, '+').replace(/_/g, '/'));
+      var directParsedState = JSON.parse(directDecodedState);
+      return directParsedState;
+    } catch (directError) {
+      return {}; // エラー時は空オブジェクトを返す
+    }
+  }
+}
+
+/**
+ * ハッシュフラグメントからツリー状態を取得
+ * URLハッシュからstate=パラメータを抽出し、デコードして状態オブジェクトを返す
+ * 
+ * @returns {Object} デコードされたツリー状態オブジェクト
+ */
+function getStateFromHash() {
+  var hash = window.location.hash;
+  if (!hash || !hash.includes('state=')) {
+    // ハッシュに状態がない場合、ローカルストレージから回復を試みる
+    try {
+      var savedStateParam = localStorage.getItem('kpiTreeStateParam');
+      if (savedStateParam) {
+        console.log('ローカルストレージから状態を回復しました');
+        return decodeStateParam(savedStateParam);
+      }
+    } catch (e) {
+      console.error('ローカルストレージアクセスエラー:', e);
+    }
+    return {};
+  }
+  
+  try {
+    // ハッシュから状態パラメータを抽出 (state=xxxxx の形式)
+    var stateMatch = hash.match(/state=([^&]+)/);
+    if (!stateMatch) return {};
+    
+    var stateParam = stateMatch[1];
+    console.log('ハッシュから状態パラメータを検出:', stateParam.substring(0, 20) + '...');
+    
+    // パラメータをデコード
+    return decodeStateParam(stateParam);
+  } catch (e) {
+    console.error('ハッシュ状態解析エラー:', e);
+    return {};
+  }
+}
+
+/**
+ * ハッシュフラグメントから表示モード（日次/月次）を取得
+ * 
+ * @returns {string|null} 表示モード（'daily'または'monthly'）が見つかった場合はその値、見つからない場合はnull
+ */
+function getViewModeFromHash() {
+  var hash = window.location.hash;
+  if (!hash) return null;
+  
+  try {
+    // viewMode=xxxの形式を抽出
+    var viewModeMatch = hash.match(/viewMode=([^&#]+)/);
+    if (!viewModeMatch) {
+      console.log('ハッシュにviewModeパラメータが見つかりません:', hash);
+      return null;
+    }
+    
+    var viewMode = viewModeMatch[1];
+    
+    // 有効な表示モード値か確認
+    if (viewMode === 'daily' || viewMode === 'monthly') {
+      console.log('ハッシュから表示モードを取得成功:', viewMode);
+      return viewMode;
+    }
+    
+    console.warn('無効な表示モード値:', viewMode);
+    return null;
+  } catch (e) {
+    console.error('表示モード取得エラー:', e);
+    return null;
+  }
+}
+
+/**
+ * URLクエリパラメータから表示モードを取得
+ * カレンダーの日付リンクから渡される?viewMode=xxx形式のパラメータを処理
+ * @returns {string|null} 表示モード文字列またはnull
+ */
+function getViewModeFromUrl() {
+  try {
+    // URLクエリパラメータからviewModeを取得
+    var urlSearchParams = new URLSearchParams(window.location.search);
+    var viewMode = urlSearchParams.get('viewMode');
+    
+    // パラメータが存在しなければ終了
+    if (!viewMode) {
+      // 代替方法：マニュアル解析
+      var searchStr = window.location.search.substring(1); // '?'を除去
+      var params = searchStr.split('&');
+      for (var i = 0; i < params.length; i++) {
+        var pair = params[i].split('=');
+        if (pair[0] === 'viewMode' && (pair[1] === 'daily' || pair[1] === 'monthly')) {
+          return pair[1];
+        }
+      }
+      
+      return null;
+    }
+    
+    // 有効な表示モード値か確認
+    if (viewMode === 'daily' || viewMode === 'monthly') {
+      return viewMode;
+    }
+    
+    return null;
+  } catch (e) {
+    console.error('URLクエリパラメータから表示モード取得エラー:', e);
+    return null;
+  }
+}
+
+/**
+ * 状態パラメータをデコードする共通関数
+ * Base64エンコードされた状態文字列をデコードしてオブジェクトに変換
+ * 
+ * @param {string} stateParam - デコードするBase64エンコード状態文字列
+ * @returns {Object} デコードされた状態オブジェクト
+ */
+function decodeStateParam(stateParam) {
+  try {
+    // チェックサムとデータ部分を分離 (データ.チェックサム の形式)
+    var parts = stateParam.split('.');
+    var encodedData = parts[0]; // データ部分
+    
+    // URLセーフBase64から標準Base64に変換してデコード
+    var decodedState = decodeURIComponent(encodedData);
+    decodedState = atob(decodedState.replace(/-/g, '+').replace(/_/g, '/'));
+    
+    // JSONパースして状態オブジェクトに変換
+    var parsedState = JSON.parse(decodedState);
+    return parsedState;
+  } catch (e) {
+    console.error('状態パラメータデコードエラー:', e);
+    
+    // 互換性対応: 旧形式のパラメータをデコード試行
+    try {
+      var directDecodedState = decodeURIComponent(stateParam);
+      directDecodedState = atob(directDecodedState.replace(/-/g, '+').replace(/_/g, '/'));
+      var directParsedState = JSON.parse(directDecodedState);
+      console.log('旧形式パラメータを正常にデコードしました');
+      return directParsedState;
+    } catch (directError) {
+      console.error('互換性デコードにも失敗:', directError);
+      return {}; // 両方のデコード方法が失敗した場合は空オブジェクト
+    }
+  }
+}
+
+/**
+ * ツリー状態をURLハッシュパラメータ用にエンコード
+ * 状態をURLセーフなBase64に変換し、チェックサムを付与して一意性を保証
+ * 
+ * @param {Object} state - エンコードするツリー状態オブジェクト
+ * @returns {string} エンコードされた状態パラメータ文字列
+ */
+function generateStateParam(state) {
+  // 状態が空の場合は空文字列を返す
+  if (!state || Object.keys(state).length === 0) {
+    return '';
+  }
+  
+  // 再現性と一意性のためキーをソート
+  var nodeIds = Object.keys(state).sort();
+  var normalizedState = {};
+  for (var i = 0; i < nodeIds.length; i++) {
+    normalizedState[nodeIds[i]] = state[nodeIds[i]];
+  }
+  
+  // 状態まとめ用フィンガープリントの生成
+  var fingerprint = nodeIds.map(function(id) {
+    return id.substring(0, 3) + state[id].substring(0, 1);
+  }).join('');
+  
+  // 簡易チェックサム生成
+  var checksum = 0;
+  for (var k = 0; k < fingerprint.length; k++) {
+    checksum += fingerprint.charCodeAt(k);
+  }
+  checksum = checksum % 1000;
+  
+  // JSON化してBase64エンコード、URLセーフ文字列に置換
+  var jsonString = JSON.stringify(normalizedState);
+  var encoded = btoa(jsonString)
+    .replace(/\+/g, '-')  // URLセーフな文字に置換
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');   // 末尾のパディング=を削除
+  
+  // 状態識別用ユニークハッシュを生成
+  var uniqueHash = 's' + checksum + '-n' + nodeIds.length;
+  
+  // データとチェックサムを結合した最終パラメータを返す
+  return encodeURIComponent(encoded) + '.' + uniqueHash;
+}
+
+/**
+ * URL変更を監視して状態の整合性を保証する
+ * 特にGoogle Cloud Storageリダイレクトなど、URLの自動変更をトラッキングして状態を維持
+ */
+function monitorUrlChanges() {
+  var lastUrl = window.location.href;
+  var checkInterval = 500; // 確認間隔(ミリ秒)
+  
+  setInterval(function() {
+    // URLが変更された場合の処理
+    if (lastUrl !== window.location.href) {
+      console.log('URL変更を検出:', lastUrl, ' -> ', window.location.href);
+      lastUrl = window.location.href;
+      
+      // GCSリダイレクトを検出した場合
+      if (window.location.href.includes('googleusercontent.com')) {
+        console.log('Google Cloud Storageリダイレクトを検出');
+        
+        // セッションから保存してある状態を取得
+        var savedState = sessionStorage.getItem('originalStateParam');
+        if (savedState) {
+          console.log('保存された状態を復元します');
+          
+          // URLクエリパラメータから状態を取得して適用
+          var state = getStateFromUrl();
+          
+          // 状態が存在する場合はツリーに適用
+          if (state && Object.keys(state).length > 0) {
+            if (typeof applyTreeState === 'function') {
+              applyTreeState(state);
+              console.log('リダイレクト後にツリー状態を復元しました');
+            }
+          }
+        }
+      }
+      
+      // URLハッシュ変更を検出した場合
+      if (window.location.hash && window.location.hash.includes('state=')) {
+        console.log('ハッシュパラメータ変更を検出');
+        
+        // ハッシュから状態を取得して適用
+        var hashState = getStateFromHash();
+        if (hashState && Object.keys(hashState).length > 0) {
+          if (typeof applyTreeState === 'function') {
+            applyTreeState(hashState);
+            console.log('ハッシュ変更によりツリー状態を更新しました');
+          }
+        }
+      }
+    }
+  }, checkInterval);
+}
+
+/**
+ * ブラウザのURLを更新
+ * History APIを使って現在のページURLを更新し、状態を保存
+ * 
+ * @param {string} queryString - 設定する新しいURLハッシュまたはクエリ文字列
+ */
+function updateBrowserUrl(queryString) {
+  // History APIの存在確認
+  if (window.history && window.history.replaceState) {
+    try {
+      // URLを更新（ページの再読み込みは行わない）
+      window.history.replaceState({}, document.title, queryString);
+      console.log('ブラウザURL更新:', queryString);
+      
+      // セッションストレージにも状態を保存（再読み込み時用）
+      var state = saveTreeState();
+      if (Object.keys(state).length > 0) {
+        sessionStorage.setItem('kpiTreeState', JSON.stringify(state));
+      }
+    } catch (e) {
+      console.error('URL更新エラー:', e);
+    }
+  }
+}
+
+
+// share.js
+/**
+ * KPIツリージェネレーター：共有機能
+ * URLの生成とクリップボードコピー機能を提供します
+ */
+
+// ツリー状態が変更されたときにURLを更新
+function updateShareUrl() {
+  // ツリーの現在の状態を取得
+  var state = saveTreeState();
+  
+  // 日次・月次の表示モードを状態に追加
+  if (!state) {
+    state = {};
+  }
+  
+  // トグルボタン状態を追加
+  if (window._viewMode) {
+    state._viewMode = window._viewMode; // 注目: アンダースコア付きのキー名で通常のノードIDと区別
+    console.log('共有URLに表示モードを含めました:', window._viewMode);
+  }
+  
+  if (state && Object.keys(state).length > 0) {
+    // 状態をデバッグ出力
+    console.log('共有URL生成前の状態:', JSON.stringify(state));
+    console.log('現在の表示モード:', window._viewMode);
+    
+    // _viewModeプロパティを弾く（状態パラメータに含めない）
+    var viewMode = window._viewMode || 'daily';
+    if (state._viewMode) {
+      delete state._viewMode; // 状態から表示モードを削除
+    }
+    
+    // 状態パラメータを生成
+    var stateParam = generateStateParam(state);
+    
+    // 状態と表示モードを別々のパラメータとしてURLに含める
+    var viewModeParam = viewMode === 'daily' ? 'daily' : 'monthly';
+    
+    // ハッシュフラグメントを構築
+    // 注意: 先頭の#記号が重要
+    var hashFragment = '#viewMode=' + viewModeParam;
+    if (stateParam) {
+      hashFragment = '#state=' + stateParam + '&viewMode=' + viewModeParam;
+    }
+    
+    console.log('生成した最終URLハッシュ:', hashFragment);
+    
+    console.log('生成したハッシュ:', hashFragment, '表示モード:', viewModeParam);
+    
+    // 常にPUBLIC_URLを使うように設定
+    if (window.PUBLIC_URL) {
+      window._publicBaseUrl = window.PUBLIC_URL;
+    }
+    
+    // 共有URL（ファイル名＋ハッシュフラグメント）を設定
+    if (window._publicBaseUrl) {
+      window._shareUrl = window._publicBaseUrl + hashFragment;
+    } else {
+      var fileName = window.location.pathname.split('/').pop() || 'index.html';
+      window._shareUrl = fileName + hashFragment;
+    }
+    
+    // ローカルストレージに現在のパラメータを保存
+    if (stateParam) {
+      try {
+        localStorage.setItem('kpiTreeStateParam', stateParam);
+      } catch (e) {
+        console.error('パラメータ保存エラー:', e);
+      }
+    }
+    
+    // ブラウザのURLをハッシュで更新（ページはリロードされない）
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, document.title, hashFragment);
+    }
+  } else {
+    // すべて展開状態の場合
+    if (window.PUBLIC_URL) {
+      window._publicBaseUrl = window.PUBLIC_URL;
+    }
+    
+    if (window._publicBaseUrl) {
+      window._shareUrl = window._publicBaseUrl;
+    } else {
+      var fileName = window.location.pathname.split('/').pop() || 'index.html';
+      window._shareUrl = fileName;
+    }
+    
+    // ブラウザのURLをハッシュなしに更新
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, document.title, window.location.pathname);
+    }
+  }
+  
+  // コンソールに現在の共有URLを表示
+  console.log('Share URL updated with hash:', window._shareUrl);
+}
+
+/**
+ * 共有ボタンクリック時の処理、現在のツリー状態をURL化しクリップボードにコピー
+ * 現在のKPIツリー状態を取得し、共有可能なURLを生成してクリップボードにコピーする
+ * 環境により最適なクリップボード操作を行う
+ * 
+ * @returns {void}
+ */
+function copyToClipboard() {
+  try {
+    // 共有URLの生成と更新
+    updateShareUrl();
+    
+    // すべての共有元で共通の共有URLを使用
+    var shareUrl = window._shareUrl;
+    
+    // ローカルストレージから状態パラメータを取得
+    var stateParam = '';
+    try {
+      stateParam = localStorage.getItem('kpiTreeStateParam') || '';
+    } catch (storageError) {
+      console.error('ストレージからパラメータ取得エラー:', storageError);
+      // ストレージエラーがあっても処理を継続
+    }
+    
+    // 公開URL設定を強制的に使用（GCSなどの環境向け）
+    if (window.PUBLIC_URL) {
+      console.log('共有URL生成前のPUBLIC_URL:', window.PUBLIC_URL);
+      console.log('現在の共有URL候補:', shareUrl);
+      
+      // 現在の状態を表すハッシュパラメータを取得
+      var currentState = saveTreeState();
+      var currentViewMode = window._viewMode || 'daily'; // 重要！現在の表示モードを取得
+      var stateFragment = '';
+      
+      // ツリー状態があればパラメータを生成
+      if (currentState && Object.keys(currentState).length > 0) {
+        var stateParam = generateStateParam(currentState);
+        if (stateParam) {
+          // 必ずviewModeパラメータを含める
+          stateFragment = '#state=' + stateParam + '&viewMode=' + currentViewMode;
+          console.log('修正後の状態フラグメント：', stateFragment);
+        }
+      } else {
+        // 状態がなくても表示モードは含める
+        stateFragment = '#viewMode=' + currentViewMode;
+      }
+      
+      // 強制的にクリップボードにコピーされるURLをYAML設定値に修正
+      var yamlPublicUrl = window.PUBLIC_URL;
+      
+      // URLの末尾のスラッシュを削除（あれば）
+      if (yamlPublicUrl.endsWith('/')) {
+        yamlPublicUrl = yamlPublicUrl.slice(0, -1);
+      }
+      
+      // YAMLで指定された公開URLに現在の状態パラメータを結合
+      shareUrl = yamlPublicUrl + stateFragment;
+      console.log('公開URLを強制使用した共有URL:', shareUrl);
+    }
+    
+    // 最終的な共有URLの生成
+    const finalUrl = shareUrl;
+    
+    console.log('クリップボードコピー準備:', finalUrl);
+    
+    // クリップボード操作時のブラウザ対応処理
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // モダンブラウザのAPIを使用
+      navigator.clipboard.writeText(finalUrl)
+        .then(function() {
+          // コピー成功時のユーザー通知
+          showCopyMessage('URLをコピーしました');
+          console.log('クリップボードコピー成功');
+        })
+        .catch(function(clipboardError) {
+          // APIエラー時は代替方法でコピー試行
+          console.warn('クリップボードAPIエラー、代替方法で試行:', clipboardError);
+          fallbackCopyToClipboard(finalUrl);
+        });
+    } else {
+      // 旧ブラウザや制限された環境向けの代替処理
+      console.log('従来型クリップボード方式を使用');
+      fallbackCopyToClipboard(finalUrl);
+    }
+  } catch (error) {
+    // 予期せぬエラーへの対策
+    console.error('共有URL生成・コピー処理エラー:', error);
+    alert('共有URLの生成中にエラーが発生しました');
+  }
+}
+
+// 共有ボタンを追加する関数
+/**
+ * KPIツリーの状態を共有するためのボタンを画面に追加
+ * 画面右下に固定表示される共有ボタンを作成し、DOMに挿入する
+ */
+function addShareButton() {
+  // 既存ボタンがあれば再追加しない
+  if (document.getElementById('shareButton')) {
+    return;
+  }
+  
+  // ボタンコンテナ要素の作成
+  var shareDiv = document.createElement('div');
+  shareDiv.className = 'share-control';
+  shareDiv.style.position = 'fixed';
+  shareDiv.style.top = '20px';
+  shareDiv.style.right = '20px';
+  shareDiv.style.zIndex = '1000';
+  
+  // 共有ボタン要素の作成とスタイル設定
+  var shareButton = document.createElement('button');
+  shareButton.id = 'shareButton';
+  shareButton.textContent = '共有URLをコピー';
+  
+  // ボタンスタイルの設定
+  Object.assign(shareButton.style, {
+    padding: '8px 15px',
+    backgroundColor: '#09BA85',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+    position: 'relative'
+  });
+  
+  // ホバー効果
+  shareButton.onmouseover = function() {
+    this.style.backgroundColor = '#078e66'; // 濃い緑
+  };
+  shareButton.onmouseout = function() {
+    this.style.backgroundColor = '#09BA85'; // 元の緑
+  };
+  
+  // ツールチップ要素の作成
+  var tooltip = document.createElement('div');
+  tooltip.id = 'shareTooltip';
+  tooltip.textContent = '現在のURLをコピーしました';
+  
+  // ツールチップスタイル設定
+  Object.assign(tooltip.style, {
+    position: 'absolute',
+    top: '100%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    backgroundColor: '#333',
+    color: 'white',
+    padding: '5px 10px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    whiteSpace: 'nowrap',
+    opacity: '0',
+    transition: 'opacity 0.3s',
+    pointerEvents: 'none',
+    zIndex: '1001'
+  });
+  
+  // ツールチップをボタンに追加
+  shareButton.appendChild(tooltip);
+  
+  /**
+   * 共有ボタンクリック時のハンドラ
+   * 現在のKPIツリー状態をURL化し、クリップボードにコピーする
+   */
+  shareButton.onclick = function() {
+    copyToClipboard();
+  };
+  
+  // 共有ボタンのみ追加（日次/月次切り替えは削除）
+  shareDiv.appendChild(shareButton);
+  document.body.appendChild(shareDiv);
+}
+
+// コピー成功表示
+function showCopySuccess() {
+  showCopyMessage('URLをコピーしました');
+}
+
+/**
+ * コピー成功時に一時的な通知メッセージを表示
+ * 画面下部にトーストメッセージを表示し、3秒後に消える
+ * 
+ * @param {string} message - 表示するメッセージ文字列
+ * @returns {void}
+ */
+function showCopyMessage(message) {
+  // 既存のメッセージ要素があれば削除（複数回クリック対応）
+  var oldMessage = document.getElementById('copy-message');
+  if (oldMessage && oldMessage.parentNode) {
+    oldMessage.parentNode.removeChild(oldMessage);
+  }
+  
+  // 新しいメッセージ要素の作成
+  var messageElement = document.createElement('div');
+  messageElement.id = 'copy-message';
+  
+  // メッセージのスタイルを設定
+  Object.assign(messageElement.style, {
+    position: 'fixed',
+    bottom: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    padding: '10px 20px',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: 'white',
+    borderRadius: '4px',
+    zIndex: '9999',
+    opacity: '1',
+    transition: 'opacity 0.3s',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+    fontSize: '14px'
+  });
+  
+  // 表示メッセージを設定
+  messageElement.textContent = message;
+  
+  // DOMに追加
+  document.body.appendChild(messageElement);
+  
+  // 3秒後にフェードアウトして消す
+  setTimeout(function() {
+    // フェードアウトアニメーション
+    messageElement.style.opacity = '0';
+    
+    // アニメーション完了後に要素を削除（メモリリーク防止）
+    setTimeout(function() {
+      if (messageElement.parentNode) {
+        messageElement.parentNode.removeChild(messageElement);
+      }
+    }, 300); // トランジションの時間と同じか少し長め
+  }, 3000); // 3秒間表示
+}
+
+/**
+ * クリップボードAPIが利用できない環境用の代替コピー機能
+ * document.execCommand('copy')を使用した従来型のクリップボード操作
+ * 
+ * @param {string} text - クリップボードにコピーするテキスト
+ * @returns {void}
+ */
+function fallbackCopyToClipboard(text) {
+  try {
+    // 一時的な非表示入力フィールドを作成
+    var tempInput = document.createElement('input');
+    tempInput.style.position = 'absolute';
+    tempInput.style.left = '-9999px'; // 画面外に配置
+    tempInput.setAttribute('readonly', ''); // 読み取り専用に設定
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    
+    // テキストを選択状態にする
+    tempInput.select();
+    tempInput.setSelectionRange(0, 99999); // モバイルデバイス対応
+    
+    // クリップボードにコピーを実行
+    var copySuccess = document.execCommand('copy');
+    
+    // 一時要素を削除
+    document.body.removeChild(tempInput);
+    
+    // 結果に応じたメッセージを表示
+    if (copySuccess) {
+      console.log('フォールバックコピー成功');
+      showCopyMessage('URLをコピーしました');
+    } else {
+      console.warn('フォールバックコピー失敗');
+      showCopyMessage('コピーに失敗しました。URL: ' + text);
+    }
+  } catch (error) {
+    // どの方法でもコピーが失敗した場合のバックアップ
+    console.error('クリップボード操作全般エラー:', error);
+    alert('クリップボードへのコピーができませんでした\n' + text);
+  }
+}
+
+// URLをクリップボードにコピー
+function copyShareUrlToClipboard() {
+  // 完全に変更！GCS対策を含む新しいロジック
+  console.log('共有ボタンがクリックされました');
+
+  // 現在のブラウザURLと表示モードを取得
+  var currentUrl = window.location.href;
+  var currentViewMode = window._viewMode || 'daily';
+  console.log('現在のURL:', currentUrl);
+  console.log('現在の表示モード:', currentViewMode);
+  
+  // storage.cloud.google.comの場合の特殊処理
+  var isGoogleStorage = currentUrl.includes('storage.cloud.google.com');
+  console.log('Google Storage URLかどうか:', isGoogleStorage);
+  
+  // ツリーの状態と基本URLを取得
+  var treeState = saveTreeState() || {};
+  var baseUrl = window._publicBaseUrl || window.location.origin + window.location.pathname;
+  
+  // URL生成のための状態保存
+  var stateParam = '';
+  if (Object.keys(treeState).length > 0) {
+    stateParam = generateStateParam(treeState);
+    console.log('生成された状態パラメータ:', stateParam);
+  }
+  
+  // 手動でURLを構築
+  var manuallyConstructedUrl = baseUrl;
+  
+  // ハッシュパラメータを追加
+  if (stateParam) {
+    manuallyConstructedUrl += '#state=' + stateParam;
+    manuallyConstructedUrl += '&viewMode=' + currentViewMode;
+  } else {
+    manuallyConstructedUrl += '#viewMode=' + currentViewMode;
+  }
+  
+  console.log('手動で構築したURL:', manuallyConstructedUrl);
+  
+  // Google Cloud Storage URLの場合はさらに強制的に追加
+  if (isGoogleStorage) {
+    // クリップボード用に確実にパラメータを追加
+    // URLの形式が #state=abc の場合、#state=abc&viewMode=daily に変更
+    if (manuallyConstructedUrl.includes('#state=') && !manuallyConstructedUrl.includes('viewMode=')) {
+      manuallyConstructedUrl += '&viewMode=' + currentViewMode;
+    }
+    // URLの形式がハッシュなしの場合、#viewMode=daily を追加
+    else if (!manuallyConstructedUrl.includes('#')) {
+      manuallyConstructedUrl += '#viewMode=' + currentViewMode;
+    }
+    console.log('GCS対策後のURL:', manuallyConstructedUrl);
+  }
+  
+  // 最終確認！本当にviewModeが入っているか
+  if (!manuallyConstructedUrl.includes('viewMode=')) {
+    // 絶対に入れる
+    console.error('viewModeが追加されていません。線形的に追加します');
+    
+    // URLの形式に応じて適切に追加
+    if (manuallyConstructedUrl.includes('#')) {
+      if (manuallyConstructedUrl.includes('&')) {
+        manuallyConstructedUrl += '&viewMode=' + currentViewMode;
+      } else {
+        manuallyConstructedUrl += '&viewMode=' + currentViewMode;
+      }
+    } else {
+      manuallyConstructedUrl += '#viewMode=' + currentViewMode;
+    }
+  }
+  
+  // 確認用ログ
+  console.log('コピー直前の最終URL:', manuallyConstructedUrl);
+  console.log('viewModeパラメータあり:', manuallyConstructedUrl.includes('viewMode='));
+  
+  // 共有URLをグローバル変数に設定
+  window._shareUrl = manuallyConstructedUrl;
+  
+  // 共有URLをクリップボードにコピー
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(manuallyConstructedUrl)
+        .then(function() {
+          showCopyMessage('共有URLをコピーしました (' + currentViewMode + ')');
+          console.log('クリップボードにコピーしたURL:', manuallyConstructedUrl);
+        })
+        .catch(function(error) {
+          console.error('クリップボードAPIエラー:', error);
+          fallbackCopyToClipboard(manuallyConstructedUrl);
+        });
+    } else {
+      fallbackCopyToClipboard(manuallyConstructedUrl);
+    }
+  } catch(e) {
+    console.error('クリップボードコピー失敗:', e);
+    alert('クリップボードにコピーできませんでした\n' + manuallyConstructedUrl);
+  }
+}
+
+
+// anchor.js
+/**
+ * KPIツリージェネレーター：アンカー機能モジュール
+ * 
+ * ノードにパーマリンク機能を提供し、特定ノードへの直接リンクを可能にします。
+ * 各ノードにリンクアイコンを追加し、クリップボードコピー機能、スクロール機能を提供します。
+ */
+
+/**
+ * 各ノードにアンカーアイコンを追加
+ * クリックすると、そのノードを指すURLの生成とコピーを行います
+ */
+function addNodeAnchors() {
+  document.querySelectorAll('.node').forEach(function(node) {
+    if (node.id) {
+      // すでにアンカーが設定されている場合はスキップ
+      if (node.querySelector('.node-anchor')) return;
+      
+      var anchorIcon = document.createElement('a');
+      anchorIcon.className = 'node-anchor';
+      anchorIcon.innerHTML = '🔗'; // リンクアイコン
+      anchorIcon.title = 'このノードへのリンクをコピー';
+      anchorIcon.style.position = 'absolute';
+      anchorIcon.style.top = '5px';
+      anchorIcon.style.right = '5px';
+      anchorIcon.style.fontSize = '14px';
+      anchorIcon.style.cursor = 'pointer';
+      anchorIcon.style.textDecoration = 'none';
+      anchorIcon.style.opacity = '0.6';
+      anchorIcon.style.transition = 'opacity 0.2s';
+      
+      anchorIcon.onmouseover = function() {
+        this.style.opacity = '1';
+      };
+      
+      anchorIcon.onmouseout = function() {
+        this.style.opacity = '0.6';
+      };
+      
+      /**
+       * ノードアンカーアイコンのクリックハンドラ
+       * 現在のツリー状態とノードIDを含むURLをクリップボードにコピー
+       */
+      anchorIcon.onclick = function(event) {
+        // イベントの伸幅を防止（親要素へのバブリング防止）
+        event.stopPropagation();
+        
+        // 現在のツリー状態を保存し、パラメータ化
+        var state = saveTreeState();
+        var stateParam = '';
+        if (state && Object.keys(state).length > 0) {
+          stateParam = generateStateParam(state);
+        }
+        
+        // ノードIDを含むURLハッシュフラグメントを生成
+        var nodeId = node.id;
+        var hashFragment = '#';
+        
+        // 状態パラメータがあれば追加
+        if (stateParam) {
+          hashFragment += 'state=' + stateParam + '&'; // ノードIDと結合するため&で終わる
+        }
+        
+        // ノードIDパラメータを追加
+        hashFragment += 'node=' + nodeId;
+        
+        // 共有に使用するベースURLの取得（設定された公開URLまたは現在のパス）
+        var baseUrl = window.PUBLIC_URL || window.location.pathname;
+        var fullUrl = baseUrl + hashFragment;
+        
+        console.log('ノードリンク生成:', fullUrl);
+        
+        // クリップボードAPIの対応確認とURLコピー
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          // 新しいClipboard APIを使用
+          navigator.clipboard.writeText(fullUrl)
+            .then(function() {
+              showCopyMessage('ノードへのリンクをコピーしました');
+            })
+            .catch(function(err) {
+              console.error('クリップボードAPIエラー:', err);
+              // フォールバック方式でコピー試行
+              fallbackCopyToClipboard(fullUrl);
+            });
+        } else {
+          // 旧環境対応のフォールバックコピー処理
+          fallbackCopyToClipboard(fullUrl);
+        }
+      };
+      
+      // ノードのポジショニング確認（アイコンの位置決めに必要）
+      if (getComputedStyle(node).position === 'static') {
+        node.style.position = 'relative'; // 絶対配置アイコンの基準点にするために必要
+      }
+      
+      // アンカーアイコンをノードにDOM挿入
+      node.appendChild(anchorIcon);
+      console.log('アンカーアイコンを追加:', node.id);
+    }
+  });
+  
+  // アンカーノード用のスタイルを追加
+  addHighlightStyle();
+}
+
+/**
+ * URLハッシュのノードパラメータから指定ノードにスクロールしてハイライト表示する
+ * URLハッシュに node=<ノードID> パラメータが含まれている場合、そのノードに自動スクロールする
+ */
+function scrollToAnchorNode() {
+  var hash = window.location.hash;
+  // ノードパラメータがなければ何もしない
+  if (!hash || !hash.includes('node=')) return;
+  
+  try {
+    // ハッシュからノードIDを正規表現で抽出 (node=xxx の形式)
+    var nodeMatch = hash.match(/node=([^&]+)/);
+    if (!nodeMatch) return;
+    
+    var nodeId = nodeMatch[1];
+    console.log('アンカーノード検出:', nodeId);
+    var targetNode = document.getElementById(nodeId);
+    
+    if (targetNode) {
+      // DOMが完全にレンダリングされるまで少し待つ
+      setTimeout(function() {
+        // 指定ノードにスムーズにスクロール
+        targetNode.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+        
+        // 視認性向上のためハイライトアニメーション
+        targetNode.classList.add('highlight-node');
+        console.log('ノードをハイライト表示しました:', nodeId);
+        
+        // 一定時間後にハイライトを解除
+        setTimeout(function() {
+          targetNode.classList.remove('highlight-node');
+        }, 2000); // 2秒間ハイライト
+      }, 500); // DOMレンダリング完了まで500ms待機
+    } else {
+      console.warn('指定されたノードIDが見つかりません:', nodeId);
+    }
+  } catch (e) {
+    console.error('アンカーノードスクロール処理エラー:', e);
+  }
+}
+
+/**
+ * ノードハイライト用のスタイルを動的に追加
+ * ノードがハイライトされたときのパルスアニメーション用CSSを挿入
+ */
+function addHighlightStyle() {
+  // 既にスタイルが存在する場合は再挿入しない
+  if (document.getElementById('kpi-tree-highlight-style')) return;
+  
+  // スタイル要素を作成
+  var style = document.createElement('style');
+  style.id = 'kpi-tree-highlight-style';
+  
+  // ハイライトのパルスアニメーションを定義
+  style.textContent = `
+    .highlight-node {
+      animation: nodeHighlight 2s;
+    }
+    @keyframes nodeHighlight {
+      0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
+    }
+  `;
+  
+  // スタイルを文書にDOM挿入
+  document.head.appendChild(style);
+  console.log('ノードハイライトスタイルを追加しました');
+}
+
+
+// calendar.js
+/**
+ * カレンダーUI機能
+ * 日付をクリックすると該当日付のHTMLにリンク
+ * データがある日付には緑のマーカーを表示
+ */
+document.addEventListener('DOMContentLoaded', function() {
+  // 全てのリンクが適切に生成されるようになったので、
+  // 古いGCS URLパターン修正は不要になりました。
+  // (yyyy/mm/dd 古いURL修正コードを削除しました)
+  
+  // カレンダー要素
+  const prevMonthBtn = document.getElementById('prev-month');
+  const nextMonthBtn = document.getElementById('next-month');
+  const currentMonthEl = document.getElementById('current-month');
+  const calendarDaysEl = document.getElementById('calendar-days');
+  
+  // 現在の日付
+  let currentDate = new Date();
+  let currentMonth = currentDate.getMonth();
+  let currentYear = currentDate.getFullYear();
+  
+  // target_dateパラメータを確認
+  let targetDate = null;
+  
+  // まず、data-target-date属性が設定されているか確認
+  const dataTargetDateEl = document.querySelector('[data-target-date]');
+  if (dataTargetDateEl) {
+    const dataTargetDateStr = dataTargetDateEl.getAttribute('data-target-date');
+    if (dataTargetDateStr && dataTargetDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const parts = dataTargetDateStr.split('-');
+      targetDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      console.log('data-target-date属性から対象日付を検出:', dataTargetDateStr);
+    }
+  }
+  
+  // 現在のデータ表示から取得
+  if (!targetDate) {
+    const dataDateEl = document.querySelector('.data-date');
+    if (dataDateEl) {
+      const dateText = dataDateEl.textContent;
+      const datePattern = /\d{4}年\d{2}月\d{2}日/;
+      const dateMatch = dateText.match(datePattern);
+      if (dateMatch) {
+        const dateStr = dateMatch[0]; // 例: '2025年05月21日'
+        const year = parseInt(dateStr.substring(0, 4));
+        const month = parseInt(dateStr.substring(5, 7)) - 1; // 0-11
+        const day = parseInt(dateStr.substring(8, 10));
+        targetDate = new Date(year, month, day);
+        console.log('日付表示から対象日付を検出:', dateStr);
+      }
+    }
+  }
+  
+  // 現在開いているページの日付を取得（YYYYMMDD.html または reports/YYYYMMDD.html）
+  let currentPageDate = null;
+  try {
+    const currentPath = window.location.pathname;
+    // reports/YYYYMMDD.html または YYYYMMDD.html パターンを検出
+    const dateMatch = currentPath.match(/\/(\d{8})\.html$/) || currentPath.match(/\/reports\/(\d{8})\.html$/);
+    if (dateMatch && dateMatch[1]) {
+      // YYYYMMDD形式を解析
+      const dateStr = dateMatch[1];
+      const year = parseInt(dateStr.substring(0, 4));
+      const month = parseInt(dateStr.substring(4, 6)) - 1; // 0-11
+      const day = parseInt(dateStr.substring(6, 8));
+      currentPageDate = new Date(year, month, day);
+      console.log('現在のページ日付を検出:', currentPageDate);
+      
+      // target_dateが未設定の場合は、現在のページ日付をtarget_dateとして使用
+      if (!targetDate) {
+        targetDate = currentPageDate;
+      }
+    }
+  } catch (e) {
+    console.error('ページ日付の解析エラー:', e);
+  }
+  
+  // target_dateが見つかった場合、その日付の月を表示するように設定
+  if (targetDate) {
+    currentYear = targetDate.getFullYear();
+    currentMonth = targetDate.getMonth();
+    console.log(`カレンダーを対象日付（${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月${targetDate.getDate()}日）の月に設定しました`);
+  }
+  
+  // 月の名前（日本語）
+  const monthNames = [
+    '1月', '2月', '3月', '4月', '5月', '6月',
+    '7月', '8月', '9月', '10月', '11月', '12月'
+  ];
+  
+  // データがある日付の配列
+  let datesWithData = [];
+  // データの期間の境界（最小日付と最大日付）
+  let minDate = null;
+  let maxDate = null;
+  
+  // デバッグ：初期状態の出力
+  console.log('【デバッグ】カレンダー初期化時のdatesWithData:', [...datesWithData]);
+  // ベースURL（YAMLから取得）
+  let baseUrl = '';
+  
+  // 日付を文字列からDateオブジェクトに変換する関数
+  function parseDate(dateString) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  
+  // 日付をYYYYMMDD形式の文字列に変換する関数
+  function formatDateYYYYMMDD(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+  }
+  
+  // 日付がデータがある日付かどうかをチェック
+  function hasDataForDate(year, month, day) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const hasData = datesWithData.includes(dateStr);
+    
+    // デバッグ：緑ポッチの対象になる日付を出力
+    if (hasData) {
+      console.log(`【デバッグ】緑ポッチ対象の日付: ${dateStr}`);
+    }
+    
+    return hasData;
+  }
+  
+  // 日付がデータ期間内かどうかをチェック
+  function isDateInRange(year, month) {
+    if (!minDate || !maxDate) return true;
+    
+    const checkDate = new Date(year, month, 1);
+    const checkMonthEnd = new Date(year, month + 1, 0);
+    
+    return (
+      (checkDate >= new Date(minDate.getFullYear(), minDate.getMonth(), 1)) &&
+      (checkMonthEnd <= new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0))
+    );
+  }
+  
+  // YAMLからのベースURLとJSONからの日付データを取得
+  function fetchCalendarData(userTargetDate) {
+    // targetDateパラメータが指定されているか確認
+    const hasTargetDate = userTargetDate instanceof Date && !isNaN(userTargetDate.getTime());
+    console.log(`カレンダーデータ取得関数が呼ばれました，ターゲット日付: ${hasTargetDate ? userTargetDate.toISOString() : '未指定'}`);
+    
+    // 重要：現在の月設定を保存（非同期処理での上書きを防ぐ）
+    const preservedMonth = currentMonth;
+    const preservedYear = currentYear;
+    console.log(`月設定を保護: ${preservedYear}年${preservedMonth + 1}月`);
+    
+    // baseURLをページのグローバル変数から取得
+    if (window.PUBLIC_URL) {
+      baseUrl = window.PUBLIC_URL;
+      baseUrl = baseUrl.replace(/\/[^\/]*\.html$/, ''); // 末尾のHTML名を削除
+    }
+    
+    // 日付データをJSONファイルから取得
+    // フォールバックとして空のデータを使用
+    const fallbackData = {
+      datesWithData: []
+    };
+    console.log('【デバッグ】フォールバックデータ:', fallbackData);
+    
+    // データ処理関数
+    function processJsonData(data) {
+      console.log('【デバッグ】processJsonData受け取ったデータ:', data);
+      
+      if (data && Array.isArray(data.datesWithData)) {
+        // 日付データを保存
+        datesWithData = data.datesWithData;
+        console.log('【デバッグ】datesWithDataを設定:', [...datesWithData]);
+        
+        // 最小日付と最大日付を取得
+        if (datesWithData.length > 0) {
+          // 日付を昇順でソート
+          datesWithData.sort();
+          minDate = parseDate(datesWithData[0]);
+          
+          // 昨日の日付を最大日付として設定
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          maxDate = yesterday;
+          
+          console.log('日付範囲:', minDate, maxDate, '(昨日までに制限)');
+          
+          // 重要：保存した月設定を復元（どんな場合でも初期設定を維持）
+          currentMonth = preservedMonth;
+          currentYear = preservedYear;
+          console.log(`月設定を復元: ${currentYear}年${currentMonth + 1}月`);
+          
+          // ターゲット日付の処理は情報表示のみ（月設定は変更しない）
+          if (hasTargetDate && userTargetDate) {
+            const targetYearMonth = new Date(userTargetDate.getFullYear(), userTargetDate.getMonth(), 1);
+            const minYearMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+            const maxYearMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+            
+            if (targetYearMonth >= minYearMonth && targetYearMonth <= maxYearMonth) {
+              console.log(`ターゲット日付は有効範囲内: ${userTargetDate.toISOString()}`);
+            } else {
+              console.log(`ターゲット日付が有効範囲外: ${userTargetDate.toISOString()}, 範囲: ${minYearMonth.toISOString()} - ${maxYearMonth.toISOString()}`);
+            }
+          }
+          
+          // ボタンの有効/無効を更新
+          updateNavigationButtons();
+          // カレンダーを描画
+          renderCalendar();
+        }
+      }
+    }
+    
+    // 検索パス
+    // public_urlに基づいて外部カレンダーデータのURLを生成
+    let externalCalendarUrl = '';
+    if (baseUrl) {
+      const baseUrlWithoutFile = baseUrl.replace(/\/[^\/]*\.html$/, '');
+      if (baseUrlWithoutFile.endsWith('/')) {
+        externalCalendarUrl = `${baseUrlWithoutFile}static/calendar-data.json`;
+      } else {
+        externalCalendarUrl = `${baseUrlWithoutFile}/static/calendar-data.json`;
+      }
+    }
+    
+    // ローカルバックアップパス
+    const localPaths = [
+      './static/calendar-data.json',
+      '/static/calendar-data.json',
+      'calendar-data.json'
+    ];
+    
+    // キャッシュを回避するためのタイムスタンプパラメータを追加
+    const timestamp = new Date().getTime();
+    const urlWithCache = externalCalendarUrl ? `${externalCalendarUrl}?t=${timestamp}` : '';
+    
+    // まず外部URLから取得を試みる（URLが設定されている場合）
+    const initialFetch = externalCalendarUrl 
+      ? fetch(urlWithCache)
+      : Promise.reject(new Error('外部URLが設定されていません'));
+      
+    // 外部URLから取得を試みる、失敗したらローカルパスを試す
+    initialFetch
+      .catch(() => {
+        console.warn('外部URLからのカレンダーデータ取得に失敗しました。ローカルのパスを試します。');
+        // 外部URLから失敗した場合、ローカルのパスを順に試す
+        return fetch(localPaths[0])
+          .catch(() => fetch(localPaths[1]))
+          .catch(() => fetch(localPaths[2]))
+          .catch(() => {
+            console.warn('すべてのパスでカレンダーデータの取得に失敗しました。フォールバックデータを使用します。');
+            // 全てのパスで失敗した場合はフォールバックを返す
+            return { 
+              ok: true,
+              json: () => Promise.resolve(fallbackData)
+            };
+          });
+      })
+      .then(response => {
+        if (!response.ok && response.ok !== undefined) {
+          console.error('応答が正しくありません');
+          return Promise.resolve(fallbackData);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('カレンダーデータを取得しました', data);
+        // 空のJSONファイルの場合も適切に処理
+        if (!data || !data.datesWithData || !Array.isArray(data.datesWithData)) {
+          console.warn('カレンダーデータが正しい形式ではありません。空のデータを使用します。');
+          console.log('【デバッグ】フォールバックデータに切り替え');
+          return processJsonData(fallbackData);
+        }
+        processJsonData(data);
+      })
+      .catch(error => {
+        console.error('日付データの読み込みエラー:', error);
+        // エラー時はフォールバックデータを使用
+        processJsonData(fallbackData);
+      });
+  }
+  
+  // ナビゲーションボタンの表示/非表示を更新
+  function updateNavigationButtons() {
+    if (minDate && maxDate) {
+      // 【デバッグ強化】関数内の現在の状態を詳細に出力
+      console.log('【NAV-DEBUG】updateNavigationButtons呼び出し時の状態:', {
+        現在表示中の月: currentMonth + 1,
+        現在表示中の年: currentYear,
+        分岐ポイント: new Error().stack.split('\n')[1]
+      });
+      
+      // 前月ボタンを制御
+      const prevMonth = new Date(currentYear, currentMonth - 1, 1);
+      const canGoToPrevMonth = prevMonth >= new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+      
+      // 次月ボタンを制御
+      const nextMonth = new Date(currentYear, currentMonth + 1, 1);
+      
+      // 今日の月を取得
+      const today = new Date();
+      const todayMonth = today.getMonth();
+      const todayYear = today.getFullYear();
+      const currentMonthFirst = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      // 【デバッグ強化】日付比較情報を詳細に出力
+      console.log('【NAV-DEBUG】日付比較情報:', {
+        現在の月: currentMonth + 1,
+        現在の年: currentYear,
+        今日の月: todayMonth + 1,
+        今日の年: todayYear,
+        次の月: (nextMonth.getMonth() + 1),
+        次の月の年: nextMonth.getFullYear(),
+        今日の月先頭: currentMonthFirst.toISOString().split('T')[0]
+      });
+      
+      // 次月ボタンを完全に無効化: 現在表示している月が今月の場合または次の月が今月より後の場合
+      let canGoToNextMonth = false;
+      if (currentMonth === todayMonth && currentYear === todayYear) {
+        // 今月を表示している場合は次月に進めない
+        canGoToNextMonth = false;
+        console.log('【NAV-DEBUG】今月表示中なので次月ボタンは無効化');
+      } else {
+        // 【修正】今月以外の月を表示している場合、次の月が今月以下なら切り替え可能
+        // 次の月の年と月を計算
+        let nextMonthNumber = currentMonth + 1;
+        let nextYearNumber = currentYear;
+        if (nextMonthNumber > 11) {
+          nextMonthNumber = 0;
+          nextYearNumber++;
+        }
+        
+        // 【決定的な修正】要素を比較して判定、次の月が今日の月より小さいか、または同じ月なら可能
+        const canNavigateToNextMonth = (
+          nextYearNumber < todayYear || 
+          (nextYearNumber === todayYear && nextMonthNumber <= todayMonth)
+        );
+        
+        // 【判定ロジック確認用】
+        console.log('【NAV-DEBUG】次月ボタンの判定情報 (修正後):', {
+          現在表示月: currentMonth + 1,
+          次の月: nextMonthNumber + 1,
+          次の年: nextYearNumber,
+          今日の月: todayMonth + 1,
+          今日の年: todayYear,
+          結果: canNavigateToNextMonth,
+          判定式: `${nextYearNumber} < ${todayYear} || (${nextYearNumber} === ${todayYear} && ${nextMonthNumber} <= ${todayMonth})`
+        });
+        
+        canGoToNextMonth = canNavigateToNextMonth;
+      }
+
+      // ボタンの表示/非表示を切り替え
+      prevMonthBtn.style.visibility = canGoToPrevMonth ? 'visible' : 'hidden';
+      nextMonthBtn.style.visibility = canGoToNextMonth ? 'visible' : 'hidden';
+      nextMonthBtn.disabled = !canGoToNextMonth;
+      
+      // 今月表示中の場合は強制的に次月ボタンを無効化
+      if (currentMonth === todayMonth && currentYear === todayYear) {
+        nextMonthBtn.style.visibility = 'hidden';
+        nextMonthBtn.disabled = true;
+      }
+      
+      console.log('ナビゲーションボタン更新: 今月=', (currentMonth === todayMonth && currentYear === todayYear),
+                  '前月=', canGoToPrevMonth, '次月=', canGoToNextMonth);
+    }
+  }
+  
+  // 前月ボタン
+  prevMonthBtn.addEventListener('click', function() {
+    if (this.disabled) return;
+    
+    currentMonth--;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+    
+    updateNavigationButtons();
+    renderCalendar();
+  });
+  
+  // 次月ボタン - シンプルな正確な実装
+  nextMonthBtn.addEventListener('click', function() {
+    if (this.disabled || this.style.visibility === 'hidden') return;
+    
+    // デバッグ情報追加
+    console.log('【月移動】クリック前状態:', {
+      現在月: currentMonth + 1,
+      現在年: currentYear
+    });
+    
+    // 単純な次月移動（1か月ずつ）
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    
+    console.log('【月移動】移動後状態:', {
+      現在月: currentMonth + 1,
+      現在年: currentYear
+    });
+    
+    updateNavigationButtons();
+    renderCalendar();
+  });
+  
+  // カレンダー描画関数
+  function renderCalendar() {
+    // 月表示の更新
+    currentMonthEl.textContent = `${currentYear}年 ${monthNames[currentMonth]}`;
+    
+    // カレンダーをクリア
+    calendarDaysEl.innerHTML = '';
+    
+    // 月初めの日
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    // 月末の日
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    
+    // 前月の最終日
+    const prevLastDay = new Date(currentYear, currentMonth, 0);
+    const prevDays = prevLastDay.getDate();
+    
+    // 月初めの曜日（0: 日曜日, 1: 月曜日, ..., 6: 土曜日）
+    const firstDayIndex = firstDay.getDay();
+    
+    // 月末の曜日
+    const lastDayIndex = lastDay.getDay();
+    
+    // 翌月の日数（カレンダーの最後の行を埋めるため）
+    const nextDays = 7 - lastDayIndex - 1;
+    
+    // 今日の日付
+    const today = new Date();
+    
+    // 前月の日を表示
+    for (let x = firstDayIndex; x > 0; x--) {
+      const day = prevDays - x + 1;
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day other-month';
+      dayEl.textContent = day;
+      calendarDaysEl.appendChild(dayEl);
+    }
+    
+    // 当月の日を表示
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day';
+      
+      // データがある日付にはマーカーを表示
+      if (hasDataForDate(currentYear, currentMonth, i)) {
+        dayEl.classList.add('has-data');
+      }
+      
+      // 今日の日付にはスタイルを適用
+      if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+        dayEl.classList.add('today');
+      }
+      
+      // target_dateには特別なハイライトを適用
+      if (targetDate && i === targetDate.getDate() && 
+          currentMonth === targetDate.getMonth() && 
+          currentYear === targetDate.getFullYear()) {
+        dayEl.classList.add('target-date');
+        // 要素にデータ属性を追加して後でJavaScriptで参照できるようにする
+        dayEl.setAttribute('data-is-target-date', 'true');
+      }
+      
+      // 現在のページ日付があれば、その日付にハイライトを適用
+      if (currentPageDate && i === currentPageDate.getDate() && 
+          currentMonth === currentPageDate.getMonth() && 
+          currentYear === currentPageDate.getFullYear()) {
+        dayEl.classList.add('current-page-date');
+      }
+      
+      // 日付ごとのリンクを作成
+      const dateLink = document.createElement('a');
+      // YYYY-MM-DD 形式
+      const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      // YYYYMMDD形式（URLパス用）
+      const dateForUrl = formatDateYYYYMMDD(new Date(currentYear, currentMonth, i));
+      
+      // 対象の日付
+      const dateObj = new Date(currentYear, currentMonth, i);
+      // 昨日までの日付かどうかをチェック
+      const isDateAvailable = dateObj <= maxDate;
+      
+      // リンク先を生成（YAMLのpublic_urlに基づく）
+      let reportUrl = '';
+      if (baseUrl) {
+        // baseUrlからindex.htmlなどのファイル名を削除
+        const baseUrlWithoutFile = baseUrl.replace(/\/[^\/]*\.html$/, '');
+        
+        // reports/YYYYMMDD.html 形式のURLを生成
+        if (baseUrlWithoutFile.endsWith('/')) {
+          reportUrl = `${baseUrlWithoutFile}reports/${dateForUrl}.html`;
+        } else {
+          reportUrl = `${baseUrlWithoutFile}/reports/${dateForUrl}.html`;
+        }
+      } else {
+        // フォールバック
+        reportUrl = `/reports/${dateForUrl}.html`;
+      }
+      
+      // 昨日までの日付に対してのみリンクを有効にする
+      if (isDateAvailable) {
+        // 現在の表示モードを取得
+        const currentViewMode = window._viewMode || 'daily';
+        
+        // 【デバッグ強化】日付リンク生成時の表示モード情報
+        console.log(`【LINK-MODE-DEBUG】${formattedDate}の日付リンク作成時の表示モード:`, {
+          グローバルモード: window._viewMode,
+          使用するモード: currentViewMode,
+          元のURL: reportUrl
+        });
+        
+        // URLの処理
+        let urlWithViewMode = reportUrl;
+        
+        // URLがハッシュを含むか確認
+        if (urlWithViewMode.includes('#')) {
+          // ハッシュがある場合は、ハッシュの前にクエリパラメータを追加
+          const parts = urlWithViewMode.split('#');
+          urlWithViewMode = `${parts[0]}?viewMode=${currentViewMode}#${parts[1]}`;
+        } else {
+          // ハッシュがない場合は通常のクエリパラメータを追加
+          urlWithViewMode = `${urlWithViewMode}?viewMode=${currentViewMode}`;
+        }
+        
+        // 【デバッグ強化】生成したURLを確認
+        console.log(`【LINK-MODE-DEBUG】${formattedDate}の日付リンクの最終URL:`, urlWithViewMode);
+        
+        dateLink.href = urlWithViewMode;
+        dateLink.title = `${formattedDate}のレポートを${currentViewMode === 'daily' ? '日次' : '月次'}モードで表示`;
+        
+        // データがある日付には特別なクラスを追加（スタイリング用）
+        if (hasDataForDate(currentYear, currentMonth, i)) {
+          dateLink.classList.add('has-data');
+        }
+      } else {
+        // 将来の日付の場合は無効なリンクにする
+        dateLink.classList.add('no-data');
+        dateLink.title = `${formattedDate}のデータはまだ利用できません`;
+      }
+      
+      dateLink.textContent = i;
+      dayEl.appendChild(dateLink);
+      calendarDaysEl.appendChild(dayEl);
+    }
+    
+    // 翌月の日を表示
+    for (let j = 1; j <= nextDays; j++) {
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day other-month';
+      dayEl.textContent = j;
+      calendarDaysEl.appendChild(dayEl);
+    }
+    
+    // レンダリング後にターゲット日付があればそこにスクロール
+    if (targetDate) {
+      // 少し遅延させてレンダリング完了後にスクロールする
+      setTimeout(() => {
+        const targetElement = document.querySelector('.calendar-day.target-date');
+        if (targetElement) {
+          // スクロールする
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // 注目を引くためのアニメーションを追加
+          targetElement.style.animation = 'highlight-pulse 1.5s ease-in-out 2';
+          console.log(`対象日付 ${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月${targetDate.getDate()}日 にスクロールしました`)
+        }
+      }, 300);
+    }
+  }
+  
+  // target-dateのスタイルを追加
+  const style = document.createElement('style');
+  style.textContent = `
+    .calendar-day.target-date {
+      background-color: #ffe0b2;
+      border: 2px solid #ff9800;
+      font-weight: bold;
+      position: relative;
+      z-index: 1;
+    }
+    
+    @keyframes highlight-pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
+      50% { transform: scale(1.1); box-shadow: 0 0 10px 5px rgba(255, 152, 0, 0.5); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // 初期データの読み込みとカレンダー描画
+  fetchCalendarData(targetDate);
+  
+  // リンク修正関数が不要になったため、フックも削除しました
+  // 必要に応じて後で再実装することができます
+});
+
+
+
+</script>
+
+</body>
+</html>
