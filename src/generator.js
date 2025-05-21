@@ -98,6 +98,16 @@ ${calendarJs}
 `;
 }
 
+// Hex色をRGBに変換する関数
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
 // Main function
 async function generateKPITree() {
   // 現在の日付をデフォルトとして使用
@@ -342,13 +352,26 @@ async function generateKPITree() {
     const treeHtml = generateTreeHtml(config.root);
     
     // スタイルと全てのJSを読み込む
-    const styleContent = await fs.readFile(STYLE_PATH, 'utf8');
+    let styleContent = await fs.readFile(STYLE_PATH, 'utf8');
+    
+    // テーマカラーをスタイルに適用
+    styleContent = styleContent
+      .replace(/#09BA85/g, primaryColor)
+      .replace(/rgba\(9,\s*186,\s*133,\s*0\.1\)/g, primaryColorRgba);
     // 全てのJSファイルを結合
-    const combinedScripts = await loadAllScripts();
+    let combinedScripts = await loadAllScripts();
+    
+    // JSファイル内のテーマカラーも置換
+    combinedScripts = combinedScripts.replace(/#09BA85/g, primaryColor);
     
     // Replace placeholders in template
     const title = config.title || 'KPI Tree';
     const theme = config.theme || 'default';
+    
+    // テーマカラー設定
+    const primaryColor = config.theme_color || '#09BA85';
+    const primaryColorRgb = hexToRgb(primaryColor);
+    const primaryColorRgba = primaryColorRgb ? `rgba(${primaryColorRgb.r}, ${primaryColorRgb.g}, ${primaryColorRgb.b}, 0.1)` : 'rgba(9, 186, 133, 0.1)';
     // 方向指定は削除（水平レイアウトのみに最適化）
     
     // Get public URL if defined in YAML
@@ -485,6 +508,17 @@ async function generateKPITree() {
       return text.replace(pattern, value || '');
     }
     
+    // フッターノートの設定処理
+    let footerNotesHtml = '';
+    if (config.footer_notes && Array.isArray(config.footer_notes)) {
+      const noteItems = config.footer_notes.map(note => `<li>${note}</li>`).join('\n          ');
+      footerNotesHtml = `<div class="note">
+        <ul>
+          ${noteItems}
+        </ul>
+      </div>`;
+    }
+    
     // 全テンプレート変数を置換
     let html = template;
     html = replacePlaceholder(html, 'TITLE', title);
@@ -494,6 +528,7 @@ async function generateKPITree() {
     html = replacePlaceholder(html, 'PUBLIC_URL_SCRIPT', publicUrlScript);
     html = replacePlaceholder(html, 'FAVICON_LINK', faviconLink);
     html = replacePlaceholder(html, 'DATA_DATE', dataDate + headerInfoText);
+    html = replacePlaceholder(html, 'FOOTER_NOTES', footerNotesHtml);
     
     // デバッグ情報
     console.log('テンプレート変数置換完了');

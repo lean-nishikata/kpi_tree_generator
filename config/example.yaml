@@ -4,6 +4,14 @@ theme: "default"
 # 公開時のURL設定（GCSなどでホスティングする場合に使用）
 public_url: "https://cc-kpi-tree-viewer-746697735781.asia-northeast1.run.app/example.html"
 
+# テーマカラー（オプション、デフォルト: #09BA85）
+theme_color: "#09BA85"
+
+# フッターノート（オプション）
+footer_notes:
+  - "データソースは<a href=\"https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID\" target=\"data-src\">スプレッドシート</a>を参照ください"
+  - "数値に関してのお問い合わせは @data-team まで"
+
 root:
   text: "Revenue (¥100M)"
   value: 500

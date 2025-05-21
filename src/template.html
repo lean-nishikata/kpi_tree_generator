@@ -286,13 +286,7 @@
   <div class="main-content">
     <div class="direction-horizontal">
     <div class="kpi-tree-container theme-{{THEME}}">
-      <div class="note">
-        <ul>
-          <li>データソースは<a href="https://docs.google.com/spreadsheets/d/1913pwtcPIZcQZBC6F6tp6_16itxjwOOVRkj6wS1B8-U/edit?usp=sharing" target="data-src">こちら</a>、各指標の定義は<a href="https://coincheck.atlassian.net/wiki/spaces/CTO/pages/3913843770" target="kpi-dic">こちら</a>を参照ください</li>
-          <li>金銭信託運用、その他の一部の数値は月次のみ手動掲載のため、営業収益合計は正確でない場合があります</li>
-          <li>数値に関してのお問い合わせは <a href="https://coincheck.enterprise.slack.com/archives/C069WL5UH3L" target="_blank">#req-data-platform</a> @data-platform-admin まで</li>
-        </ul>
-      </div>
+      {{FOOTER_NOTES}}
       <ul class="kpi-tree">
         {{TREE_HTML}}
       </ul>
