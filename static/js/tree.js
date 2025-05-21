@@ -67,35 +67,6 @@ function saveTreeState() {
   return Object.keys(filteredState).length > 0 ? filteredState : {};
 }
 
-/**
- * ローカルストレージから保存されたツリー状態を読み込む
- * 
- * @returns {Object} 保存されていたツリー状態のオブジェクト。存在しない場合は空オブジェクト
- */
-function loadTreeState() {
-  try {
-    var savedState = localStorage.getItem('kpiTreeState');
-    return savedState ? JSON.parse(savedState) : {};
-  } catch (e) {
-    console.error('ツリー状態の読み込みエラー:', e);
-    return {};
-  }
-}
-
-/**
- * 全ノードを展開状態にリセット
- * ツリー全体を展開状態に戻します
- */
-function resetAllNodes() {
-  document.querySelectorAll('.children').forEach(function(child) {
-    child.classList.remove('collapsed');
-  });
-  
-  // すべてのトグルボタンを非折りたたみ状態に設定
-  document.querySelectorAll('.toggle-btn').forEach(function(button) {
-    button.classList.remove('collapsed');
-  });
-}
 
 /**
  * ノードの開閉状態を初期化（3階層目まで展開、それ以降は折りたたみ）
@@ -151,7 +122,12 @@ function applyTreeState(state) {
   if (!state || Object.keys(state).length === 0) return;
   
   // 先にすべて展開状態にリセット
-  resetAllNodes();
+  document.querySelectorAll('.children').forEach(function(child) {
+    child.classList.remove('collapsed');
+  });
+  document.querySelectorAll('.toggle-btn').forEach(function(button) {
+    button.classList.remove('collapsed');
+  });
   
   // 指定された状態を適用
   for (var nodeId in state) {

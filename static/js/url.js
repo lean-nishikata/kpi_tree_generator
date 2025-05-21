@@ -361,27 +361,3 @@ function monitorUrlChanges() {
   }, checkInterval);
 }
 
-/**
- * ブラウザのURLを更新
- * History APIを使って現在のページURLを更新し、状態を保存
- * 
- * @param {string} queryString - 設定する新しいURLハッシュまたはクエリ文字列
- */
-function updateBrowserUrl(queryString) {
-  // History APIの存在確認
-  if (window.history && window.history.replaceState) {
-    try {
-      // URLを更新（ページの再読み込みは行わない）
-      window.history.replaceState({}, document.title, queryString);
-      console.log('ブラウザURL更新:', queryString);
-      
-      // セッションストレージにも状態を保存（再読み込み時用）
-      var state = saveTreeState();
-      if (Object.keys(state).length > 0) {
-        sessionStorage.setItem('kpiTreeState', JSON.stringify(state));
-      }
-    } catch (e) {
-      console.error('URL更新エラー:', e);
-    }
-  }
-}

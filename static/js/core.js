@@ -52,8 +52,7 @@ function kpiTreeInit() {
   // 共有ボタンの設置
   addShareButton();
   
-  // ノードハイライト用のスタイルをページに追加
-  addHighlightStyle();
+  // ノードハイライト用のスタイルはanchor.jsで追加される
   
   /**
    * ステップ4: ツリー状態の取得と適用
@@ -220,28 +219,6 @@ function setDirection(direction) {
   }
 }
 
-/**
- * ノードハイライト表示用のスタイルを動的に追加
- * アンカーリンクを使用した場合の強調表示に使用されます
- */
-function addHighlightStyle() {
-  // 既存のスタイル要素があれば追加しない
-  if (document.getElementById('kpi-tree-highlight-style')) return;
-  
-  var style = document.createElement('style');
-  style.id = 'kpi-tree-highlight-style';
-  style.textContent = `
-    .highlight-node {
-      animation: nodeHighlight 2s;
-    }
-    @keyframes nodeHighlight {
-      0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
-    }
-  `;
-  document.head.appendChild(style);
-}
 
 
 /**
