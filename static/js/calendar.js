@@ -299,6 +299,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // ナビゲーションボタンの表示/非表示を更新
   function updateNavigationButtons() {
     if (minDate && maxDate) {
+      // 【デバッグ強化】関数内の現在の状態を詳細に出力
+      console.log('【NAV-DEBUG】updateNavigationButtons呼び出し時の状態:', {
+        現在表示中の月: currentMonth + 1,
+        現在表示中の年: currentYear,
+        分岐ポイント: new Error().stack.split('\n')[1]
+      });
+      
       // 前月ボタンを制御
       const prevMonth = new Date(currentYear, currentMonth - 1, 1);
       const canGoToPrevMonth = prevMonth >= new Date(minDate.getFullYear(), minDate.getMonth(), 1);
@@ -312,15 +319,51 @@ document.addEventListener('DOMContentLoaded', function() {
       const todayYear = today.getFullYear();
       const currentMonthFirst = new Date(today.getFullYear(), today.getMonth(), 1);
       
+      // 【デバッグ強化】日付比較情報を詳細に出力
+      console.log('【NAV-DEBUG】日付比較情報:', {
+        現在の月: currentMonth + 1,
+        現在の年: currentYear,
+        今日の月: todayMonth + 1,
+        今日の年: todayYear,
+        次の月: (nextMonth.getMonth() + 1),
+        次の月の年: nextMonth.getFullYear(),
+        今日の月先頭: currentMonthFirst.toISOString().split('T')[0]
+      });
+      
       // 次月ボタンを完全に無効化: 現在表示している月が今月の場合または次の月が今月より後の場合
       let canGoToNextMonth = false;
       if (currentMonth === todayMonth && currentYear === todayYear) {
         // 今月を表示している場合は次月に進めない
         canGoToNextMonth = false;
+        console.log('【NAV-DEBUG】今月表示中なので次月ボタンは無効化');
       } else {
-        // 今月以外の月を表示している場合、次の月が今月以下ならOK
-        const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
-        canGoToNextMonth = nextMonthDate <= new Date(todayYear, todayMonth, 1);
+        // 【修正】今月以外の月を表示している場合、次の月が今月以下なら切り替え可能
+        // 次の月の年と月を計算
+        let nextMonthNumber = currentMonth + 1;
+        let nextYearNumber = currentYear;
+        if (nextMonthNumber > 11) {
+          nextMonthNumber = 0;
+          nextYearNumber++;
+        }
+        
+        // 【決定的な修正】要素を比較して判定、次の月が今日の月より小さいか、または同じ月なら可能
+        const canNavigateToNextMonth = (
+          nextYearNumber < todayYear || 
+          (nextYearNumber === todayYear && nextMonthNumber <= todayMonth)
+        );
+        
+        // 【判定ロジック確認用】
+        console.log('【NAV-DEBUG】次月ボタンの判定情報 (修正後):', {
+          現在表示月: currentMonth + 1,
+          次の月: nextMonthNumber + 1,
+          次の年: nextYearNumber,
+          今日の月: todayMonth + 1,
+          今日の年: todayYear,
+          結果: canNavigateToNextMonth,
+          判定式: `${nextYearNumber} < ${todayYear} || (${nextYearNumber} === ${todayYear} && ${nextMonthNumber} <= ${todayMonth})`
+        });
+        
+        canGoToNextMonth = canNavigateToNextMonth;
       }
 
       // ボタンの表示/非表示を切り替え
