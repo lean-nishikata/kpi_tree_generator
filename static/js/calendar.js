@@ -145,6 +145,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const hasTargetDate = userTargetDate instanceof Date && !isNaN(userTargetDate.getTime());
     console.log(`カレンダーデータ取得関数が呼ばれました，ターゲット日付: ${hasTargetDate ? userTargetDate.toISOString() : '未指定'}`);
     
+    // 重要：現在の月設定を保存（非同期処理での上書きを防ぐ）
+    const preservedMonth = currentMonth;
+    const preservedYear = currentYear;
+    console.log(`月設定を保護: ${preservedYear}年${preservedMonth + 1}月`);
+    
     // baseURLをページのグローバル変数から取得
     if (window.PUBLIC_URL) {
       baseUrl = window.PUBLIC_URL;
@@ -180,41 +185,21 @@ document.addEventListener('DOMContentLoaded', function() {
           
           console.log('日付範囲:', minDate, maxDate, '(昨日までに制限)');
           
-          // ターゲット日付が指定されている場合は、その日付の月を優先表示
+          // 重要：保存した月設定を復元（どんな場合でも初期設定を維持）
+          currentMonth = preservedMonth;
+          currentYear = preservedYear;
+          console.log(`月設定を復元: ${currentYear}年${currentMonth + 1}月`);
+          
+          // ターゲット日付の処理は情報表示のみ（月設定は変更しない）
           if (hasTargetDate && userTargetDate) {
-            // ターゲット日付が有効範囲（最小日付から最大日付）内か確認
             const targetYearMonth = new Date(userTargetDate.getFullYear(), userTargetDate.getMonth(), 1);
             const minYearMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
             const maxYearMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
             
             if (targetYearMonth >= minYearMonth && targetYearMonth <= maxYearMonth) {
-              // 重要：既に設定されているcurrentMonth/currentYearを上書きしない
-              // （初期設定が4月なら4月のまま維持）
-              console.log(`ターゲット日付は有効範囲内ですが、既存の月設定を維持します: ${currentYear}年${currentMonth + 1}月`);
+              console.log(`ターゲット日付は有効範囲内: ${userTargetDate.toISOString()}`);
             } else {
-              console.log(`ターゲット日付が有効範囲外です: ${userTargetDate.toISOString()}, 範囲: ${minYearMonth.toISOString()} - ${maxYearMonth.toISOString()}`);
-              // デフォルトの処理を実行
-              setDefaultMonth();
-            }
-          } else {
-            // ターゲット日付が未指定の場合はデフォルトの月設定を使用
-            setDefaultMonth();
-          }
-          
-          // デフォルトの月設定を行う関数
-          function setDefaultMonth() {
-            // 現在の表示月を、最小日付と最大日付の間にある今日の月、
-            // または単に最小日付の月に設定
-            const today = new Date();
-            if (
-              today >= new Date(minDate.getFullYear(), minDate.getMonth(), 1) &&
-              today <= new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0)
-            ) {
-              currentMonth = today.getMonth();
-              currentYear = today.getFullYear();
-            } else {
-              currentMonth = minDate.getMonth();
-              currentYear = minDate.getFullYear();
+              console.log(`ターゲット日付が有効範囲外: ${userTargetDate.toISOString()}, 範囲: ${minYearMonth.toISOString()} - ${maxYearMonth.toISOString()}`);
             }
           }
           
