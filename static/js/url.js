@@ -188,6 +188,36 @@ function getViewModeFromHash() {
 }
 
 /**
+ * URLクエリパラメータから表示モードを取得
+ * カレンダーの日付リンクから渡される?viewMode=xxx形式のパラメータを処理
+ * @returns {string|null} 表示モード文字列またはnull
+ */
+function getViewModeFromUrl() {
+  try {
+    // URLクエリパラメータからviewModeを取得
+    var urlSearchParams = new URLSearchParams(window.location.search);
+    var viewMode = urlSearchParams.get('viewMode');
+    
+    // パラメータが存在しなければ終了
+    if (!viewMode) {
+      return null;
+    }
+    
+    // 有効な表示モード値か確認
+    if (viewMode === 'daily' || viewMode === 'monthly') {
+      console.log('URLクエリパラメータから表示モードを取得成功:', viewMode);
+      return viewMode;
+    }
+    
+    console.warn('無効な表示モード値（URLクエリパラメータ）:', viewMode);
+    return null;
+  } catch (e) {
+    console.error('URLクエリパラメータから表示モード取得エラー:', e);
+    return null;
+  }
+}
+
+/**
  * 状態パラメータをデコードする共通関数
  * Base64エンコードされた状態文字列をデコードしてオブジェクトに変換
  * 

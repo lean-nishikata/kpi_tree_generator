@@ -64,8 +64,19 @@ function kpiTreeInit() {
   
   // 1.5 ハッシュから表示モードを取得試行
   var viewModeParam = getViewModeFromHash();
-  if (viewModeParam) {
+  
+  // ハッシュから取得できなければ、URLクエリパラメータから表示モードを取得試行
+  if (!viewModeParam) {
+    viewModeParam = getViewModeFromUrl();
+    if (viewModeParam) {
+      console.log('URLクエリパラメータから表示モードを取得:', viewModeParam);
+    }
+  } else {
     console.log('ハッシュから表示モードを取得:', viewModeParam);
+  }
+  
+  // 有効な表示モードが取得できた場合は適用
+  if (viewModeParam) {
     window._viewMode = viewModeParam;
     
     // 重要: 表示モードを実際に適用する処理を追加
@@ -73,6 +84,15 @@ function kpiTreeInit() {
     
     // 重要: 変数を定義してDOMContentLoaded完了後に確実にモードを適用できるようにする
     window._initialViewMode = viewModeParam;
+    
+    // DOM読み込み完了後に表示モードを確実に切り替える
+    document.addEventListener('DOMContentLoaded', function() {
+      // トグル読み込み後に少し遅延させて実行
+      setTimeout(function() {
+        console.log('初期読み込み後に表示モードを切り替え:', viewModeParam);
+        switchViewMode(viewModeParam);
+      }, 100);
+    });
   }
   
   // 2. ハッシュに状態がなければ、URLクエリパラメータから取得試行
