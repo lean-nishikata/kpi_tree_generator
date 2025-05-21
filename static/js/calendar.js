@@ -282,6 +282,24 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // ナビゲーションボタンの表示/非表示を更新
   function updateNavigationButtons() {
+    // minDateとmaxDateがない場合は、適切なデフォルト範囲を設定
+    if (!minDate || !maxDate) {
+      const today = new Date();
+      maxDate = new Date(today);
+      maxDate.setDate(today.getDate() - 1); // 昨日まで
+      
+      // minDateは現在の表示月から最大6ヶ月前まで、ただし今年の1月1日以降とする
+      const currentYear = new Date().getFullYear();
+      const januaryFirst = new Date(currentYear, 0, 1); // 今年の1月1日
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      
+      // より新しい日付を採用（今年の1月1日 vs 6ヶ月前）
+      minDate = januaryFirst > sixMonthsAgo ? januaryFirst : sixMonthsAgo;
+      
+      console.log('デフォルトの日付範囲を設定:', minDate, 'から', maxDate, 'まで');
+    }
+    
     if (minDate && maxDate) {
       // 【デバッグ強化】関数内の現在の状態を詳細に出力
       console.log('【NAV-DEBUG】updateNavigationButtons呼び出し時の状態:', {
@@ -596,6 +614,26 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 初期データの読み込みとカレンダー描画
   fetchCalendarData(targetDate);
+  
+  // フォールバック: 初期描画が確実に行われるように、少し遅延させて再度描画を試行
+  setTimeout(() => {
+    if (!currentMonthEl.textContent) {
+      console.log('カレンダーの初期表示が空のため、フォールバック描画を実行します');
+      // データが取得できない場合でも基本的な表示をする
+      datesWithData = []; // 空のデータ配列
+      updateNavigationButtons();
+      renderCalendar();
+    }
+  }, 500);
+  
+  // さらに確実にするため、もう一度チェック
+  setTimeout(() => {
+    if (!currentMonthEl.textContent) {
+      console.log('2回目のフォールバック描画を実行します');
+      // 強制的に描画
+      renderCalendar();
+    }
+  }, 1500);
   
   // リンク修正関数が不要になったため、フックも削除しました
   // 必要に応じて後で再実装することができます
