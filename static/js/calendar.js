@@ -49,6 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // データの期間の境界（最小日付と最大日付）
   let minDate = null;
   let maxDate = null;
+  
+  // デバッグ：初期状態の出力
+  console.log('【デバッグ】カレンダー初期化時のdatesWithData:', [...datesWithData]);
   // ベースURL（YAMLから取得）
   let baseUrl = '';
   
@@ -69,7 +72,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // 日付がデータがある日付かどうかをチェック
   function hasDataForDate(year, month, day) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return datesWithData.includes(dateStr);
+    const hasData = datesWithData.includes(dateStr);
+    
+    // デバッグ：緑ポッチの対象になる日付を出力
+    if (hasData) {
+      console.log(`【デバッグ】緑ポッチ対象の日付: ${dateStr}`);
+    }
+    
+    return hasData;
   }
   
   // 日付がデータ期間内かどうかをチェック
@@ -98,12 +108,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const fallbackData = {
       datesWithData: []
     };
+    console.log('【デバッグ】フォールバックデータ:', fallbackData);
     
     // データ処理関数
     function processJsonData(data) {
+      console.log('【デバッグ】processJsonData受け取ったデータ:', data);
+      
       if (data && Array.isArray(data.datesWithData)) {
         // 日付データを保存
         datesWithData = data.datesWithData;
+        console.log('【デバッグ】datesWithDataを設定:', [...datesWithData]);
         
         // 最小日付と最大日付を取得
         if (datesWithData.length > 0) {
@@ -197,6 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 空のJSONファイルの場合も適切に処理
         if (!data || !data.datesWithData || !Array.isArray(data.datesWithData)) {
           console.warn('カレンダーデータが正しい形式ではありません。空のデータを使用します。');
+          console.log('【デバッグ】フォールバックデータに切り替え');
           return processJsonData(fallbackData);
         }
         processJsonData(data);
@@ -405,8 +420,27 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // 昨日までの日付に対してのみリンクを有効にする
       if (isDateAvailable) {
-        dateLink.href = reportUrl;
-        dateLink.title = `${formattedDate}のレポートを表示`;
+        // 現在の表示モードを取得
+        const currentViewMode = window._viewMode || 'daily';
+        
+        // URLの処理
+        let urlWithViewMode = reportUrl;
+        
+        // URLがハッシュを含むか確認
+        if (urlWithViewMode.includes('#')) {
+          // ハッシュがある場合は、ハッシュの前にクエリパラメータを追加
+          const parts = urlWithViewMode.split('#');
+          urlWithViewMode = `${parts[0]}?viewMode=${currentViewMode}#${parts[1]}`;
+        } else {
+          // ハッシュがない場合は通常のクエリパラメータを追加
+          urlWithViewMode = `${urlWithViewMode}?viewMode=${currentViewMode}`;
+        }
+        
+        // デバッグログ
+        console.log(`日付リンクに表示モードを追加: ${formattedDate} -> ${urlWithViewMode}`)
+        
+        dateLink.href = urlWithViewMode;
+        dateLink.title = `${formattedDate}のレポートを${currentViewMode === 'daily' ? '日次' : '月次'}モードで表示`;
         
         // データがある日付には特別なクラスを追加（スタイリング用）
         if (hasDataForDate(currentYear, currentMonth, i)) {
