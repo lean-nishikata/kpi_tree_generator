@@ -19,6 +19,38 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentMonth = currentDate.getMonth();
   let currentYear = currentDate.getFullYear();
   
+  // target_dateパラメータを確認
+  let targetDate = null;
+  
+  // まず、data-target-date属性が設定されているか確認
+  const dataTargetDateEl = document.querySelector('[data-target-date]');
+  if (dataTargetDateEl) {
+    const dataTargetDateStr = dataTargetDateEl.getAttribute('data-target-date');
+    if (dataTargetDateStr && dataTargetDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const parts = dataTargetDateStr.split('-');
+      targetDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      console.log('data-target-date属性から対象日付を検出:', dataTargetDateStr);
+    }
+  }
+  
+  // 現在のデータ表示から取得
+  if (!targetDate) {
+    const dataDateEl = document.querySelector('.data-date');
+    if (dataDateEl) {
+      const dateText = dataDateEl.textContent;
+      const datePattern = /\d{4}年\d{2}月\d{2}日/;
+      const dateMatch = dateText.match(datePattern);
+      if (dateMatch) {
+        const dateStr = dateMatch[0]; // 例: '2025年05月21日'
+        const year = parseInt(dateStr.substring(0, 4));
+        const month = parseInt(dateStr.substring(5, 7)) - 1; // 0-11
+        const day = parseInt(dateStr.substring(8, 10));
+        targetDate = new Date(year, month, day);
+        console.log('日付表示から対象日付を検出:', dateStr);
+      }
+    }
+  }
+  
   // 現在開いているページの日付を取得（YYYYMMDD.html または reports/YYYYMMDD.html）
   let currentPageDate = null;
   try {
@@ -33,9 +65,21 @@ document.addEventListener('DOMContentLoaded', function() {
       const day = parseInt(dateStr.substring(6, 8));
       currentPageDate = new Date(year, month, day);
       console.log('現在のページ日付を検出:', currentPageDate);
+      
+      // target_dateが未設定の場合は、現在のページ日付をtarget_dateとして使用
+      if (!targetDate) {
+        targetDate = currentPageDate;
+      }
     }
   } catch (e) {
     console.error('ページ日付の解析エラー:', e);
+  }
+  
+  // target_dateが見つかった場合、その日付の月を表示するように設定
+  if (targetDate) {
+    currentYear = targetDate.getFullYear();
+    currentMonth = targetDate.getMonth();
+    console.log(`カレンダーを対象日付（${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月${targetDate.getDate()}日）の月に設定しました`);
   }
   
   // 月の名前（日本語）
@@ -382,6 +426,15 @@ document.addEventListener('DOMContentLoaded', function() {
         dayEl.classList.add('today');
       }
       
+      // target_dateには特別なハイライトを適用
+      if (targetDate && i === targetDate.getDate() && 
+          currentMonth === targetDate.getMonth() && 
+          currentYear === targetDate.getFullYear()) {
+        dayEl.classList.add('target-date');
+        // 要素にデータ属性を追加して後でJavaScriptで参照できるようにする
+        dayEl.setAttribute('data-is-target-date', 'true');
+      }
+      
       // 現在のページ日付があれば、その日付にハイライトを適用
       if (currentPageDate && i === currentPageDate.getDate() && 
           currentMonth === currentPageDate.getMonth() && 
@@ -464,7 +517,42 @@ document.addEventListener('DOMContentLoaded', function() {
       dayEl.textContent = j;
       calendarDaysEl.appendChild(dayEl);
     }
+    
+    // レンダリング後にターゲット日付があればそこにスクロール
+    if (targetDate) {
+      // 少し遅延させてレンダリング完了後にスクロールする
+      setTimeout(() => {
+        const targetElement = document.querySelector('.calendar-day.target-date');
+        if (targetElement) {
+          // スクロールする
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // 注目を引くためのアニメーションを追加
+          targetElement.style.animation = 'highlight-pulse 1.5s ease-in-out 2';
+          console.log(`対象日付 ${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月${targetDate.getDate()}日 にスクロールしました`)
+        }
+      }, 300);
+    }
   }
+  
+  // target-dateのスタイルを追加
+  const style = document.createElement('style');
+  style.textContent = `
+    .calendar-day.target-date {
+      background-color: #ffe0b2;
+      border: 2px solid #ff9800;
+      font-weight: bold;
+      position: relative;
+      z-index: 1;
+    }
+    
+    @keyframes highlight-pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
+      50% { transform: scale(1.1); box-shadow: 0 0 10px 5px rgba(255, 152, 0, 0.5); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+    }
+  `;
+  document.head.appendChild(style);
   
   // 初期データの読み込みとカレンダー描画
   fetchCalendarData();
