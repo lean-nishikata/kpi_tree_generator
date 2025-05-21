@@ -396,63 +396,27 @@ document.addEventListener('DOMContentLoaded', function() {
     renderCalendar();
   });
   
-  // 翻月ボタン - 完全に修正したバージョン
+  // 次月ボタン - シンプルな正確な実装
   nextMonthBtn.addEventListener('click', function() {
     if (this.disabled || this.style.visibility === 'hidden') return;
     
     // デバッグ情報追加
-    console.log('【月移動-修正版】クリック前状態:', {
+    console.log('【月移動】クリック前状態:', {
       現在月: currentMonth + 1,
       現在年: currentYear
     });
     
-    // 今日の日付を取得
-    const today = new Date();
-    const todayMonth = today.getMonth();
-    const todayYear = today.getFullYear();
-    
-    // 次の月への移動処理
-    let targetMonth = currentMonth + 1;
-    let targetYear = currentYear;
-    
-    // 年をまたぐ場合の処理
-    if (targetMonth > 11) {
-      targetMonth = 0;
-      targetYear++;
+    // 単純な次月移動（1か月ずつ）
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
     }
     
-    console.log('【月移動-修正版】計算結果:', {
+    console.log('【月移動】移動後状態:', {
       現在月: currentMonth + 1,
-      移動先月: targetMonth + 1,
-      現在年: currentYear,
-      移動先年: targetYear,
-      今日の月: todayMonth + 1,
-      今日の年: todayYear
+      現在年: currentYear
     });
-    
-    // 未来の月への移動を制限
-    if (targetYear > todayYear || (targetYear === todayYear && targetMonth > todayMonth)) {
-      console.log('【月移動-修正版】移動先が未来の月のため移動をキャンセル');
-      return;
-    }
-    
-    // 実際に月を移動
-    console.log('【月移動-修正版】移動実行:', {
-      移動前: currentMonth + 1 + '月' + currentYear + '年',
-      移動後: targetMonth + 1 + '月' + targetYear + '年'
-    });
-    
-    // 移動先を設定
-    currentMonth = targetMonth;
-    currentYear = targetYear;
-    
-    // 再度確認: 進めた後の月が今月以下かチェック
-    if (currentYear > todayYear || (currentYear === todayYear && currentMonth > todayMonth)) {
-      // 間違って未来に進んでしまった場合は今月に戻す
-      console.log('未来の月に移動してしまったので今月に戻します');
-      currentMonth = todayMonth;
-      currentYear = todayYear;
-    }
     
     updateNavigationButtons();
     renderCalendar();
