@@ -353,15 +353,29 @@ document.addEventListener('DOMContentLoaded', function() {
     renderCalendar();
   });
   
-  // 翌月ボタン
+  // 翻月ボタン
   nextMonthBtn.addEventListener('click', function() {
     if (this.disabled) return;
     if (this.style.visibility === 'hidden') return;
+    
+    // 【デバッグ強化】現在の状態を出力
+    console.log('【CALENDAR-NAV-DEBUG】次の月ボタンクリック:', {
+      現在の月: currentMonth + 1,
+      現在の年: currentYear,
+      画面上の日付: document.getElementById('current-date').innerText
+    });
     
     // 現在の日付を取得
     const today = new Date();
     const todayMonth = today.getMonth();
     const todayYear = today.getFullYear();
+    
+    // 【デバッグ強化】チェック条件を詳細に出力
+    console.log('【CALENDAR-NAV-DEBUG】チェック条件:', {
+      今日の月: todayMonth + 1,
+      今日の年: todayYear,
+      現在表示中は今月か: (currentMonth === todayMonth && currentYear === todayYear)
+    });
     
     // 厳格なチェック: 現在表示中の月が今月なら何もしない
     if (currentMonth === todayMonth && currentYear === todayYear) {
@@ -377,6 +391,15 @@ document.addEventListener('DOMContentLoaded', function() {
       nextYear++;
     }
     
+    // 【デバッグ強化】次の月の計算結果を詳細に出力
+    console.log('【CALENDAR-NAV-DEBUG】次の月計算結果:', {
+      計算後の次の月: nextMonth + 1,
+      計算後の次の年: nextYear,
+      今日の月: todayMonth + 1,
+      今日の年: todayYear,
+      移動可能か: !(nextYear > todayYear || (nextYear === todayYear && nextMonth > todayMonth))
+    });
+    
     // 日付比較（次の月が今月より後は移動不可）
     if (nextYear > todayYear || (nextYear === todayYear && nextMonth > todayMonth)) {
       console.log('未来の月には移動できません');
@@ -384,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 条件を通過した場合のみ月を進める
+    console.log('【CALENDAR-NAV-DEBUG】移動実行: ' + currentMonth + '月 → ' + (currentMonth + 1) + '月');
     currentMonth++;
     if (currentMonth > 11) {
       currentMonth = 0;
@@ -504,7 +528,13 @@ document.addEventListener('DOMContentLoaded', function() {
       if (isDateAvailable) {
         // 現在の表示モードを取得
         const currentViewMode = window._viewMode || 'daily';
-        console.log(`【CALENDAR-DEBUG】現在の表示モード(window._viewMode): ${window._viewMode}、使用するモード: ${currentViewMode}`);
+        
+        // 【デバッグ強化】日付リンク生成時の表示モード情報
+        console.log(`【LINK-MODE-DEBUG】${formattedDate}の日付リンク作成時の表示モード:`, {
+          グローバルモード: window._viewMode,
+          使用するモード: currentViewMode,
+          元のURL: reportUrl
+        });
         
         // URLの処理
         let urlWithViewMode = reportUrl;
@@ -519,15 +549,8 @@ document.addEventListener('DOMContentLoaded', function() {
           urlWithViewMode = `${urlWithViewMode}?viewMode=${currentViewMode}`;
         }
         
-        // 【デバッグ強化】作成したURLを詳細に出力
-        console.log(`【CALENDAR-DEBUG】日付リンク情報:`, {
-          date: formattedDate,
-          viewMode: currentViewMode,
-          originalUrl: reportUrl,
-          finalUrl: urlWithViewMode,
-          urlContainsViewMode: urlWithViewMode.includes('viewMode='),
-          viewModeValue: urlWithViewMode.match(/viewMode=([^&#]*)/)?.[1] || 'not found'
-        });
+        // 【デバッグ強化】生成したURLを確認
+        console.log(`【LINK-MODE-DEBUG】${formattedDate}の日付リンクの最終URL:`, urlWithViewMode);
         
         dateLink.href = urlWithViewMode;
         dateLink.title = `${formattedDate}のレポートを${currentViewMode === 'daily' ? '日次' : '月次'}モードで表示`;
