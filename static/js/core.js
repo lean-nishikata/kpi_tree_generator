@@ -488,12 +488,40 @@ function updateDateDisplay(mode) {
   // 現在の日付表示テキストを取得
   const currentText = dateDisplay.textContent;
   
+  // 「現在のデータ: 」の後に来るテキストを抽出
+  const prefixPattern = /現在のデータ: /;
+  let mainContent = currentText.replace(prefixPattern, '');
+  
+  // 追加情報を折り返し文字や特殊文字で分割して抽出
+  let additionalInfo = '';
+  let dateContent = mainContent;
+  
+  // 「/」や「～」などで分割されている場合
+  if (mainContent.includes('/')) {
+    const parts = mainContent.split('/');
+    dateContent = parts[0].trim();
+    additionalInfo = '/' + parts.slice(1).join('/');
+  } else if (mainContent.includes('～')) { // 月次モードの場合
+    // 月初～指定日付の形式から指定日付部分を抽出
+    const parts = mainContent.split('～');
+    if (parts.length > 1) {
+      dateContent = parts[1].trim();
+    }
+    
+    // さらに追加情報がある場合は抽出
+    if (dateContent.includes('/')) {
+      const moreParts = dateContent.split('/');
+      dateContent = moreParts[0].trim();
+      additionalInfo = '/' + moreParts.slice(1).join('/');
+    }
+  }
+  
   // 日付部分を抽出するパターン
   const datePattern = /\d{4}年\d{2}月\d{2}日/;
-  const dateMatch = currentText.match(datePattern);
+  const dateMatch = dateContent.match(datePattern);
   
   if (!dateMatch) {
-    console.warn('日付パターンが見つかりません:', currentText);
+    console.warn('日付パターンが見つかりません:', dateContent);
     return;
   }
   
@@ -514,9 +542,6 @@ function updateDateDisplay(mode) {
     // 日次モード: 元の日付表示を維持
     newDateDisplay = `現在のデータ: ${dateStr}`;
   }
-  
-  // 追加情報があれば復元
-  const additionalInfo = currentText.split(dateStr)[1] || '';
   
   // 日付表示を更新
   dateDisplay.textContent = newDateDisplay + additionalInfo;
