@@ -513,6 +513,50 @@ function switchViewMode(mode) {
     console.error('URL更新中にエラー:', urlError);
   }
   
+  // URLを更新し、現在の状態を反映させる
+  window.history.replaceState({}, '', hashFragment);
+  console.log('ハッシュを更新しました:', hashFragment);
+  
+  // 【重要】カレンダーの日付リンクを更新
+  // モード切替後に既存のカレンダー日付リンクを更新する
+  try {
+    console.log('【SWITCH-MODE-FIX】カレンダーの日付リンクを更新します');
+    
+    // カレンダーの日付リンクを取得
+    const calendarLinks = document.querySelectorAll('.calendar-day a');
+    if (calendarLinks && calendarLinks.length > 0) {
+      console.log(`【SWITCH-MODE-FIX】${calendarLinks.length}個のカレンダーリンクを更新します。現在のモード: ${mode}`);
+      
+      // 各日付リンクのURLを更新
+      calendarLinks.forEach(function(link) {
+        if (link.href) {
+          const originalUrl = link.href;
+          const urlObj = new URL(originalUrl);
+          
+          // 既存のviewModeパラメータを削除
+          urlObj.searchParams.delete('viewMode');
+          
+          // 新しいモードを設定
+          urlObj.searchParams.set('viewMode', mode);
+          
+          // URLを更新
+          link.href = urlObj.toString();
+          
+          // デバッグ用に最初の数個だけ出力
+          if (calendarLinks.indexOf(link) < 3) {
+            console.log(`【SWITCH-MODE-FIX】リンク更新: ${originalUrl} -> ${link.href}`);
+          }
+        }
+      });
+      
+      console.log('【SWITCH-MODE-FIX】カレンダーの日付リンクを更新完了');
+    } else {
+      console.log('【SWITCH-MODE-FIX】カレンダーの日付リンクが見つかりません');
+    }
+  } catch (e) {
+    console.error('【SWITCH-MODE-FIX】カレンダーリンク更新エラー:', e);
+  }
+  
   // 全てのノードの値を更新
   updateAllNodeValues();
   
