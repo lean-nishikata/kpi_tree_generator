@@ -1,6 +1,6 @@
 # KPI ツリージェネレーター
 
-YAMLファイル形式の設定から、HTML形式のKPIツリーを生成するためのツールです。ローカルやDocker環境、Google Cloud Storageなどで利用できます。
+YAMLファイル形式の設定から、HTML形式のKPIツリーを生成するためのツールです。ローカルやDocker環境、Google Cloud Storageなどで利用できます。BigQueryからデータを取得してGoogle Sheetsに出力し、KPIツリーを自動生成することも可能です。
 
 ## 特徴
 
@@ -76,22 +76,6 @@ docker-compose run --rm kpi-generator config/game.yaml
    ```shell
    docker-compose run --rm kpi-generator spreadsheet-example
    ```
-
-### Googleスプレッドシートの情報とセル値の確認
-
-スプレッドシートの情報やセル値を確認するためのツールが含まれています。
-
-1. スプレッドシートの基本情報を確認:
-   ```shell
-   make check-sheets id="あなたのスプレッドシートID"
-   ```
-
-2. 特定セルの値を確認:
-   ```shell
-   make check-value id="あなたのスプレッドシートID" range="シート名!A1"
-   ```
-   ※ シート名に空白や特殊文字が含まれる場合はダブルクォートで囲んでください
-   例: `range="Sheet 1!A1"`
 
 ### 手動でビルドして実行
 
@@ -187,6 +171,41 @@ root:
 
 - テーマを変更するには、YAMLファイルの `theme` パラメータを変更します（"default", "blue", "red"）
 - ノードの色やサイズを変更する場合は、`static/style.css` ファイルをカスタマイズしてください
+
+## BigQueryからのデータ取得とKPIツリー生成 (update_html.py)
+
+BigQueryからデータを取得し、Google Sheetsに保存した後、KPIツリーを生成するパイプラインが用意されています。このスクリプトはDocker環境でのみ実行します。
+これは、バッチ処理で更新することを想定したワークフローです。
+
+### Docker環境での実行
+
+```shell
+# ビルド
+docker-compose build update-html
+
+# 集計日とyamlファイルを指定する場合
+docker-compose run --rm update-html --target_date YYYY-MM-DD --yaml_file custom.yaml
+
+# 今日のデータとしてindex.htmlにもアップロードする場合
+docker-compose run --rm update-html --target_date YYYY-MM-DD --yaml_file custom.yaml --today
+```
+
+このワークフローは以下の処理を行います：
+- BigQueryに対してSQLクエリを実行し、KPIデータを取得
+- 取得したデータをGoogle Sheetsに書き込み
+- 指定されたYAMLファイルを使用してKPIツリーのHTMLを生成
+- 生成されたHTMLファイルを日付形式（YYYYMMDD.html）にリネーム
+- 生成されたHTMLファイルをGoogle Cloud Storageにアップロード
+- `--today`オプションが指定されている場合、同じファイルを`index.html`としてもGCSにアップロード
+- `static/calendar-data.json` ファイルを更新し、生成済みの日付情報を管理
+
+
+**注意点**:
+- `--target_date` パラメータはYYYY-MM-DD形式で指定します。このパラメータは必須です。
+- `--yaml_file` パラメータで使用するYAMLファイルを指定できます。省略するとデフォルトで `yyyymmdd.yaml` が使用されます。
+- 認証ファイルは `./keys/service-account-key.json` に配置されている必要があります
+- BigQuery SQLクエリファイル `sql/daily_kpi_tree_report.sql` が必要です
+
 
 ## Google Cloud Storage（GCS）での公開方法
 

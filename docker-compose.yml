@@ -23,3 +23,17 @@ services:
       # - KPI_TREE_SPREADSHEET_ID=your_spreadsheet_id_here
     # コマンドライン引数を渡すことができます（例：docker-compose run kpi-generator sales）
     # デフォルトはconfig.yaml
+
+  update-html:
+    build:
+      context: .
+      dockerfile: Dockerfile.update-html
+    volumes:
+      - ./output:/app/output
+      - ./static:/app/static
+      - ./sql:/app/sql
+      - ./keys:/app/keys
+      - ./update_html.py:/app/update_html.py
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/keys/service-account-key.json
+    # コマンドライン引数を渡すことができます（例：docker-compose run --rm update-html --target_date 2025-05-22）

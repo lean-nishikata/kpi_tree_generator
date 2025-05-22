@@ -1,0 +1,37 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# 必要なパッケージをインストール
+RUN apt-get update && apt-get install -y \
+    gcc \
+    python3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python依存ライブラリをインストール
+COPY requirements-update-html.txt /app/
+RUN pip install --no-cache-dir -r requirements-update-html.txt
+
+# スクリプトファイルをコピー
+COPY update_html.py /app/
+COPY sql /app/sql/
+
+# 必要なディレクトリを作成
+RUN mkdir -p /app/keys /app/output /app/static
+RUN chmod 777 /app/output /app/static
+
+# 環境変数の設定
+ENV PYTHONUNBUFFERED=1
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/keys/service-account-key.json
+
+# ボリュームの設定
+VOLUME ["/app/keys"]
+VOLUME ["/app/output"]
+VOLUME ["/app/static"]
+VOLUME ["/app/sql"]
+
+# エントリーポイントの設定
+ENTRYPOINT ["python", "update_html.py"]
+# デフォルト引数（上書き可能）
+CMD ["--cred_file", "/app/keys/service-account-key.json"]
